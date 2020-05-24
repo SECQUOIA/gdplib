@@ -1,2 +1,4 @@
 Pyomo>=5.6.1
 setuptools>=39.0.1
+pandas>=1.0.1
+matplotlib>=2.2.2

@@ -1,0 +1,4 @@
+                 SMR             POX              ATR             CR             DMR             BR                TR
+compressor        2               4                4              4               0              2                 6
+exchanger         3               4                4              6               2              4                 6
+reformer          1               1                1              2               1              1                 1
