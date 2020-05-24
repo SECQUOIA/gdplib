@@ -13,7 +13,7 @@ from pyomo.gdp import Disjunct
 def build_model():
     m = ConcreteModel()
     m.bigM = Suffix(direction=Suffix.LOCAL)
-    m.time = RangeSet(0, 120, doc="months in 10 years", ordered=True)
+    m.time = RangeSet(0, 120, doc="months in 10 years")
     m.suppliers = RangeSet(10)
     m.markets = RangeSet(10)
     m.potential_sites = RangeSet(12)

@@ -20,7 +20,7 @@ def build_model():
     m.periods_per_year = Param(initialize=4, doc="Quarters per year")
     m.project_life = Param(initialize=15, doc="Years")
     m.time = RangeSet(0, m.periods_per_year *
-                      m.project_life - 1, doc="Time periods", ordered=True)
+                      m.project_life - 1, doc="Time periods")
     m.discount_rate = Param(initialize=0.08, doc="8%")
     m.learning_rate = Param(initialize=0.1, doc="Fraction discount for doubling of quantity")
 
@@ -33,7 +33,7 @@ def build_model():
 
     xlsx_data = pd.read_excel(os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None)
     module_sheet = xlsx_data['modules'].set_index('Type')
-    m.module_types = Set(initialize=module_sheet.columns.tolist(), ordered=True)
+    m.module_types = Set(initialize=module_sheet.columns.tolist(),)
 
     @m.Param(m.module_types)
     def module_base_cost(m, mtype):
@@ -52,7 +52,7 @@ def build_model():
         return float(module_sheet[mtype]['Conversion [kB/MMSCF]'])
 
     site_sheet = xlsx_data['sites'].set_index('Potential site')
-    m.potential_sites = Set(initialize=site_sheet.index.tolist(), ordered=True)
+    m.potential_sites = Set(initialize=site_sheet.index.tolist())
     m.site_pairs = Set(
         doc="Pairs of potential sites",
         initialize=m.potential_sites * m.potential_sites,
@@ -67,7 +67,7 @@ def build_model():
         return float(site_sheet['y'][site])
 
     well_sheet = xlsx_data['wells'].set_index('Well')
-    m.well_clusters = Set(initialize=well_sheet.index.tolist(), ordered=True)
+    m.well_clusters = Set(initialize=well_sheet.index.tolist())
 
     @m.Param(m.well_clusters)
     def well_x(m, well):
@@ -92,7 +92,7 @@ def build_model():
         return sum(well_profiles[well][t * 3:t * 3 + 2]) / 3
 
     mkt_sheet = xlsx_data['markets'].set_index('Market')
-    m.markets = Set(initialize=mkt_sheet.index.tolist(), ordered=True)
+    m.markets = Set(initialize=mkt_sheet.index.tolist())
 
     @m.Param(m.markets)
     def mkt_x(m, mkt):

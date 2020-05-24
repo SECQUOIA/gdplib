@@ -11,7 +11,7 @@ from pyomo.gdp import Disjunct, Disjunction
 
 def build_model(case="Growth"):
     m = ConcreteModel()
-    m.months = RangeSet(0, 120, doc="10 years", ordered=True)
+    m.months = RangeSet(0, 120, doc="10 years")
     m.discount_rate = Param(initialize=0.08, doc="8%")
     m.conv_setup_time = Param(initialize=12)
     m.modular_setup_time = Param(initialize=3)
