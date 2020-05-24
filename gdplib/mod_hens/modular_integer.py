@@ -10,7 +10,7 @@ modules using integer variables for module selection.
 """
 from __future__ import division
 
-from pyomo.environ import (Constraint, IntegerSet, log, Var)
+from pyomo.environ import (Constraint, Integers, log, Var)
 from pyomo.gdp import Disjunct, Disjunction
 
 from gdplib.mod_hens import common
@@ -60,7 +60,7 @@ def build_model(use_cafaro_approximation, num_stages):
     m.num_modules = Var(
         m.valid_matches, m.stages, m.module_sizes,
         doc="The number of modules of each size at each exchanger.",
-        domain=IntegerSet, bounds=(0, 100), initialize=0)
+        domain=Integers, bounds=(0, 100), initialize=0)
     # improve quality of bounds
     for size in m.module_sizes:
         for var in m.num_modules[:, :, :, size]:
