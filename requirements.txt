@@ -1,0 +1,2 @@
+Pyomo>=5.6.1
+setuptools>=39.0.1
