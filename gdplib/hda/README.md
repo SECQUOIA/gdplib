@@ -1,4 +1,4 @@
-# biofuel - Biofuel processing network
+# hda - Synthesis: Hydrodealkylation of Toluene
 
 This model describes the profit maximization of a Hydrodealkylation of Toluene process first presented in:
 > James M Douglas (1988). Conceptual Design of Chemical Processes, McGraw-Hill. ISBN-13: 978-0070177628
