@@ -18,7 +18,7 @@ def HDA_model():
 
     # ## scalars
 
- 
+
     m.alpha = Param(initialize=0.3665, doc="compressor coefficient")
     m.compeff = Param(initialize=0.750, doc="compressor effiency")
     m.gam = Param(initialize=1.300, doc="ratio of cp to cv")
@@ -895,7 +895,7 @@ def HDA_model():
         b.ratio = Constraint([comp], rule=Ratio,
                              doc='pressure ratio (out to in)')
 
-    
+
     m.vapor_pressure_unit_match = Param(
         initialize=7500.6168, doc="unit match coeffieicnt for vapor pressure calculation")
     m.actual_reflux_ratio = Param(
@@ -1391,7 +1391,7 @@ def HDA_model():
         b.splto = Constraint([multi_splitter], m.str,
                              rule=Splto, doc='outlet temperature relation')
 
-    
+
 
     def build_valve(b, valve_):
         def Valcmb(_m, valve, compon):
@@ -1406,7 +1406,7 @@ def HDA_model():
             return sum(m.p[stream] for (valv, stream) in m.oval if valv == valve) <= sum(m.p[stream] for (valv, stream) in m.ival if valv == valve)
         b.valp = Constraint([valve_], rule=Valp, doc='pressure relation')
 
-    
+
     m.Prereference_factor = Param(
         initialize=6.3e+10, doc="Pre-reference factor for reaction rate constant")
     m.Ea_R = Param(initialize=-26167.)
@@ -1803,12 +1803,11 @@ def HDA_model():
     m.obj = Objective(rule = profits_from_paper, sense=maximize)
     # def profits_GAMS_file(m):
 
-    #     "there are several difference between the data from GAMS file and the paper: 1. all the compressor share the same fixed and linear cost in paper but in GAMS they have different fixed and linear cost in GAMS file. 2. the fixed cost for absorber in GAMS file is 3.0 but in the paper is 13.0, but they are getting the same results 3. the electricity cost is not the same"
+    #     "there are several differences between the data from GAMS file and the paper: 1. all the compressor share the same fixed and linear cost in paper but in GAMS they have different fixed and linear cost in GAMS file. 2. the fixed cost for absorber in GAMS file is 3.0 but in the paper is 13.0, but they are getting the same results 3. the electricity cost is not the same"
 
     #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.meathane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coeffcient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coeffcient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.indicator_var + m.recycle_hydrogen.indicator_var + m.absorber_hydrogen.indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.indicator_var + m.adiabtic_reactor_linear_coeffcient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.indicator_var + m.isothermal_reactor_linear_coeffcient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.indicator_var +m.stabilizing_column_linear_coeffcient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coeffcient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.indicator_var + m.toluene_column_linear_coeffcient * m.ndist[3]) - (m.membrane_seperator_fixed_cost * m.purify_H2.indicator_var + m.membrane_seperator_linear_coeffcient * m.f[3]) - (m.membrane_seperator_fixed_cost * m.recycle_methane_membrane.indicator_var + m.membrane_seperator_linear_coeffcient * m.f[54]) - (3.0 * m.absorber_hydrogen.indicator_var + m.abs_linear_coeffcient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coeffcient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
     # m.obj = Objective(rule=profits_GAMS_file, sense=maximize)
 
-                                                  
     return m
 
 
@@ -1822,16 +1821,18 @@ def solve_with_gdpopt(m):
     opt = SolverFactory('gdpopt')
     res = opt.solve(m, tee=True,
                     strategy='LOA',
+                    # strategy='GLOA',
                     time_limit=3600,
                     mip_solver='gams',
-                    mip_solver_args=dict(solver='gurobi', warmstart=True),
+                    mip_solver_args=dict(solver='cplex', warmstart=True),
                     nlp_solver='gams',
                     nlp_solver_args=dict(solver='ipopth', warmstart=True,),
                     minlp_solver='gams',
                     minlp_solver_args=dict(solver='dicopt', warmstart=True),
                     subproblem_presolve=False,
-                    init_strategy='no_init',
-                    set_cover_iterlim=20
+                    # init_strategy='no_init',
+                    set_cover_iterlim=20,
+                    # calc_disjunctive_bounds=True
                     )
     return res
 
@@ -1841,15 +1842,16 @@ def solve_with_minlp(m):
     '''
 
     TransformationFactory('gdp.bigm').apply_to(m, bigM=60)
-    # TransformationFactory('gdp.chull').apply_to(m)
+    # TransformationFactory('gdp.hull').apply_to(m)
+    # result = SolverFactory('baron').solve(m, tee=True)
     result = SolverFactory('gams').solve(
-        m, solver='baron', tee=True, 
+        m, solver='baron', tee=True,
         add_options=[
-            'option reslim=120;' 
+            'option reslim=120;'
         ]
     );
 
-    return res
+    return result
 
 
 
@@ -1857,7 +1859,7 @@ def solve_with_minlp(m):
 
 def infeasible_constraints(m):
     '''
-    This function checks infeasible constraint in the model 
+    This function checks infeasible constraint in the model
     '''
     log_infeasible_constraints(m)
 
@@ -1865,7 +1867,7 @@ def infeasible_constraints(m):
 
 # %%
 
-# enumeration each possible route selection by fixing binary variable values in every disjunctions 
+# enumeration each possible route selection by fixing binary variable values in every disjunctions
 
 def enumerate_solutions(m):
 
@@ -1934,9 +1936,9 @@ def enumerate_solutions(m):
                                             set_cover_iterlim = 20
                                             )
                             print('{0:<30}{1:<30}{2:<30}{3:<30}{4:<30}{5:<30}{6:<30}{7:<30}'.format(H2_treatment, Reactor_selection, Methane_recycle_selection,Absorber_recycle_selection,Methane_product_selection,Toluene_product_selection,str(res.solver.termination_condition),value(m.obj)))
-# %% 
+# %%
 def show_decision(m):
-    ''' 
+    '''
     print indicator variable value
     '''
     if value(m.purify_H2.indicator_var) == 1:
@@ -1946,23 +1948,23 @@ def show_decision(m):
     if value(m.adiabatic_reactor.indicator_var) == 1:
         print("adiabatic reactor")
     else:
-        print("isothermal reactor")                       
+        print("isothermal reactor")
     if value(m.recycle_methane_membrane.indicator_var) == 1:
         print("recycle_membrane")
     else:
-        print("methane purge") 
+        print("methane purge")
     if value(m.absorber_hydrogen.indicator_var) == 1:
         print("yes_absorber")
     else:
-        print("no_absorber") 
+        print("no_absorber")
     if value(m.methane_distillation_column.indicator_var) == 1:
         print("methane_column")
     else:
-        print("methane_flash") 
+        print("methane_flash")
     if value(m.toluene_distillation_column.indicator_var) == 1:
         print("toluene_column")
     else:
-        print("toluene_flash")   
+        print("toluene_flash")
 # %%
 
 
@@ -1971,15 +1973,15 @@ if __name__ == "__main__":
     m = HDA_model()
 
     # Solve model
-    # res = solve_with_gdpopt(m)
+    res = solve_with_gdpopt(m)
     # res = solve_with_minlp(m)
 
     # Enumerate all solutions
-    res =  enumerate_solutions(m)
+    # res =  enumerate_solutions(m)
 
     # Check if constraints are violated
     infeasible_constraints(m)
-    
+
     # show optimial flowsheet selection
     # show_decision(m)
 
