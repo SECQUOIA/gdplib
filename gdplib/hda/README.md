@@ -9,6 +9,8 @@ Later implemented as a GDP in:
 
 The MINLP formulation of this problem is available in GAMS https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_hda.html
 
+This model was reimplemented by Yunshan Liu @Yunshan-Liu
+
 ## Problem Details
 
 ### Solution
