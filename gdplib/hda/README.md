@@ -12,10 +12,11 @@ The MINLP formulation of this problem is available in GAMS https://www.gams.com/
 This model was reimplemented by Yunshan Liu @Yunshan-Liu .
 
 ## Problem Details
-
 ### Solution
 
-Optimal objective value: 5966.51
+Best known objective value: 5966.51
+
+
 ### Size
 
 | Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
