@@ -12,17 +12,24 @@ The MINLP formulation of this problem is available in GAMS https://www.gams.com/
 This model was reimplemented by Yunshan Liu @Yunshan-Liu
 
 ## Problem Details
-
 ### Solution
 
-Optimal objective value: 5966.51
+Best known objective value: 5966.51
+
 
 ### Size
-- Variables: 733
-    - Boolean: 12
-    - Binary: 0
-    - Integer: 0
-    - Continuous: 721
-- Constraints: 728
-- Disjuncts: 12
-- Disjunctions: 6
+
+| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
+|-----------|------|------|-----|-----|------|------|----|------|--------|
+| Kaibel Column | 733 | 12 | 0 | 0 | 721 | 728 | 151 | 12 | 6 |
+
+- ``vars``: variables
+- ``Bool``: Boolean variables
+- ``bin``: binary variables
+- ``int``: integer variables
+- ``cont``: continuous variables
+- ``cons``: constraints
+- ``nl``: nonlinear constraints
+- ``disj``: disjuncts
+- ``disjtn``: disjunctions
+
