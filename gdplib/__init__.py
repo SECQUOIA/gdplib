@@ -7,3 +7,4 @@ import gdplib.stranded_gas  # Requires logical expression system
 import gdplib.gdp_col
 import gdplib.hda
 import gdplib.kaibel
+import gdplib.methanol
