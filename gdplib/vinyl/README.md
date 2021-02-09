@@ -2,6 +2,7 @@
 Information comes from methanol model and will be edited later
 This is a GDP model to determine the optimal maximum profit for a methanol production process.
 
+
 Source paper:
 
 > Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. *Computers and Chemical Engineering*, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
