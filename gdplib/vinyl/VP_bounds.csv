@@ -1,0 +1,569 @@
+﻿,,lower bounds,upper bounds
+1,nitrogen,0,230.172
+1,oxygen,0,312.761
+1,ethylene,0,189.076
+1,hydrogen chloride,0,344.425
+1,vinyl chloride,0,63.572
+1,chlorine,0,149.16
+1,ethylene di-chloride,0,76.4765
+1,water,0,216.99
+2,nitrogen,0,230.172
+2,oxygen,0,312.761
+2,ethylene,0,189.076
+2,hydrogen chloride,0,344.425
+2,vinyl chloride,0,63.572
+2,chlorine,0,149.16
+2,ethylene di-chloride,0,76.4765
+2,water,0,216.99
+3,nitrogen,0,230.172
+3,oxygen,0,312.761
+3,ethylene,0,189.076
+3,hydrogen chloride,0,344.425
+3,vinyl chloride,0,63.572
+3,chlorine,0,149.16
+3,ethylene di-chloride,0,76.4765
+3,water,0,216.99
+4,nitrogen,0,230.172
+4,oxygen,0,312.761
+4,ethylene,0,189.076
+4,hydrogen chloride,0,344.425
+4,vinyl chloride,0,63.572
+4,chlorine,0,149.16
+4,ethylene di-chloride,0,76.4765
+4,water,0,216.99
+5,nitrogen,0,230.172
+5,oxygen,0,312.761
+5,ethylene,0,189.076
+5,hydrogen chloride,0,344.425
+5,vinyl chloride,0,63.572
+5,chlorine,0,149.16
+5,ethylene di-chloride,0,76.4765
+5,water,0,216.99
+6,nitrogen,0,230.172
+6,oxygen,0,312.761
+6,ethylene,0,189.076
+6,hydrogen chloride,0,344.425
+6,vinyl chloride,0,63.572
+6,chlorine,0,149.16
+6,ethylene di-chloride,0,76.4765
+6,water,0,216.99
+7,nitrogen,0,230.172
+7,oxygen,0,312.761
+7,ethylene,0,189.076
+7,hydrogen chloride,0,344.425
+7,vinyl chloride,0,63.572
+7,chlorine,0,149.16
+7,ethylene di-chloride,0,76.4765
+7,water,0,216.99
+8,nitrogen,0,230.172
+8,oxygen,0,312.761
+8,ethylene,0,189.076
+8,hydrogen chloride,0,344.425
+8,vinyl chloride,0,63.572
+8,chlorine,0,149.16
+8,ethylene di-chloride,0,76.4765
+8,water,0,216.99
+9,nitrogen,0,230.172
+9,oxygen,0,312.761
+9,ethylene,0,189.076
+9,hydrogen chloride,0,344.425
+9,vinyl chloride,0,63.572
+9,chlorine,0,149.16
+9,ethylene di-chloride,0,76.4765
+9,water,0,216.99
+10,nitrogen,0,230.172
+10,oxygen,0,312.761
+10,ethylene,0,189.076
+10,hydrogen chloride,0,344.425
+10,vinyl chloride,0,63.572
+10,chlorine,0,149.16
+10,ethylene di-chloride,0,76.4765
+10,water,0,216.99
+11,nitrogen,0,230.172
+11,oxygen,0,312.761
+11,ethylene,0,189.076
+11,hydrogen chloride,0,344.425
+11,vinyl chloride,0,63.572
+11,chlorine,0,149.16
+11,ethylene di-chloride,0,76.4765
+11,water,0,216.99
+12,nitrogen,0,230.172
+12,oxygen,0,312.761
+12,ethylene,0,189.076
+12,hydrogen chloride,0,344.425
+12,vinyl chloride,0,63.572
+12,chlorine,0,149.16
+12,ethylene di-chloride,0,76.4765
+12,water,0,216.99
+13,nitrogen,0,230.172
+13,oxygen,0,312.761
+13,ethylene,0,189.076
+13,hydrogen chloride,0,344.425
+13,vinyl chloride,0,63.572
+13,chlorine,0,149.16
+13,ethylene di-chloride,0,76.4765
+13,water,0,216.99
+14,nitrogen,0,230.172
+14,oxygen,0,312.761
+14,ethylene,0,189.076
+14,hydrogen chloride,0,344.425
+14,vinyl chloride,0,63.572
+14,chlorine,0,149.16
+14,ethylene di-chloride,0,76.4765
+14,water,0,216.99
+15,nitrogen,0,230.172
+15,oxygen,0,312.761
+15,ethylene,0,189.076
+15,hydrogen chloride,0,344.425
+15,vinyl chloride,0,63.572
+15,chlorine,0,149.16
+15,ethylene di-chloride,0,76.4765
+15,water,0,216.99
+16,nitrogen,0,230.172
+16,oxygen,0,312.761
+16,ethylene,0,189.076
+16,hydrogen chloride,0,344.425
+16,vinyl chloride,0,63.572
+16,chlorine,0,149.16
+16,ethylene di-chloride,0,76.4765
+16,water,0,216.99
+17,nitrogen,0,230.172
+17,oxygen,0,312.761
+17,ethylene,0,189.076
+17,hydrogen chloride,0,344.425
+17,vinyl chloride,0,63.572
+17,chlorine,0,149.16
+17,ethylene di-chloride,0,76.4765
+17,water,0,216.99
+18,nitrogen,0,230.172
+18,oxygen,0,312.761
+18,ethylene,0,189.076
+18,hydrogen chloride,0,344.425
+18,vinyl chloride,0,63.572
+18,chlorine,0,149.16
+18,ethylene di-chloride,0,76.4765
+18,water,0,216.99
+19,nitrogen,0,230.172
+19,oxygen,0,312.761
+19,ethylene,0,189.076
+19,hydrogen chloride,0,344.425
+19,vinyl chloride,0,63.572
+19,chlorine,0,149.16
+19,ethylene di-chloride,0,76.4765
+19,water,0,216.99
+20,nitrogen,0,230.172
+20,oxygen,0,312.761
+20,ethylene,0,189.076
+20,hydrogen chloride,0,344.425
+20,vinyl chloride,0,63.572
+20,chlorine,0,149.16
+20,ethylene di-chloride,0,76.4765
+20,water,0,216.99
+21,nitrogen,0,230.172
+21,oxygen,0,312.761
+21,ethylene,0,189.076
+21,hydrogen chloride,0,344.425
+21,vinyl chloride,0,63.572
+21,chlorine,0,149.16
+21,ethylene di-chloride,0,76.4765
+21,water,0,216.99
+22,nitrogen,0,230.172
+22,oxygen,0,312.761
+22,ethylene,0,189.076
+22,hydrogen chloride,0,344.425
+22,vinyl chloride,0,63.572
+22,chlorine,0,149.16
+22,ethylene di-chloride,0,76.4765
+22,water,0,216.99
+23,nitrogen,0,230.172
+23,oxygen,0,312.761
+23,ethylene,0,189.076
+23,hydrogen chloride,0,344.425
+23,vinyl chloride,0,63.572
+23,chlorine,0,149.16
+23,ethylene di-chloride,0,76.4765
+23,water,0,216.99
+24,nitrogen,37.0669,140.901
+24,oxygen,32.0965,169.587
+24,ethylene,2.23496,59.2267
+24,hydrogen chloride,1.35474,79.8655
+24,vinyl chloride,0.0683467,11.9226
+24,chlorine,0.159849,25.9338
+24,ethylene di-chloride,0.00248377,6.1717
+24,water,8.79E-05,6.08973
+25,nitrogen,37.0669,140.901
+25,oxygen,32.0965,169.587
+25,ethylene,2.23496,59.2267
+25,hydrogen chloride,1.35474,79.8655
+25,vinyl chloride,0.0683467,11.9226
+25,chlorine,0.159849,25.9338
+25,ethylene di-chloride,0.00248377,6.1717
+25,water,8.79E-05,6.08973
+26,nitrogen,37.0669,140.901
+26,oxygen,32.0965,169.587
+26,ethylene,2.23496,59.2267
+26,hydrogen chloride,1.35474,79.8655
+26,vinyl chloride,0.0683467,11.9226
+26,chlorine,0.159849,25.9338
+26,ethylene di-chloride,0.00248377,6.1717
+26,water,8.79E-05,6.08973
+27,nitrogen,0,230.172
+27,oxygen,0,312.761
+27,ethylene,0,189.076
+27,hydrogen chloride,0,344.425
+27,vinyl chloride,0,63.572
+27,chlorine,0,149.16
+27,ethylene di-chloride,0,76.4765
+27,water,0,216.99
+28,nitrogen,0,230.172
+28,oxygen,0,312.761
+28,ethylene,0,189.076
+28,hydrogen chloride,0,344.425
+28,vinyl chloride,0,63.572
+28,chlorine,0,149.16
+28,ethylene di-chloride,0,76.4765
+28,water,0,216.99
+29,nitrogen,0,230.172
+29,oxygen,0,312.761
+29,ethylene,0,189.076
+29,hydrogen chloride,0,344.425
+29,vinyl chloride,0,63.572
+29,chlorine,0,149.16
+29,ethylene di-chloride,0,76.4765
+29,water,0,216.99
+30,nitrogen,0,230.172
+30,oxygen,0,312.761
+30,ethylene,0,189.076
+30,hydrogen chloride,0,344.425
+30,vinyl chloride,0,63.572
+30,chlorine,0,149.16
+30,ethylene di-chloride,0.00248377,28.0883
+30,water,8.79E-05,52.3933
+31,nitrogen,0,230.172
+31,oxygen,0,312.761
+31,ethylene,0,189.076
+31,hydrogen chloride,0,344.425
+31,vinyl chloride,0,63.572
+31,chlorine,0,149.16
+31,ethylene di-chloride,0.00248377,28.0883
+31,water,8.79E-05,52.3933
+32,nitrogen,0,230.172
+32,oxygen,0,312.761
+32,ethylene,0,189.076
+32,hydrogen chloride,0,344.425
+32,vinyl chloride,0,63.572
+32,chlorine,0,149.16
+32,ethylene di-chloride,0,76.4765
+32,water,0,216.99
+33,nitrogen,0,230.172
+33,oxygen,0,312.761
+33,ethylene,0,189.076
+33,hydrogen chloride,0,344.425
+33,vinyl chloride,0,63.572
+33,chlorine,0,149.16
+33,ethylene di-chloride,0,76.4765
+33,water,0,216.99
+34,nitrogen,0,230.172
+34,oxygen,0,312.761
+34,ethylene,0,189.076
+34,hydrogen chloride,0,344.425
+34,vinyl chloride,0,63.572
+34,chlorine,0,149.16
+34,ethylene di-chloride,0,76.4765
+34,water,0,216.99
+35,nitrogen,0,230.172
+35,oxygen,0,312.761
+35,ethylene,0,189.076
+35,hydrogen chloride,0,344.425
+35,vinyl chloride,0,63.572
+35,chlorine,0,149.16
+35,ethylene di-chloride,0,76.4765
+35,water,0,216.99
+36,nitrogen,0,230.172
+36,oxygen,0,312.761
+36,ethylene,0,189.076
+36,hydrogen chloride,0,344.425
+36,vinyl chloride,0,63.572
+36,chlorine,0,149.16
+36,ethylene di-chloride,0,76.4765
+36,water,0,216.99
+37,nitrogen,0,230.172
+37,oxygen,0,312.761
+37,ethylene,0,189.076
+37,hydrogen chloride,0,344.425
+37,vinyl chloride,0,63.572
+37,chlorine,0,149.16
+37,ethylene di-chloride,0,76.4765
+37,water,0,216.99
+38,nitrogen,0,230.172
+38,oxygen,0,312.761
+38,ethylene,0,189.076
+38,hydrogen chloride,0,344.425
+38,vinyl chloride,0,63.572
+38,chlorine,0,149.16
+38,ethylene di-chloride,0,76.4765
+38,water,0,216.99
+39,nitrogen,0,230.172
+39,oxygen,0,312.761
+39,ethylene,0,189.076
+39,hydrogen chloride,0,344.425
+39,vinyl chloride,0,63.572
+39,chlorine,0,149.16
+39,ethylene di-chloride,0,76.4765
+39,water,0,216.99
+40,nitrogen,0,230.172
+40,oxygen,0,312.761
+40,ethylene,0,189.076
+40,hydrogen chloride,0,344.425
+40,vinyl chloride,0,63.572
+40,chlorine,0,149.16
+40,ethylene di-chloride,0,76.4765
+40,water,0,216.99
+41,nitrogen,0,230.172
+41,oxygen,0,312.761
+41,ethylene,0,189.076
+41,hydrogen chloride,0,344.425
+41,vinyl chloride,0,63.572
+41,chlorine,0,149.16
+41,ethylene di-chloride,0,76.4765
+41,water,0,216.99
+42,nitrogen,0,230.172
+42,oxygen,0,312.761
+42,ethylene,0,189.076
+42,hydrogen chloride,0,344.425
+42,vinyl chloride,0,63.572
+42,chlorine,0,149.16
+42,ethylene di-chloride,0,76.4765
+42,water,0,216.99
+43,nitrogen,0,230.172
+43,oxygen,0,312.761
+43,ethylene,0,189.076
+43,hydrogen chloride,0,344.425
+43,vinyl chloride,0,63.572
+43,chlorine,0,149.16
+43,ethylene di-chloride,0,76.4765
+43,water,0,216.99
+44,nitrogen,0,230.172
+44,oxygen,0,312.761
+44,ethylene,0,189.076
+44,hydrogen chloride,0,344.425
+44,vinyl chloride,0,63.572
+44,chlorine,0,149.16
+44,ethylene di-chloride,0,76.4765
+44,water,0,216.99
+45,nitrogen,0,230.172
+45,oxygen,0,312.761
+45,ethylene,0,189.076
+45,hydrogen chloride,0,344.425
+45,vinyl chloride,0,63.572
+45,chlorine,0,149.16
+45,ethylene di-chloride,0,76.4765
+45,water,0,216.99
+46,nitrogen,0,230.172
+46,oxygen,0,312.761
+46,ethylene,0,189.076
+46,hydrogen chloride,0,344.425
+46,vinyl chloride,0,63.572
+46,chlorine,0,149.16
+46,ethylene di-chloride,0,76.4765
+46,water,0,216.99
+47,nitrogen,0,230.172
+47,oxygen,0,312.761
+47,ethylene,0,189.076
+47,hydrogen chloride,0,344.425
+47,vinyl chloride,0,63.572
+47,chlorine,0,149.16
+47,ethylene di-chloride,0,76.4765
+47,water,0,216.99
+48,nitrogen,0,230.172
+48,oxygen,0,312.761
+48,ethylene,0,189.076
+48,hydrogen chloride,0,344.425
+48,vinyl chloride,0,63.572
+48,chlorine,0,149.16
+48,ethylene di-chloride,0,76.4765
+48,water,0,216.99
+49,nitrogen,0,230.172
+49,oxygen,0,312.761
+49,ethylene,0,189.076
+49,hydrogen chloride,0,344.425
+49,vinyl chloride,0,63.572
+49,chlorine,0,149.16
+49,ethylene di-chloride,0,76.4765
+49,water,0,216.99
+50,nitrogen,55.9756,223.055
+50,oxygen,53.6488,300.745
+50,ethylene,6.26442,175.658
+50,hydrogen chloride,4.84493,313.85
+50,vinyl chloride,0.373226,57.2961
+50,chlorine,0.81172,133.604
+50,ethylene di-chloride,0.0327978,65.4267
+50,water,0.00350983,173.908
+51,nitrogen,0,230.172
+51,oxygen,0,312.761
+51,ethylene,0,189.076
+51,hydrogen chloride,0,344.425
+51,vinyl chloride,0,63.572
+51,chlorine,0,149.16
+51,ethylene di-chloride,0,76.4765
+51,water,0,216.99
+52,nitrogen,0,230.172
+52,oxygen,0,312.761
+52,ethylene,0,189.076
+52,hydrogen chloride,0,344.425
+52,vinyl chloride,0,63.572
+52,chlorine,0,149.16
+52,ethylene di-chloride,0,76.4765
+52,water,0,216.99
+53,nitrogen,0,230.172
+53,oxygen,0,312.761
+53,ethylene,0,189.076
+53,hydrogen chloride,0,344.425
+53,vinyl chloride,0,63.572
+53,chlorine,0,149.16
+53,ethylene di-chloride,0,76.4765
+53,water,0,216.99
+54,nitrogen,0,230.172
+54,oxygen,0,312.761
+54,ethylene,0,189.076
+54,hydrogen chloride,0,344.425
+54,vinyl chloride,0,63.572
+54,chlorine,0,149.16
+54,ethylene di-chloride,0,76.4765
+54,water,0,216.99
+55,nitrogen,0,230.172
+55,oxygen,0,312.761
+55,ethylene,0,189.076
+55,hydrogen chloride,0,344.425
+55,vinyl chloride,0,63.572
+55,chlorine,0,149.16
+55,ethylene di-chloride,0,76.4765
+55,water,0,216.99
+56,nitrogen,0,230.172
+56,oxygen,0,312.761
+56,ethylene,0,189.076
+56,hydrogen chloride,0,344.425
+56,vinyl chloride,0,63.572
+56,chlorine,0,149.16
+56,ethylene di-chloride,0,76.4765
+56,water,0,216.99
+57,nitrogen,55.9756,223.055
+57,oxygen,53.6488,300.745
+57,ethylene,6.26442,175.658
+57,hydrogen chloride,4.84493,313.85
+57,vinyl chloride,0.373226,57.2961
+57,chlorine,0.81172,133.604
+57,ethylene di-chloride,0.0327978,65.4267
+57,water,0.00350983,173.908
+58,nitrogen,55.9756,223.055
+58,oxygen,53.6488,300.745
+58,ethylene,6.26442,175.658
+58,hydrogen chloride,4.84493,313.85
+58,vinyl chloride,0.373226,57.2961
+58,chlorine,0.81172,133.604
+58,ethylene di-chloride,0.0327978,65.4267
+58,water,0.00350983,173.908
+59,nitrogen,0,230.172
+59,oxygen,0,312.761
+59,ethylene,0,189.076
+59,hydrogen chloride,0,344.425
+59,vinyl chloride,0,63.572
+59,chlorine,0,149.16
+59,ethylene di-chloride,0,76.4765
+59,water,0,216.99
+60,nitrogen,0,230.172
+60,oxygen,0,312.761
+60,ethylene,0,189.076
+60,hydrogen chloride,0,344.425
+60,vinyl chloride,0,63.572
+60,chlorine,0,149.16
+60,ethylene di-chloride,0,76.4765
+60,water,0,216.99
+61,nitrogen,55.9756,223.055
+61,oxygen,53.6488,300.745
+61,ethylene,6.26442,175.658
+61,hydrogen chloride,4.84493,313.85
+61,vinyl chloride,0.373226,57.2961
+61,chlorine,0.81172,133.604
+61,ethylene di-chloride,0.0327978,65.4267
+61,water,0.00350983,173.908
+62,nitrogen,55.9756,223.055
+62,oxygen,53.6488,300.745
+62,ethylene,6.26442,175.658
+62,hydrogen chloride,4.84493,313.85
+62,vinyl chloride,0.373226,57.2961
+62,chlorine,0.81172,133.604
+62,ethylene di-chloride,0.0327978,65.4267
+62,water,0.00350983,173.908
+63,nitrogen,0,230.172
+63,oxygen,0,312.761
+63,ethylene,0,189.076
+63,hydrogen chloride,0,344.425
+63,vinyl chloride,0,63.572
+63,chlorine,0,149.16
+63,ethylene di-chloride,0,76.4765
+63,water,0,216.99
+64,nitrogen,0,230.172
+64,oxygen,0,312.761
+64,ethylene,0,189.076
+64,hydrogen chloride,0,344.425
+64,vinyl chloride,0,63.572
+64,chlorine,0,149.16
+64,ethylene di-chloride,0,76.4765
+64,water,0,216.99
+65,nitrogen,0,230.172
+65,oxygen,0,312.761
+65,ethylene,0,189.076
+65,hydrogen chloride,0,344.425
+65,vinyl chloride,0,63.572
+65,chlorine,0,149.16
+65,ethylene di-chloride,0,76.4765
+65,water,0,216.99
+66,nitrogen,0,230.172
+66,oxygen,0,312.761
+66,ethylene,0,189.076
+66,hydrogen chloride,0,344.425
+66,vinyl chloride,0,63.572
+66,chlorine,0,149.16
+66,ethylene di-chloride,0,76.4765
+66,water,0,216.99
+67,nitrogen,0,230.172
+67,oxygen,0,312.761
+67,ethylene,0,189.076
+67,hydrogen chloride,0,344.425
+67,vinyl chloride,0,63.572
+67,chlorine,0,149.16
+67,ethylene di-chloride,0,76.4765
+67,water,0,216.99
+68,nitrogen,0,230.172
+68,oxygen,0,312.761
+68,ethylene,0,189.076
+68,hydrogen chloride,0,344.425
+68,vinyl chloride,0,63.572
+68,chlorine,0,149.16
+68,ethylene di-chloride,0,76.4765
+68,water,0,216.99
+69,nitrogen,0,230.172
+69,oxygen,0,312.761
+69,ethylene,0,189.076
+69,hydrogen chloride,0,344.425
+69,vinyl chloride,0,63.572
+69,chlorine,0,149.16
+69,ethylene di-chloride,0,76.4765
+69,water,0,216.99
+70,nitrogen,0,230.172
+70,oxygen,0,312.761
+70,ethylene,0,189.076
+70,hydrogen chloride,0,344.425
+70,vinyl chloride,0,63.572
+70,chlorine,0,149.16
+70,ethylene di-chloride,0,76.4765
+70,water,0,216.99
+71,nitrogen,0,230.172
+71,oxygen,0,312.761
+71,ethylene,0,189.076
+71,hydrogen chloride,0,344.425
+71,vinyl chloride,0,63.572
+71,chlorine,0,149.16
+71,ethylene di-chloride,0,76.4765
+71,water,0,216.99
