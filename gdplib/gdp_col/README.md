@@ -16,7 +16,7 @@ Best known objective value: 19,430
 
 | Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
 |-----------|------|------|-----|-----|------|------|----|------|--------|
-| syngas | 433 | 28 | 0 | 0 | 405 | 603 | 255 | 28 | 15 |
+| gdp_col | 433 | 28 | 0 | 0 | 405 | 603 | 255 | 28 | 15 |
 
 - ``vars``: variables
 - ``Bool``: Boolean variables
