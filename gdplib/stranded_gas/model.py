@@ -9,7 +9,7 @@ from pyomo.environ import (
     RangeSet, Set, SolverFactory, Suffix, TransformationFactory, Var, exp, log,
     sqrt, summation, value
 )
-from .util import alphanum_sorted
+from gdplib.stranded_gas.util import alphanum_sorted
 from pyomo.environ import TerminationCondition as tc
 
 

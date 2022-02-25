@@ -76,6 +76,7 @@ def main():
 
 
     results = SolverFactory('gdpopt').solve(m,
+                                            strategy='LOA',
                                             tee=True,
                                             time_limit = 3600, 
                                             mip_solver='gams',

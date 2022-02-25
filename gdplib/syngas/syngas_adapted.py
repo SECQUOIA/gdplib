@@ -765,7 +765,7 @@ if __name__ == "__main__":
     #     # solver="cplex", add_options=['GAMS_MODEL.optfile=1;', '$onecho > cplex.opt', 'iis=1', '$offecho'],
     # )
     result = SolverFactory('gdpopt').solve(
-        m, tee=True, mip_solver='gams',
+        m, strategy='LOA', tee=True, mip_solver='gams',
         nlp_solver='gams', nlp_solver_args=dict(solver='scip', add_options=['option optcr=0;']),
         minlp_solver='gams', minlp_solver_args=dict(solver='baron', add_options=['option optcr=0;'])
     )
