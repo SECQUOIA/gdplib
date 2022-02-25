@@ -80,7 +80,8 @@ def build_model():
         ]
 
     for k, i in m.compounds * m.wave_number:
-        m.Y[k, i].set_binary_var(m.d[k, i].disjuncts[0].indicator_var)
+        m.Y[k, i].associate_binary_var(
+            m.d[k, i].disjuncts[0].binary_indicator_var)
 
     @m.Constraint(m.spectra_data)
     def eq1(m, j):
