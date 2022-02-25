@@ -29,7 +29,7 @@ from __future__ import division
 
 from pyomo.environ import (exp, log10, minimize, NonNegativeReals, Objective, RangeSet, SolverFactory, value, Var)
 
-from kaibel_prop import get_model_with_properties
+from gdplib.kaibel.kaibel_prop import get_model_with_properties
 
 
 def initialize_kaibel():

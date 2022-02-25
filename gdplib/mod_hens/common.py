@@ -289,7 +289,7 @@ def build_model(use_cafaro_approximation, num_stages):
             ) ** (1 / 3))
 
     def _exchanger_exists(disj, hot, cold, stg):
-        disj.indicator_var.value = 1
+        disj.indicator_var.value = True
 
         # Log mean temperature difference calculation
         disj.LMTD_calc = Constraint(
@@ -336,7 +336,7 @@ def build_model(use_cafaro_approximation, num_stages):
                 - m.stage_entry_T[cold, stg])
 
     def _exchanger_absent(disj, hot, cold, stg):
-        disj.indicator_var.value = 0
+        disj.indicator_var.value = False
         disj.no_match_exchanger_cost = Constraint(
             expr=m.exchanger_area_cost[stg, hot, cold] == 0)
         disj.no_match_exchanger_area = Constraint(
@@ -368,15 +368,15 @@ def build_model(use_cafaro_approximation, num_stages):
     for hot, cold in m.valid_matches:
         if hot not in m.utility_streams:
             m.exchanger_exists[hot, cold, 1].deactivate()
-            m.exchanger_absent[hot, cold, 1].indicator_var.fix(1)
+            m.exchanger_absent[hot, cold, 1].indicator_var.fix(True)
         if cold not in m.utility_streams:
             m.exchanger_exists[hot, cold, num_stages].deactivate()
-            m.exchanger_absent[hot, cold, num_stages].indicator_var.fix(1)
+            m.exchanger_absent[hot, cold, num_stages].indicator_var.fix(True)
     # Exclude utility-stream matches in middle stages
     for hot, cold, stg in m.valid_matches * (m.stages - [1, num_stages]):
         if hot in m.utility_streams or cold in m.utility_streams:
             m.exchanger_exists[hot, cold, stg].deactivate()
-            m.exchanger_absent[hot, cold, stg].indicator_var.fix(1)
+            m.exchanger_absent[hot, cold, stg].indicator_var.fix(True)
 
     @m.Expression(m.utility_streams)
     def utility_cost(m, strm):

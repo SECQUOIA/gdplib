@@ -190,7 +190,7 @@ def build_model():
     @m.Expression(doc="million $")
     def raw_material_fixed_transport_cost(m):
         return (
-            sum(m.supply_route_active[sup, site].indicator_var
+            sum(m.supply_route_active[sup, site].binary_indicator_var
                 for sup in m.suppliers for site in m.potential_sites)
             * m.transport_fixed_cost / 1000)
 
@@ -205,7 +205,7 @@ def build_model():
     @m.Expression(doc="million $")
     def product_fixed_transport_cost(m):
         return (
-            sum(m.product_route_active[site, mkt].indicator_var
+            sum(m.product_route_active[site, mkt].binary_indicator_var
                 for site in m.potential_sites for mkt in m.markets)
             * m.transport_fixed_cost / 1000)
 
@@ -398,7 +398,7 @@ if __name__ == "__main__":
                      (m.market_x[mkt] + 2, m.market_y[mkt] + 2),
                      fontsize='x-small')
     for site in m.potential_sites:
-        if m.site_inactive[site].indicator_var.value == 0:
+        if m.site_inactive[site].binary_indicator_var.value == 0:
             plt.annotate(
                 'p%s' % site, (m.site_x[site], m.site_y[site]),
                 (m.site_x[site] + 2, m.site_y[site] + 2),
@@ -414,13 +414,13 @@ if __name__ == "__main__":
             (m.supplier_x[sup] + 2, m.supplier_y[sup] + 2),
             fontsize='x-small')
     for sup, site in m.suppliers * m.potential_sites:
-        if fabs(m.supply_route_active[sup, site].indicator_var.value - 1) <= 1E-3:
+        if fabs(m.supply_route_active[sup, site].binary_indicator_var.value - 1) <= 1E-3:
             plt.arrow(m.supplier_x[sup], m.supplier_y[sup],
                       m.site_x[site] - m.supplier_x[sup],
                       m.site_y[site] - m.supplier_y[sup],
                       width=0.8, length_includes_head=True, color='b')
     for site, mkt in m.potential_sites * m.markets:
-        if fabs(m.product_route_active[site, mkt].indicator_var.value - 1) <= 1E-3:
+        if fabs(m.product_route_active[site, mkt].binary_indicator_var.value - 1) <= 1E-3:
             plt.arrow(m.site_x[site], m.site_y[site],
                       m.market_x[mkt] - m.site_x[site],
                       m.market_y[mkt] - m.site_y[site],

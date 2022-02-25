@@ -220,17 +220,17 @@ def build_modular_model():
     @m.Constraint(m.modular_sites, doc="Symmetry breaking for site activation")
     def site_active_ordering(m, site):
         if site + 1 <= max(m.modular_sites):
-            return (m.site_active[site].indicator_var >=
-                    m.site_active[site + 1].indicator_var)
+            return (m.site_active[site].binary_indicator_var >=
+                    m.site_active[site + 1].binary_indicator_var)
         else:
             return Constraint.NoConstraint
 
     @m.Disjunct(m.unique_site_pairs)
     def pair_active(disj, site1, site2):
         disj.site1_active = Constraint(
-            expr=m.site_active[site1].indicator_var == 1)
+            expr=m.site_active[site1].binary_indicator_var == 1)
         disj.site2_active = Constraint(
-            expr=m.site_active[site2].indicator_var == 1)
+            expr=m.site_active[site2].binary_indicator_var == 1)
         disj.site_distance_calc = Constraint(
             expr=m.dist_to_site[site1, site2] == sqrt(
                 m.sqr_scaled_dist_to_site[site1, site2]) * 150)
@@ -247,9 +247,9 @@ def build_modular_model():
     @m.Disjunct(m.unique_site_pairs)
     def pair_inactive(disj, site1, site2):
         disj.site1_inactive = Constraint(
-            expr=m.site_active[site1].indicator_var == 0)
+            expr=m.site_active[site1].binary_indicator_var == 0)
         disj.site2_inactive = Constraint(
-            expr=m.site_active[site2].indicator_var == 0)
+            expr=m.site_active[site2].binary_indicator_var == 0)
 
         disj.no_module_transfer = Constraint(
             expr=sum(m.modules_transferred[site1, site2, qtr]
@@ -267,7 +267,7 @@ def build_modular_model():
     @m.Disjunct(m.modular_sites, m.markets)
     def product_route_active(disj, site, mkt):
         disj.site_active = Constraint(
-            expr=m.site_active[site].indicator_var == 1)
+            expr=m.site_active[site].binary_indicator_var == 1)
 
         @disj.Constraint()
         def market_distance_calculation(site_disj):
@@ -299,7 +299,7 @@ def build_modular_model():
             for qtr in m.quarters))
 
     m.fixed_shipment_cost = Expression(
-        expr=sum(m.product_route_active[site, mkt].indicator_var *
+        expr=sum(m.product_route_active[site, mkt].binary_indicator_var *
                  m.route_fixed_cost
                  for site in m.modular_sites for mkt in m.markets))
 
@@ -392,7 +392,8 @@ if __name__ == "__main__":
             site, m.site_x[site].value, m.site_y[site].value))
         print("  Supplies markets {}".format(tuple(
             mkt for mkt in m.markets
-            if m.product_route_active[site, mkt].indicator_var.value == 1)))
+            if m.product_route_active[site, 
+                                      mkt].binary_indicator_var.value == 1)))
 
     if res.solver.termination_condition is not TerminationCondition.optimal:
         exit()
@@ -409,7 +410,7 @@ if __name__ == "__main__":
             'site%s' % site, (m.site_x[site].value, m.site_y[site].value),
             (m.site_x[site].value + 2, m.site_y[site].value + 0))
     for site, mkt in m.modular_sites * m.markets:
-        if m.product_route_active[site, mkt].indicator_var.value == 1:
+        if m.product_route_active[site, mkt].binary_indicator_var.value == 1:
             plt.arrow(m.site_x[site].value, m.site_y[site].value,
                       m.mkt_x[mkt] - m.site_x[site].value,
                       m.mkt_y[mkt] - m.site_y[site].value,

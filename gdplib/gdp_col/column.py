@@ -39,7 +39,7 @@ def build_column(min_trays, max_trays, xD, xB):
     def tray_no_tray(b, t):
         return [b.tray[t], b.no_tray[t]]
     m.minimum_num_trays = Constraint(
-        expr=sum(m.tray[t].indicator_var
+        expr=sum(m.tray[t].binary_indicator_var
                  for t in m.conditional_trays) + 1  # for feed tray
         >= min_trays)
 
@@ -201,10 +201,9 @@ def build_column(min_trays, max_trays, xD, xB):
         return m.B['toluene'] >= m.bottoms_purity * m.bot
 
     # m.obj = Objective(expr=(m.Qc + m.Qb) * 1E-3, sense=minimize)
-    m.obj = Objective(
-        expr=(m.Qc + m.Qb) * 1E3 + 1E3 * (
-            sum(m.tray[t].indicator_var for t in m.conditional_trays) + 1),
-        sense=minimize)
+    m.obj = Objective( expr=(m.Qc + m.Qb) * 1E3 + 1E3 * (
+        sum(m.tray[t].binary_indicator_var for t in m.conditional_trays) + 1),
+                       sense=minimize)
     # m.obj = Objective(
     #     expr=sum(m.tray[t].indicator_var for t in m.conditional_trays) + 1)
 
@@ -220,9 +219,11 @@ def build_column(min_trays, max_trays, xD, xB):
     def tray_ordering(m, t):
         """Trays close to the feed should be activated first."""
         if t + 1 < m.condens_tray and t > m.feed_tray:
-            return m.tray[t].indicator_var >= m.tray[t + 1].indicator_var
+            return m.tray[t].binary_indicator_var >= \
+                m.tray[t + 1].binary_indicator_var
         elif t > m.reboil_tray and t + 1 < m.feed_tray:
-            return m.tray[t + 1].indicator_var >= m.tray[t].indicator_var
+            return m.tray[t + 1].binary_indicator_var >= \
+                m.tray[t].binary_indicator_var
         else:
             return Constraint.NoConstraint
 

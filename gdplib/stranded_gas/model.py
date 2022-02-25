@@ -9,7 +9,7 @@ from pyomo.environ import (
     RangeSet, Set, SolverFactory, Suffix, TransformationFactory, Var, exp, log,
     sqrt, summation, value
 )
-from .util import alphanum_sorted
+from gdplib.stranded_gas.util import alphanum_sorted
 from pyomo.environ import TerminationCondition as tc
 
 
@@ -343,7 +343,7 @@ def build_model():
     @m.Expression(m.well_clusters, m.potential_sites, doc="MM$")
     def pipeline_construction_cost(m, well, site):
         return (m.pipeline_unit_cost * m.distance[well, site]
-                * m.pipeline_exists[well, site].indicator_var)
+                * m.pipeline_exists[well, site].binary_indicator_var)
 
     # Module transport cost
     @m.Expression(m.site_pairs, doc="MM$")
@@ -408,4 +408,4 @@ if __name__ == "__main__":
         m.modules_transferred[mtype, :, :, :].fix(0)
         m.modules_purchased[mtype, :, :].fix(0)
         m.mtype_exists[mtype].deactivate()
-        m.mtype_absent[mtype].indicator_var.fix(1)
+        m.mtype_absent[mtype].binary_indicator_var.fix(1)

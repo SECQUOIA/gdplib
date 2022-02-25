@@ -193,7 +193,7 @@ def build_model():
             []
         ]
     for i in m.consumers:
-        m.Y[i].set_binary_var(m.d[i].disjuncts[0].indicator_var)
+        m.Y[i].associate_binary_var(m.d[i].disjuncts[0].binary_indicator_var)
     for k in m.locations:
         lb, ub = location_bounds[k]
         m.x[k].setlb(lb)
@@ -206,7 +206,7 @@ def build_model():
     m.c5 = Constraint(expr=0.25 * m.x[2] + 1.05 * m.x[4] - 0.3 * m.x[5] >= 4.5)
 
     m.obj = Objective(
-        expr=10 * m.U - sum(m.fixed_profit[i] * m.Y[i].as_binary() for i in m.consumers) + 0.6 * m.x[1] ** 2 - 0.9 * m.x[
+        expr=10 * m.U - sum(m.fixed_profit[i] * m.Y[i].get_associated_binary() for i in m.consumers) + 0.6 * m.x[1] ** 2 - 0.9 * m.x[
             2] - 0.5 * m.x[3] + 0.1 * m.x[4] ** 2 + m.x[5])
 
     return m

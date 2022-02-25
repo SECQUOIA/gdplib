@@ -24,7 +24,7 @@ def build_require_modular(cafaro_approx, num_stages):
     # Require modular
     for hot, cold, stg in m.valid_matches * m.stages:
         disj = m.exchanger_exists[hot, cold, stg]
-        disj.modular.indicator_var.fix(1)
+        disj.modular.indicator_var.fix(True)
         disj.conventional.deactivate()
 
     for hot, cold in m.valid_matches:

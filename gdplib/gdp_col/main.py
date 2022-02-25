@@ -35,7 +35,7 @@ def main():
     m.BigM[None] = 100
 
     SolverFactory('gdpopt').solve(
-        m, tee=True, init_strategy='fix_disjuncts',
+        m, tee=True, strategy='LOA', init_strategy='fix_disjuncts',
         mip_solver='glpk')
     log_infeasible_constraints(m, tol=1E-3)
     display_column(m)

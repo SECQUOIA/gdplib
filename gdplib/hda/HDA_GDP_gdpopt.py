@@ -1799,13 +1799,13 @@ def HDA_model():
     m.diphenyl_product = Param(initialize = 11.84,doc= "diphenyl product profit(diphenyl = 100%)")
 
     def profits_from_paper(m):
-        return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.meathane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coeffcient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coeffcient  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.indicator_var + m.recycle_hydrogen.indicator_var + m.absorber_hydrogen.indicator_var) - m.compressor_fixed_cost * m.recycle_methane_membrane.indicator_var - sum((m.electricity_cost * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.indicator_var + m.adiabtic_reactor_linear_coeffcient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.indicator_var + m.isothermal_reactor_linear_coeffcient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.indicator_var +m.stabilizing_column_linear_coeffcient * m.ndist[1]) - (m.benzene_column_fixed_cost+ m.benzene_column_linear_coeffcient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.indicator_var + m.toluene_column_linear_coeffcient * m.ndist[3]) - (m.membrane_seperator_fixed_cost * m.purify_H2.indicator_var + m.membrane_seperator_linear_coeffcient * m.f[3]) - (m.membrane_seperator_fixed_cost * m.recycle_methane_membrane.indicator_var + m.membrane_seperator_linear_coeffcient * m.f[54]) - (m.abs_fixed_cost * m.absorber_hydrogen.indicator_var + m.abs_linear_coeffcient * m.nabs[1]) - ( m.fuel_cost * m.qfuel[1] + m.furnace_linear_coeffcient* m.qfuel[1] ) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost  
+        return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.meathane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coeffcient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coeffcient  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.binary_indicator_var + m.recycle_hydrogen.binary_indicator_var + m.absorber_hydrogen.binary_indicator_var) - m.compressor_fixed_cost * m.recycle_methane_membrane.binary_indicator_var - sum((m.electricity_cost * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var + m.adiabtic_reactor_linear_coeffcient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.binary_indicator_var + m.isothermal_reactor_linear_coeffcient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.binary_indicator_var +m.stabilizing_column_linear_coeffcient * m.ndist[1]) - (m.benzene_column_fixed_cost+ m.benzene_column_linear_coeffcient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.binary_indicator_var + m.toluene_column_linear_coeffcient * m.ndist[3]) - (m.membrane_seperator_fixed_cost * m.purify_H2.binary_indicator_var + m.membrane_seperator_linear_coeffcient * m.f[3]) - (m.membrane_seperator_fixed_cost * m.recycle_methane_membrane.binary_indicator_var + m.membrane_seperator_linear_coeffcient * m.f[54]) - (m.abs_fixed_cost * m.absorber_hydrogen.binary_indicator_var + m.abs_linear_coeffcient * m.nabs[1]) - ( m.fuel_cost * m.qfuel[1] + m.furnace_linear_coeffcient* m.qfuel[1] ) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost  
     m.obj = Objective(rule = profits_from_paper, sense=maximize)
     # def profits_GAMS_file(m):
 
     #     "there are several differences between the data from GAMS file and the paper: 1. all the compressor share the same fixed and linear cost in paper but in GAMS they have different fixed and linear cost in GAMS file. 2. the fixed cost for absorber in GAMS file is 3.0 but in the paper is 13.0, but they are getting the same results 3. the electricity cost is not the same"
 
-    #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.meathane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coeffcient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coeffcient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.indicator_var + m.recycle_hydrogen.indicator_var + m.absorber_hydrogen.indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.indicator_var + m.adiabtic_reactor_linear_coeffcient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.indicator_var + m.isothermal_reactor_linear_coeffcient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.indicator_var +m.stabilizing_column_linear_coeffcient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coeffcient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.indicator_var + m.toluene_column_linear_coeffcient * m.ndist[3]) - (m.membrane_seperator_fixed_cost * m.purify_H2.indicator_var + m.membrane_seperator_linear_coeffcient * m.f[3]) - (m.membrane_seperator_fixed_cost * m.recycle_methane_membrane.indicator_var + m.membrane_seperator_linear_coeffcient * m.f[54]) - (3.0 * m.absorber_hydrogen.indicator_var + m.abs_linear_coeffcient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coeffcient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
+    #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.meathane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coeffcient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coeffcient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.binary_indicator_var + m.recycle_hydrogen.binary_indicator_var + m.absorber_hydrogen.binary_indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.binary_indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var + m.adiabtic_reactor_linear_coeffcient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.binary_indicator_var + m.isothermal_reactor_linear_coeffcient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.binary_indicator_var +m.stabilizing_column_linear_coeffcient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coeffcient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.binary_indicator_var + m.toluene_column_linear_coeffcient * m.ndist[3]) - (m.membrane_seperator_fixed_cost * m.purify_H2.binary_indicator_var + m.membrane_seperator_linear_coeffcient * m.f[3]) - (m.membrane_seperator_fixed_cost * m.recycle_methane_membrane.binary_indicator_var + m.membrane_seperator_linear_coeffcient * m.f[54]) - (3.0 * m.absorber_hydrogen.binary_indicator_var + m.abs_linear_coeffcient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coeffcient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
     # m.obj = Objective(rule=profits_GAMS_file, sense=maximize)
 
     return m
@@ -1886,41 +1886,41 @@ def enumerate_solutions(m):
                     for Methane_product_selection in Methane_product_selections:
                         for Toluene_product_selection in Toluene_product_selections:
                             if H2_treatment == 'purify':
-                                m.purify_H2.indicator_var.fix(1)
-                                m.no_purify_H2.indicator_var.fix(0)
+                                m.purify_H2.indicator_var.fix(True)
+                                m.no_purify_H2.indicator_var.fix(False)
                             else:
-                                m.purify_H2.indicator_var.fix(0)
-                                m.no_purify_H2.indicator_var.fix(1)
+                                m.purify_H2.indicator_var.fix(False)
+                                m.no_purify_H2.indicator_var.fix(True)
                             if Reactor_selection == 'adiabatic_reactor':
-                                m.adiabatic_reactor.indicator_var.fix(1)
-                                m.isothermal_reactor.indicator_var.fix(0)
+                                m.adiabatic_reactor.indicator_var.fix(True)
+                                m.isothermal_reactor.indicator_var.fix(False)
                             else:
-                                m.adiabatic_reactor.indicator_var.fix(0)
-                                m.isothermal_reactor.indicator_var.fix(1)
+                                m.adiabatic_reactor.indicator_var.fix(False)
+                                m.isothermal_reactor.indicator_var.fix(True)
                             if Methane_recycle_selection == 'recycle_membrane':
-                                m.recycle_methane_purge.indicator_var.fix(0)
-                                m.recycle_methane_membrane.indicator_var.fix(1)
+                                m.recycle_methane_purge.indicator_var.fix(False)
+                                m.recycle_methane_membrane.indicator_var.fix(True)
                             else:
-                                m.recycle_methane_purge.indicator_var.fix(1)
-                                m.recycle_methane_membrane.indicator_var.fix(0)
+                                m.recycle_methane_purge.indicator_var.fix(True)
+                                m.recycle_methane_membrane.indicator_var.fix(False)
                             if Absorber_recycle_selection == 'yes_absorber':
-                                m.absorber_hydrogen.indicator_var.fix(1)
-                                m.recycle_hydrogen.indicator_var.fix(0)
+                                m.absorber_hydrogen.indicator_var.fix(True)
+                                m.recycle_hydrogen.indicator_var.fix(False)
                             else:
-                                m.absorber_hydrogen.indicator_var.fix(0)
-                                m.recycle_hydrogen.indicator_var.fix(1)
+                                m.absorber_hydrogen.indicator_var.fix(False)
+                                m.recycle_hydrogen.indicator_var.fix(True)
                             if Methane_product_selection == 'methane_column':
-                                m.methane_flash_separation.indicator_var.fix(0)
-                                m.methane_distillation_column.indicator_var.fix(1)
+                                m.methane_flash_separation.indicator_var.fix(False)
+                                m.methane_distillation_column.indicator_var.fix(True)
                             else:
-                                m.methane_flash_separation.indicator_var.fix(1)
-                                m.methane_distillation_column.indicator_var.fix(0)
+                                m.methane_flash_separation.indicator_var.fix(True)
+                                m.methane_distillation_column.indicator_var.fix(False)
                             if Toluene_product_selection == 'toluene_column':
-                                m.toluene_flash_separation.indicator_var.fix(0)
-                                m.toluene_distillation_column.indicator_var.fix(1)
+                                m.toluene_flash_separation.indicator_var.fix(False)
+                                m.toluene_distillation_column.indicator_var.fix(True)
                             else:
-                                m.toluene_flash_separation.indicator_var.fix(1)
-                                m.toluene_distillation_column.indicator_var.fix(0)
+                                m.toluene_flash_separation.indicator_var.fix(True)
+                                m.toluene_distillation_column.indicator_var.fix(False)
                             opt = SolverFactory('gdpopt')
                             res = opt.solve(m,tee =False,
                                             strategy = 'LOA',
@@ -1941,27 +1941,27 @@ def show_decision(m):
     '''
     print indicator variable value
     '''
-    if value(m.purify_H2.indicator_var) == 1:
+    if value(m.purify_H2.binary_indicator_var) == 1:
         print("purify inlet H2")
     else:
         print("no purify inlet H2")
-    if value(m.adiabatic_reactor.indicator_var) == 1:
+    if value(m.adiabatic_reactor.binary_indicator_var) == 1:
         print("adiabatic reactor")
     else:
         print("isothermal reactor")
-    if value(m.recycle_methane_membrane.indicator_var) == 1:
+    if value(m.recycle_methane_membrane.binary_indicator_var) == 1:
         print("recycle_membrane")
     else:
         print("methane purge")
-    if value(m.absorber_hydrogen.indicator_var) == 1:
+    if value(m.absorber_hydrogen.binary_indicator_var) == 1:
         print("yes_absorber")
     else:
         print("no_absorber")
-    if value(m.methane_distillation_column.indicator_var) == 1:
+    if value(m.methane_distillation_column.binary_indicator_var) == 1:
         print("methane_column")
     else:
         print("methane_flash")
-    if value(m.toluene_distillation_column.indicator_var) == 1:
+    if value(m.toluene_distillation_column.binary_indicator_var) == 1:
         print("toluene_column")
     else:
         print("toluene_flash")
