@@ -8,9 +8,9 @@ from math import copysign
 from pyomo.environ import (Constraint, exp, minimize, NonNegativeReals, Objective, RangeSet, Set, Var)
 from pyomo.gdp import Disjunct
 
-from kaibel_init import initialize_kaibel
+from gdplib.kaibel.kaibel_init import initialize_kaibel
 
-from kaibel_side_flash import calc_side_feed_flash
+from gdplib.kaibel.kaibel_side_flash import calc_side_feed_flash
 
 
 def build_model():
@@ -453,17 +453,17 @@ def build_model():
 
     @m.Constraint(m.section_main)
     def minimum_trays_main(m, sec):
-        return sum(m.tray_exists[sec, n_tray].indicator_var
+        return sum(m.tray_exists[sec, n_tray].binary_indicator_var
                    for n_tray in m.candidate_trays_main) + 1  >= m.min_num_trays
 
     @m.Constraint()
     def minimum_trays_feed(m):
-        return sum(m.tray_exists[2, n_tray].indicator_var
+        return sum(m.tray_exists[2, n_tray].binary_indicator_var
                    for n_tray in m.candidate_trays_feed) + 1  >= m.min_num_trays
 
     @m.Constraint()
     def minimum_trays_product(m):
-        return sum(m.tray_exists[3, n_tray].indicator_var
+        return sum(m.tray_exists[3, n_tray].binary_indicator_var
                    for n_tray in m.candidate_trays_product) + 1  >= m.min_num_trays
 
     
@@ -593,12 +593,12 @@ def build_model():
     m.obj = Objective(
         expr= (m.Qcon + m.Qreb) * m.Hscale + 1e3 * (
             sum(
-                sum(m.tray_exists[sec, n_tray].indicator_var
+                sum(m.tray_exists[sec, n_tray].binary_indicator_var
                      for n_tray in m.candidate_trays_main)
                 for sec in m.section_main)
-            + sum(m.tray_exists[2, n_tray].indicator_var
+            + sum(m.tray_exists[2, n_tray].binary_indicator_var
                     for n_tray in m.candidate_trays_feed)
-            + sum(m.tray_exists[3, n_tray].indicator_var
+            + sum(m.tray_exists[3, n_tray].binary_indicator_var
                     for n_tray in m.candidate_trays_product)
             + 1),
         sense=minimize)
@@ -610,7 +610,7 @@ def build_model():
     @m.Constraint(m.section_main, m.candidate_trays_main)
     def _logic_proposition_main(m, sec, n_tray):
         if n_tray > m.reb_tray and (n_tray + 1) < m.num_trays:
-            return m.tray_exists[sec, n_tray].indicator_var <= m.tray_exists[sec, n_tray + 1].indicator_var
+            return m.tray_exists[sec, n_tray].binary_indicator_var <= m.tray_exists[sec, n_tray + 1].binary_indicator_var
         else:
             return Constraint.NoConstraint
 
@@ -618,9 +618,9 @@ def build_model():
     @m.Constraint(m.candidate_trays_feed)
     def _logic_proposition_feed(m, n_tray):
         if n_tray > m.reb_tray and (n_tray + 1) < m.feed_tray:
-            return m.tray_exists[2, n_tray].indicator_var <= m.tray_exists[2, n_tray + 1].indicator_var
+            return m.tray_exists[2, n_tray].binary_indicator_var <= m.tray_exists[2, n_tray + 1].binary_indicator_var
         elif n_tray > m.feed_tray and (n_tray + 1) < m.con_tray:
-            return m.tray_exists[2, n_tray + 1].indicator_var <= m.tray_exists[2, n_tray].indicator_var
+            return m.tray_exists[2, n_tray + 1].binary_indicator_var <= m.tray_exists[2, n_tray].binary_indicator_var
         else:
             return Constraint.NoConstraint
 
@@ -628,21 +628,21 @@ def build_model():
     @m.Constraint(m.candidate_trays_product)
     def _logic_proposition_section3(m, n_tray):
         if n_tray > 1 and (n_tray + 1) < m.num_trays:
-            return m.tray_exists[3, n_tray].indicator_var <= m.tray_exists[3, n_tray + 1].indicator_var
+            return m.tray_exists[3, n_tray].binary_indicator_var <= m.tray_exists[3, n_tray + 1].binary_indicator_var
         else:
             return Constraint.NoConstraint
 
     
     @m.Constraint(m.tray)
     def equality_feed_product_side(m, n_tray):
-            return m.tray_exists[2, n_tray].indicator_var == m.tray_exists[3, n_tray].indicator_var
+            return m.tray_exists[2, n_tray].binary_indicator_var == m.tray_exists[3, n_tray].binary_indicator_var
 
 
     @m.Constraint()
     def _existent_minimum_numbertrays(m):
         return sum(
-            sum(m.tray_exists[sec, n_tray].indicator_var
-                for n_tray in m.tray) for sec in m.section) - sum(m.tray_exists[3, n_tray].indicator_var for n_tray in m.tray)  >= int(m.min_tray)
+            sum(m.tray_exists[sec, n_tray].binary_indicator_var
+                for n_tray in m.tray) for sec in m.section) - sum(m.tray_exists[3, n_tray].binary_indicator_var for n_tray in m.tray)  >= int(m.min_tray)
 
 
     return m
@@ -650,7 +650,7 @@ def build_model():
 
 
 def enforce_tray_exists(m, sec, n_tray):
-    m.tray_exists[sec, n_tray].indicator_var.fix(1)
+    m.tray_exists[sec, n_tray].indicator_var.fix(True)
     m.tray_absent[sec, n_tray].deactivate()
 
 

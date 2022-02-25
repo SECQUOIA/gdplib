@@ -47,13 +47,9 @@ def calc_side_feed_flash(m):
     
     @msf.Constraint(doc="Vapor fraction")
     def _algq(msf):
-        val = sum(m.xfi[nc] * (1 - msf.Keqf[nc]) / \
+        return sum(m.xfi[nc] * (1 - msf.Keqf[nc]) / \
                   (1 + msf.q * (msf.Keqf[nc] - 1))
-                  for nc in msf.nc)
-        if val == 0:
-            return Constraint.Skip 
-        else:
-            return val == 0
+                  for nc in msf.nc) == 0
 
         
     @msf.Constraint(msf.nc,
