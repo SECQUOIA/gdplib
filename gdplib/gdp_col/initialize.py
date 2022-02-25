@@ -4,15 +4,23 @@ from __future__ import division
 import pandas
 from math import fabs, floor
 from pyomo.environ import value, exp
+import os
+
+gdp_col_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-def initialize(m):
+def initialize(m, excel_file=None):
     m.reflux_frac.set_value(value(
         m.reflux_ratio / (1 + m.reflux_ratio)))
     m.boilup_frac.set_value(value(
         m.reboil_ratio / (1 + m.reboil_ratio)))
+    
+    if excel_file is None:
+        excel_file = 'init.xlsx'
 
-    _excel_sheets = pandas.read_excel('init.xlsx', sheet_name=None)
+    print(gdp_col_dir)
+    _excel_sheets = pandas.read_excel("%s/init.xlsx" % gdp_col_dir,
+                                      sheet_name=None)
 
     def set_value_if_not_fixed(var, val):
         """Set variable to the value if it is not fixed."""
@@ -22,7 +30,7 @@ def initialize(m):
     active_trays = [
         t for t in m.trays
         if t not in m.conditional_trays or
-        fabs(value(m.tray[t].indicator_var - 1)) <= 1E-3]
+        fabs(value(m.tray[t].binary_indicator_var - 1)) <= 1E-3]
     num_active_trays = len(active_trays)
 
     feed_tray = m.feed_tray

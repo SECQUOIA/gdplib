@@ -6,6 +6,9 @@ from pyomo.core.expr.logical_expr import *
 from pyomo.core.plugins.transform.logical_to_linear import update_boolean_vars_from_binary
 from pyomo.environ import *
 from pyomo.environ import TerminationCondition as tc
+import os
+
+syngas_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def build_model():
@@ -92,7 +95,7 @@ def build_model():
         ('TR', 'O2'): 0.47,
     }
 
-    data_dict = pd.read_csv('syngas_conversion_data.txt', delimiter=r'\s+').fillna(0).stack().to_dict()
+    data_dict = pd.read_csv('%s/syngas_conversion_data.txt' % syngas_dir, delimiter=r'\s+').fillna(0).stack().to_dict()
     m.syngas_conversion_factor = Param(m.species, m.syngas_techs, initialize=data_dict)
     m.co2_ratio = Param(doc="CO2-CO ratio of total carbon in final syngas", initialize=0.05)
 
@@ -137,7 +140,7 @@ def build_model():
             'WGS': 1.52, 'flash': 1.82, 'PSA': 1, 'absorber2': 1.82, 'bypass3': 0},
         default=0
     )
-    data_dict = pd.read_csv('syngas_pressure_factor_data.txt', delimiter=r'\s+').stack().to_dict()
+    data_dict = pd.read_csv('%s/syngas_pressure_factor_data.txt' % syngas_dir, delimiter=r'\s+').stack().to_dict()
     m.syngas_pressure_factor = Param(m.syngas_tech_units, m.syngas_techs, initialize=data_dict)
 
     m.utility_cost = Param(
@@ -164,12 +167,12 @@ def build_model():
     m.CEPCI2001 = Param(initialize=397, doc="equipment cost index 2001")
     m.cost_index_ratio = Param(initialize=m.CEPCI2015 / m.CEPCI2001, doc="cost index ratio")
 
-    data_dict = pd.read_csv('syngas_utility_data.txt', delimiter=r'\s+').stack().to_dict()
+    data_dict = pd.read_csv('%s/syngas_utility_data.txt' % syngas_dir, delimiter=r'\s+').stack().to_dict()
     m.syngas_tech_utility_rate = Param(
         m.utilities, m.syngas_techs, initialize=data_dict,
         doc="kWh of utility u per kmol of methane fed in syngas process i [kWh·kmol methane -1]")
 
-    data_dict = pd.read_csv('syngas_num_units_data.txt', delimiter=r'\s+').stack().to_dict()
+    data_dict = pd.read_csv('%s/syngas_num_units_data.txt' % syngas_dir, delimiter=r'\s+').stack().to_dict()
     m.syngas_tech_num_units = Param(
         m.syngas_tech_units, m.syngas_techs, initialize=data_dict,
         doc="number of units h in syngas process i")
@@ -329,7 +332,7 @@ def build_model():
 
     m.Yunit = BooleanVar(m.process_options, doc="Boolean variable for existence of a process unit")
     for option in m.process_options:
-        m.Yunit[option].set_binary_var(m.unit_exists[option].indicator_var)
+        m.Yunit[option].associate_binary_var(m.unit_exists[option].binary_indicator_var)
 
     for tech in m.syngas_techs:
         # Capital costs -->  cap = (p1*x + p2)*(B1 + B2*Fmf*Fp)
@@ -384,14 +387,14 @@ def build_model():
 
     m.Ycomp = BooleanVar(m.syngas_techs)
     for tech in m.syngas_techs:
-        m.Ycomp[tech].set_binary_var(m.stage_one_compressor[tech].indicator_var)
+        m.Ycomp[tech].associate_binary_var(m.stage_one_compressor[tech].binary_indicator_var)
 
-    @m.LogicalStatement(m.syngas_techs)
+    @m.LogicalConstraint(m.syngas_techs)
     def compressor_implies_tech(m, tech):
         return m.Ycomp[tech].implies(m.Yunit[tech])
 
     m.syngas_tech_compressor_cost_calc = Constraint(expr=m.syngas_tech_compressor_cost == (
-        ((3.553 * 10 ** 5) * sum(m.Ycomp[tech].as_binary() for tech in m.syngas_techs)
+        ((3.553 * 10 ** 5) * sum(m.Ycomp[tech].get_associated_binary() for tech in m.syngas_techs)
          + 586 * sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs))
         * m.annualization_factor / 8000
     ))
@@ -614,7 +617,7 @@ def build_model():
         m.total_flow_from['flash'] * m.min_flow_division
     ))
 
-    m.compressor_or_bypass = LogicalStatement(expr=Exactly(1, m.Yunit['bypass3'], m.Yunit['compressor']))
+    m.compressor_or_bypass = LogicalConstraint(expr=exactly(1, m.Yunit['bypass3'], m.Yunit['compressor']))
 
     # ms3
     @m.Constraint(m.species)
@@ -644,7 +647,7 @@ def build_model():
 
     m.unit_absent['absorber2'].no_absorption = Constraint(expr=m.Fabs2 == 0)
     
-    m.only_one_absorber = LogicalStatement(expr=AtMost(1, m.Yunit['absorber1'], m.Yunit['absorber2']))
+    m.only_one_absorber = LogicalConstraint(expr=atmost(1, m.Yunit['absorber1'], m.Yunit['absorber2']))
 
     @m.Constraint(m.species)
     def final_mass_balance(m, species):
@@ -659,8 +662,8 @@ def build_model():
         >= sum(m.final_syngas_flow[species] for species in {'CH4', 'H2O'})
     )
 
-    m.syngas_process_limits = LogicalStatement(
-        expr=AtMost(m.max_syngas_techs, [m.Yunit[tech] for tech in m.syngas_techs]))
+    m.syngas_process_limits = LogicalConstraint(
+        expr=atmost(m.max_syngas_techs, [m.Yunit[tech] for tech in m.syngas_techs]))
 
     # Bounds
     m.wgs_heater.setub(10000)
@@ -708,7 +711,7 @@ def build_model():
 
     m.aux_unit_capital_cost.setub(10000)
 
-    m.always_use_flash = LogicalStatement(expr=m.Yunit['flash'])
+    m.always_use_flash = LogicalConstraint(expr=m.Yunit['flash'])
 
     m.syngas_minimum_demand = Constraint(expr=m.syngas_total_flow >= 0.3)
     m.syngas_maximum_demand = Constraint(expr=m.syngas_total_flow <= 5)
@@ -722,7 +725,7 @@ def build_model():
     # m.optimal_feed = Constraint(expr=m.flow_out_from['in', 'CH4'] == 0.1674)
     # m.wgs_flow = Constraint(expr=(0.00991008 - 1E-5, m.flow['ms1', 'WGS', 'CH4'], 0.00991008 + 1e-5))
     # m.wgs_conv = Constraint(expr=(0.0201 - 1E-4, m.Xw, 0.0201 + 1E-4))
-    # m.use_dmr = LogicalStatement(
+    # m.use_dmr = LogicalConstraint(
     #     expr=m.Yunit['DMR']
     #          & m.Yunit['WGS'] & ~m.Yunit['bypass1'] & ~m.Yunit['absorber1']
     #          & ~m.Yunit['PSA']
