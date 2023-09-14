@@ -1,0 +1,16 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Bernal
+    given-names: David E.
+    orcid: https://orcid.org/0000-0002-8308-5016
+  - family-names: Chen
+    given-names: Qi
+  - family-names: Liu
+    given-names: Yunshan
+  - family-names: Johnson
+    given-names: Emma
+title: "GDPLib: an open library of Generalized Disjunctive Programming (GDP) models"
+version: 1.0.0
+url: https://github.com/SECQUOIA/gdplib
+license-url: https://github.com/SECQUOIA/gdplib/blob/master/LICENSE
