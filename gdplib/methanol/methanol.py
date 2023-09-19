@@ -650,11 +650,7 @@ def solve_with_gdp_opt():
             lb, ub = compute_bounds_on_expr(_c.body)
             _d.BigM[_c] = max(abs(lb), abs(ub))
     opt = pe.SolverFactory('gdpopt')
-    opt.CONFIG.strategy = 'LOA'
-    opt.CONFIG.mip_solver = 'gams'
-    opt.CONFIG.nlp_solver = 'gams'
-    opt.CONFIG.tee = True
-    res = opt.solve(m)
+    res = opt.solve(m, algorithm='LOA', mip_solver='gams',nlp_solver='gams',tee=True)
     for d in m.component_data_objects(ctype=gdp.Disjunct, active=True, sort=True, descend_into=True):
         if d.indicator_var.value == 1:
             print(d.name)
