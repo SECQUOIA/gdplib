@@ -1,3 +1,12 @@
+"""
+batch_processing.py
+This problem seeks to minimize the investment cost in the design of a plant with multiple units in parallel and intermediate storage tanks [1].
+
+Reference:
+    [1] Ravemark, E. Optimization models for design and operation of chemical batch processes. Ph.D. Thesis, ETH Zurich, 1995.
+    [2] Vecchietti, A.; Grossmann, I. E. LOGMIP: a disjunctive 0-1 non-linear optimizer for process system models. Computers and Chemical Engineering 1994, 23, 555–565.
+
+"""
 from os.path import join
 
 from pyomo.common.fileutils import this_file_dir
@@ -23,7 +32,7 @@ def build_model():
     model.BigM[None] = 1000
 
 
-    ## Constants from GAMS
+    # Constants from GAMS
     StorageTankSizeFactor = 2*5 # btw, I know 2*5 is 10... I don't know why it's written this way in GAMS?
     StorageTankSizeFactorByProd = 3
     MinFlow = -log(10000)
@@ -36,10 +45,7 @@ def build_model():
     # TODO: YOU ARE HERE. YOU HAVEN'T ACTUALLY MADE THESE THE BOUNDS YET, NOR HAVE YOU FIGURED OUT WHOSE
     # BOUNDS THEY ARE. AND THERE ARE MORE IN GAMS.
 
-
-    ##########
     # Sets
-    ##########
 
     model.PRODUCTS = Set()
     model.STAGES = Set(ordered=True)
@@ -52,12 +58,9 @@ def build_model():
 
 
     # TODO: these aren't in the formulation??
-    #model.STORAGE_TANKS = Set()
+    # model.STORAGE_TANKS = Set()
 
-
-    ###############
     # Parameters
-    ###############
 
     model.HorizonTime = Param()
     model.Alpha1 = Param()
@@ -92,9 +95,7 @@ def build_model():
     model.unitsOutOfPhaseUB = Param(model.STAGES, default=UnitsOutOfPhaseUB)
 
 
-    ################
     # Variables
-    ################
 
     # TODO: right now these match the formulation. There are more in GAMS...
 
@@ -138,9 +139,7 @@ def build_model():
     model.outOfPhase = Var(model.STAGES, model.PARALLELUNITS, within=Binary)
     model.inPhase = Var(model.STAGES, model.PARALLELUNITS, within=Binary)
 
-    ###############
     # Objective
-    ###############
 
     def get_cost_rule(model):
         return model.Alpha1 * sum(exp(model.unitsInPhase_log[j] + model.unitsOutOfPhase_log[j] + \
@@ -148,11 +147,7 @@ def build_model():
             model.Alpha2 * sum(exp(model.Beta2 * model.storageTankSize_log[j]) for j in model.STAGESExceptLast)
     model.min_cost = Objective(rule=get_cost_rule)
 
-
-    ##############
     # Constraints
-    ##############
-
     def processing_capacity_rule(model, j, i):
         return model.volume_log[j] >= log(model.ProductSizeFactor[i, j]) + model.batchSize_log[i, j] - \
             model.unitsInPhase_log[j]
@@ -169,9 +164,7 @@ def build_model():
     model.finish_in_time = Constraint(rule=finish_in_time_rule)
 
 
-    ###############
     # Disjunctions
-    ###############
 
     def storage_tank_selection_disjunct_rule(disjunct, selectStorageTank, j):
         model = disjunct.model()
