@@ -24,8 +24,11 @@ def build_model():
     """
     Builds the model for the SIR disease model using a low/high transmission parameter
 
+    Arg:
+        None
+
     Returns:
-        _type_: _description_
+        model(Pyomo.ConcreteModel): Pyomo model object that represent the SIR disease model using a low/high transmission parameter.
     """
     # import data
     # Population Data
@@ -58,7 +61,7 @@ def build_model():
     # define variable bounds
     def _gt_zero(m,i):
         """
-        boundary greater than zero
+        Boundary greater than zero
 
         Args:
             m (Pyomo.ConcreteModel): SIR disease model using a low/high transmission parameter
@@ -68,6 +71,7 @@ def build_model():
             None, but set up the boundary greater than zero.
         """
         return (0.0,1e7)
+    
     def _beta_bounds(m):
         """
         Set up the Transition Parameters Bounds
@@ -85,15 +89,15 @@ def build_model():
     # log of estimated cases
     # model.logI = Var(model.S_meas, bounds=_gt_zero, doc='log of estimated cases')
     model.logI = Var(model.S_meas, bounds=(0.001,1e7), doc='log of estimated cases')
-    # log of transmission parameter beta
+    # # log of transmission parameter beta
     # model.logbeta = Var(model.S_beta, bounds=_gt_zero, doc='log of transmission parameter beta')
     model.logbeta = Var(model.S_beta, bounds=(0.0001,5), doc='log of transmission parameter beta')
-    # binary variable y over all betas
+    # # binary variable y over all betas
     # model.y = Var(model.S_beta, within=Binary, doc='binary variable y over all betas')
-    # low value of beta
+    # # low value of beta
     # model.logbeta_low = Var(bounds=_beta_bounds, doc='low value of beta')
     model.logbeta_low = Var(bounds=(0.0001,5))
-    # high value of beta
+    # # high value of beta
     # model.logbeta_high = Var(bounds=_beta_bounds, doc='high value of beta')
     model.logbeta_high = Var(bounds=(0.0001,5), doc='high value of beta')
     # dummy variables
@@ -219,30 +223,85 @@ def build_model():
 
     return model
 
-
 """
-# high beta disjuncts
-def highbeta_L(m,i):
-    expr = m.logbeta[i] - m.logbeta_high + bigM*(1-m.y[i])
-    return (0.0, expr, None)
-model.highbeta_L = Constraint(model.S_beta, rule=highbeta_L)
-
-def highbeta_U(m,i):
-    expr = m.logbeta[i] - m.logbeta_high
-    return (None, expr, 0.0)
-model.highbeta_U = Constraint(model.S_beta, rule=highbeta_U)
-
-# low beta disjuncts
-def lowbeta_U(m,i):
-    expr = m.logbeta[i] - m.logbeta_low - bigM*(m.y[i])
-    return (None, expr, 0.0)
-model.lowbeta_U = Constraint(model.S_beta, rule=lowbeta_U)
-
-def lowbeta_L(m,i):
-    expr = m.logbeta[i] - m.logbeta_low
-    return (0.0, expr, None)
-model.lowbeta_L = Constraint(model.S_beta, rule=lowbeta_L)
+The original code inside build_model employs a disjunctive approach with integrated constraints. On the other hand, the commented code uses separate constraints for each scenario, applying the big-M Reformulation.
 """
+
+# # disjuncts
+# # high beta disjuncts
+# def highbeta_L(m,i):
+#     """
+#      Args:
+#         m (Pyomo.ConcreteModel): SIR disease model using a low/high transmission parameter
+#         i (int): index of biweekly periods in the data set
+
+#     Returns:
+#         A tuple (0.0, expr, None) where expr is the Pyomo expression for the lower bound of the high beta disjunct at the i-th biweekly period. 
+#         This represents the lower bound of the high beta disjunct at the i-th biweekly period.
+
+#     Note:
+#         The given function is given as the expression that the disjunctions are converted by big-M reformulation.
+#         The binary variable m.y[i] is commented inside the model function.
+#     """
+#     expr = m.logbeta[i] - m.logbeta_high + bigM*(1-m.y[i])
+#     return (0.0, expr, None)
+# model.highbeta_L = Constraint(model.S_beta, rule=highbeta_L)
+
+# def highbeta_U(m,i):
+#     """
+#     Args:
+#         m (Pyomo.ConcreteModel): SIR disease model using a low/high transmission parameter
+#         i (int): index of biweekly periods in the data set
+
+#     Returns:
+#         A tuple (None, expr, 0.0) where expr is the Pyomo expression for the upper bound of the high beta disjunct at the i-th biweekly period. 
+#         This represents the upper bound of the high beta disjunct at the i-th biweekly period.
+
+#     Note:
+#         The given function is given as the expression that the disjunctions are converted by big-M reformulation.
+#         The binary variable m.y[i] is commented inside the model function.
+#     """
+#     expr = m.logbeta[i] - m.logbeta_high
+#     return (None, expr, 0.0)
+# model.highbeta_U = Constraint(model.S_beta, rule=highbeta_U)
+
+# # low beta disjuncts
+# def lowbeta_U(m,i):
+#     """
+#     Args:
+#         m (Pyomo.ConcreteModel): SIR disease model using a low/high transmission parameter
+#         i (int): index of biweekly periods in the data set
+
+#     Returns:
+#         A tuple (None, expr, 0.0) where expr is the Pyomo expression for the upper bound of the low beta disjunct at the i-th biweekly period. 
+#         This represents the upper bound of the low beta disjunct at the i-th biweekly period.
+
+#     Note:
+#         The given function is given as the expression that the disjunctions are converted by big-M reformulation.
+#         The binary variable m.y[i] is commented inside the model function.
+#     """
+#     expr = m.logbeta[i] - m.logbeta_low - bigM*(m.y[i])
+#     return (None, expr, 0.0)
+# model.lowbeta_U = Constraint(model.S_beta, rule=lowbeta_U)
+
+# def lowbeta_L(m,i):
+#     """
+#     Args:
+#         m (Pyomo.ConcreteModel): SIR disease model using a low/high transmission parameter
+#         i (int): index of biweekly periods in the data set
+
+#     Returns:
+#         A tuple (0.0, expr, None) where expr is the Pyomo expression for the lower bound of the low beta disjunct at the i-th biweekly period. 
+#         This represents the lower bound of the low beta disjunct at the i-th biweekly period.
+
+#     Note:
+#         The given function is given as the expression that the disjunctions are converted by big-M reformulation.
+#         The binary variable m.y[i] is commented inside the model function.
+#     """
+#     expr = m.logbeta[i] - m.logbeta_low
+#     return (0.0, expr, None)
+# model.lowbeta_L = Constraint(model.S_beta, rule=lowbeta_L)
+
 
 if __name__ == "__main__":
     m = build_model()
