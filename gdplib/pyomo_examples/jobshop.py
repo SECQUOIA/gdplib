@@ -26,7 +26,7 @@ from os.path import join
 #
 # References:
 #
-# Raman & Grossmann, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
+# Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
 #
 # Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
 #
@@ -40,7 +40,7 @@ def build_model():
     It requires that no two jobs be performed at any stage at any time. The objective is to minimize the makespan, the time to complete all jobs.
 
     References:
-        Raman & Grossmann, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
+        Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
         Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
     """
     model = AbstractModel()
@@ -61,7 +61,7 @@ def build_model():
         Calculate the time bounds for the start time of each job in a scheduling model.
 
         Args:
-            model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+            model (Pyomo.Abstractmodel): job shop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
                 A zero wait transfer policy is assumed between stages.
             I (str): job index
 
