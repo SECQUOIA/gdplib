@@ -87,17 +87,22 @@ def build_model():
     # define variables
 
     # log of estimated cases
+    """
+    The original code inside build_model employs a disjunctive approach with integrated constraints. 
+    On the other hand, the commented code uses separate constraints for each scenario, applying the Big-M Reformulation.
+    Binary variables (model.y) are defined inside on the build_model() function. The disjuncts for the Big-M Reformulation is written outside of the code.
+    """
     # model.logI = Var(model.S_meas, bounds=_gt_zero, doc='log of estimated cases')
     model.logI = Var(model.S_meas, bounds=(0.001,1e7), doc='log of estimated cases')
-    # # log of transmission parameter beta
+    # log of transmission parameter beta
     # model.logbeta = Var(model.S_beta, bounds=_gt_zero, doc='log of transmission parameter beta')
     model.logbeta = Var(model.S_beta, bounds=(0.0001,5), doc='log of transmission parameter beta')
-    # # binary variable y over all betas
+    # binary variable y over all betas
     # model.y = Var(model.S_beta, within=Binary, doc='binary variable y over all betas')
-    # # low value of beta
+    # low value of beta
     # model.logbeta_low = Var(bounds=_beta_bounds, doc='low value of beta')
     model.logbeta_low = Var(bounds=(0.0001,5))
-    # # high value of beta
+    # high value of beta
     # model.logbeta_high = Var(bounds=_beta_bounds, doc='high value of beta')
     model.logbeta_high = Var(bounds=(0.0001,5), doc='high value of beta')
     # dummy variables
@@ -106,16 +111,16 @@ def build_model():
 
     # define indexed constants
 
-    # log of measured cases after adjusting for underreporting
+    # log of measured cases after adjusting for under-reporting
     logIstar = logIstar
     # changes in susceptible population profile from susceptible reconstruction
     deltaS = deltaS
-    # mean susceptibles
+    # mean susceptibles (Number of Population)
     # meanS = 1.04e6
     meanS = 8.65e5
-    # log of measured population
+    # log of measured population (Number of Population(log scale))
     logN = pop
-    # define index for beta over all measurements
+    # define index for beta over all measurements ()
     beta_set = beta_set
 
     # define objective
@@ -142,13 +147,15 @@ def build_model():
         """
         Constraint function for the SIR disease model that represents the dynamics of infectious disease spread. 
         This constraint is based on a logarithmic formulation of the SIR model.
+        The model enforces that the actual dynamics (captured in the expression expr) follow the specified dynamics of the SIR model for each biweekly period by setting the expression equal to zero.
+        This is the constraint of the differential function discretized.
         
         Args:
             m (Pyomo.ConcreteModel): SIR disease model using a low/high transmission parameter
             i (int): index of biweekly periods in the data set
 
         Returns:
-             A tuple (0.0, expr) where expr is the Pyomo expression for the SIR constraint at the i-th biweekly period. 
+            A tuple (0.0, expr) where expr is the Pyomo expression for the SIR constraint at the i-th biweekly period. 
             This represents the change in the logarithm of estimated infectious cases adjusted by the transmission rate, 
             change in susceptibles, and the total population.
         """
@@ -223,12 +230,10 @@ def build_model():
 
     return model
 
-"""
-The original code inside build_model employs a disjunctive approach with integrated constraints. On the other hand, the commented code uses separate constraints for each scenario, applying the big-M Reformulation.
-"""
 
-# # disjuncts
-# # high beta disjuncts
+
+# disjuncts
+# high beta disjuncts
 # def highbeta_L(m,i):
 #     """
 #      Args:
@@ -265,7 +270,7 @@ The original code inside build_model employs a disjunctive approach with integra
 #     return (None, expr, 0.0)
 # model.highbeta_U = Constraint(model.S_beta, rule=highbeta_U)
 
-# # low beta disjuncts
+# low beta disjuncts
 # def lowbeta_U(m,i):
 #     """
 #     Args:
