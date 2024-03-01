@@ -108,11 +108,11 @@ def build_model():
 
         Args:
             model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-                A zero wait transfer policy is assumed between stages.
+            A zero wait transfer policy is assumed between stages.
             I (str): job index
 
         Returns:
-            expression: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
+            bool: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
         """
         return model.ms >= model.t[I] + sum(model.tau[I, M] for M in model.STAGES)
 
