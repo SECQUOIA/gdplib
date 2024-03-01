@@ -112,7 +112,7 @@ def build_model():
             I (str): job index
 
         Returns:
-            bool: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
+            expression: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
         """
         return model.ms >= model.t[I] + sum(model.tau[I, M] for M in model.STAGES)
 
