@@ -104,7 +104,7 @@ def build_model():
     # Makespan is greater than the start time of every job + that job's
     # total duration
     def _feas(model, I):
-        """_summary_
+        """This function creates a constraint that ensures the makespan is greater than the sum of the start time of every job and that job's total duration.
 
         Args:
             model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
