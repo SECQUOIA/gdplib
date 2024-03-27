@@ -42,8 +42,11 @@ def build_model():
     References:
         Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
         Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
+    
     Args: None
-    Returns: AbstractModel: jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+    
+    Returns:
+        AbstractModel: jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
     """
     model = AbstractModel()
 
@@ -106,17 +109,18 @@ def build_model():
     # Makespan is greater than the start time of every job + that job's
     # total duration
     def _feas(model, I):
-            """This function creates a constraint that ensures the makespan is greater than the sum of the start time of every job and that job's total duration.
+        """
+        This function creates a constraint that ensures the makespan is greater than the sum of the start time of every job and that job's total duration.
 
-            Args:
-                model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-                A zero wait transfer policy is assumed between stages.
-                I (str): job index
+        Args:
+            model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+            A zero wait transfer policy is assumed between stages.
+            I (str): job index
 
-            Returns:
-                expression: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
-            """
-            return model.ms >= model.t[I] + sum(model.tau[I, M] for M in model.STAGES)
+        Returns:
+            expression: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
+        """
+        return model.ms >= model.t[I] + sum(model.tau[I, M] for M in model.STAGES)
 
     model.Feas = Constraint(
         model.JOBS,
