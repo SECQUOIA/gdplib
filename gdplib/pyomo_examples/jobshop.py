@@ -27,7 +27,7 @@ from os.path import join
 #
 # References:
 #
-# Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
+# Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994. DOI: 10.1016/0098-1354(93)E0010-7.
 #
 # Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
 #
