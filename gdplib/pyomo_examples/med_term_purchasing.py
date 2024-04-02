@@ -21,6 +21,26 @@ from os.path import join
 # most notably the process structure itself and the mass balance information.
 
 def build_model():
+    """
+    Build a Pyomo abstract model for the medium-term purchasing contracts problem.
+
+    Returns
+    -------
+    Pyomo.AbstractModel
+        Pyomo abstract model for medium-term purchasing contracts problem.
+
+    Raises
+    ------
+    RuntimeError
+        _description_
+    RuntimeError
+        _description_
+
+    References
+    ----------
+    [1] Vecchietti, Aldo, and I. Grossmann. "Computational experience with logmip solving linear and nonlinear disjunctive programming problems." In Proc. of FOCAPD, pp. 587-590. 2004.
+    [2] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial & Engineering Chemistry Research, 45(14), 5013-5026. DOI: https://doi.org/10.1021/ie0513144
+    """
     model = AbstractModel()
 
     # Constants (data that was hard-coded in GAMS model)
@@ -38,33 +58,33 @@ def build_model():
 
     # T
     # t in GAMS
-    model.TimePeriods = Set(ordered=True)
+    model.TimePeriods = Set(ordered=True, doc="Set of time periods")
 
     # Available length contracts
     # p in GAMS
-    model.Contracts_Length = Set()
+    model.Contracts_Length = Set(doc="Set of available length contracts")
 
     # JP
     # final(j) in GAMS
     # Finished products
-    model.Products = Set()
+    model.Products = Set(doc="Set of finished products")
 
     # JM
     # rawmat(J) in GAMS
     # Set of Raw Materials-- raw materials, intermediate products, and final products partition J
-    model.RawMaterials = Set()
+    model.RawMaterials = Set(doc="Set of raw materials, intermediate products, and final products")
 
     # C
     # c in GAMS
-    model.Contracts = Set()
+    model.Contracts = Set(doc='Set of available contracts')
 
     # I
     # i in GAMS
-    model.Processes = Set()
+    model.Processes = Set(doc='Set of processes in the network')
 
     # J
     # j in GAMS
-    model.Streams = Set()
+    model.Streams = Set(doc='Set of streams in the network')
 
 
     ##################
@@ -73,33 +93,34 @@ def build_model():
 
     # Q_it
     # excap(i) in GAMS
-    model.Capacity = Param(model.Processes)
+    model.Capacity = Param(model.Processes, doc='Capacity of process i')
 
     # u_ijt
     # cov(i) in GAMS
-    model.ProcessConstants = Param(model.Processes)
+    model.ProcessConstants = Param(model.Processes, doc='Process constants')
 
     # a_jt^U and d_jt^U
     # spdm(j,t) in GAMS
-    model.SupplyAndDemandUBs = Param(model.Streams, model.TimePeriods, default=0)
+    model.SupplyAndDemandUBs = Param(model.Streams, model.TimePeriods, default=0, doc='Supply and demand upper bounds')
 
     # d_jt^L
     # lbdm(j, t) in GAMS
-    model.DemandLB = Param(model.Streams, model.TimePeriods, default=0)
+    model.DemandLB = Param(model.Streams, model.TimePeriods, default=0, doc='Demand lower bounds')
 
     # delta_it
     # delta(i, t) in GAMS
     # operating cost of process i at time t
-    model.OperatingCosts = Param(model.Processes, model.TimePeriods)
+    model.OperatingCosts = Param(model.Processes, model.TimePeriods, doc='Operating cost of process i at time t')
 
     # prices of raw materials under FP contract and selling prices of products
     # pf(j, t) in GAMS
     # omega_jt and pf_jt
-    model.Prices = Param(model.Streams, model.TimePeriods, default=0)
+    model.Prices = Param(model.Streams, model.TimePeriods, default=0, doc='Prices of raw materials under FP contract and selling prices of products')
 
     # Price for quantities less than min amount under discount contract
     # pd1(j, t) in GAMS
     model.RegPrice_Discount = Param(model.Streams, model.TimePeriods)
+
     # Discounted price for the quantity purchased exceeding the min amount
     # pd2(j,t0 in GAMS
     model.DiscountPrice_Discount = Param(model.Streams, model.TimePeriods)
@@ -107,40 +128,41 @@ def build_model():
     # Price for quantities below min amount
     # pb1(j,t) in GAMS
     model.RegPrice_Bulk = Param(model.Streams, model.TimePeriods)
-    # Price for quantities aboce min amount
+
+    # Price for quantities above min amount
     # pb2(j, t) in GAMS
-    model.DiscountPrice_Bulk = Param(model.Streams, model.TimePeriods)
+    model.DiscountPrice_Bulk = Param(model.Streams, model.TimePeriods, doc='Price for quantities above minimum amount under bulk contract')
 
     # prices with length contract
     # pl(j, p, t) in GAMS
-    model.Prices_Length = Param(model.Streams, model.Contracts_Length, model.TimePeriods, default=0)
+    model.Prices_Length = Param(model.Streams, model.Contracts_Length, model.TimePeriods, default=0, doc='Prices with length contract')
 
     # sigmad_jt
     # sigmad(j, t) in GAMS
     # Minimum quantity of chemical j that must be bought before recieving a Discount under discount contract
-    model.MinAmount_Discount = Param(model.Streams, model.TimePeriods, default=0)
+    model.MinAmount_Discount = Param(model.Streams, model.TimePeriods, default=0, doc='Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract')
 
     # min quantity to recieve discount under bulk contract
     # sigmab(j, t) in GAMS
-    model.MinAmount_Bulk = Param(model.Streams, model.TimePeriods, default=0)
+    model.MinAmount_Bulk = Param(model.Streams, model.TimePeriods, default=0, doc='Minimum quantity of chemical j that must be bought before receiving a Discount under bulk contract')
 
     # min quantity to recieve discount under length contract
     # sigmal(j, p) in GAMS
-    model.MinAmount_Length = Param(model.Streams, model.Contracts_Length, default=0)
+    model.MinAmount_Length = Param(model.Streams, model.Contracts_Length, default=0, doc='Minimum quantity of chemical j that must be bought before receiving a Discount under length contract')
 
     # main products of process i
     # These are 1 (true) if stream j is the main product of process i, false otherwise.
     # jm(j, i) in GAMS
-    model.MainProducts = Param(model.Streams, model.Processes, default=0)
+    model.MainProducts = Param(model.Streams, model.Processes, default=0, doc='Main products of process i')
 
     # theta_jt
     # psf(j, t) in GAMS
     # Shortfall penalty of product j at time t
-    model.ShortfallPenalty = Param(model.Products, model.TimePeriods)
+    model.ShortfallPenalty = Param(model.Products, model.TimePeriods, doc='Shortfall penalty of product j at time t')
 
     # shortfall upper bound
     # sfub(j, t) in GAMS
-    model.ShortfallUB = Param(model.Products, model.TimePeriods, default=0)
+    model.ShortfallUB = Param(model.Products, model.TimePeriods, default=0, doc='Shortfall upper bound')
 
     # epsilon_jt
     # cinv(j, t) in GAMS
@@ -156,9 +178,41 @@ def build_model():
     # All of these upper bounds are hardcoded. So I am just leaving them that way.
     # This means they all have to be the same as each other right now.
     def getAmountUBs(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return AMOUNT_UB
 
     def getCostUBs(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return COST_UB
 
     model.AmountPurchasedUB_FP = Param(model.Streams, model.TimePeriods,
@@ -186,16 +240,33 @@ def build_model():
 
     # prof in GAMS
     # will be objective
-    model.Profit = Var()
+    model.Profit = Var(doc='Profit')
 
     # f(j, t) in GAMS
     # mass flow rates in tons per time interval t
-    model.FlowRate = Var(model.Streams, model.TimePeriods, within=NonNegativeReals)
+    model.FlowRate = Var(model.Streams, model.TimePeriods, within=NonNegativeReals, doc='Mass flow rates in tons per time interval t')
 
     # V_jt
     # inv(j, t) in GAMS
     # inventory level of chemical j at time period t
     def getInventoryBounds(model, i, j):
+        """
+        Inventory level of chemical j at time period t
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        i : _type_
+            _description_
+        j : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.InventoryLevelUB[i,j])
     model.InventoryLevel = Var(model.Streams, model.TimePeriods,
         bounds=getInventoryBounds)
@@ -204,6 +275,17 @@ def build_model():
     # sf(j, t) in GAMS
     # Shortfall of demand for chemical j at time period t
     def getShortfallBounds(model, i, j):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        i : _type_
+            _description_
+        j : _type_
+            _description_
+        """
         return(0, model.ShortfallUB[i,j])
     model.Shortfall = Var(model.Products, model.TimePeriods,
         bounds=getShortfallBounds)
@@ -214,12 +296,44 @@ def build_model():
     # spf(j, t) in GAMS
     # Amount of raw material j bought under fixed price contract at time period t
     def get_FP_bounds(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.AmountPurchasedUB_FP[j,t])
     model.AmountPurchased_FP = Var(model.Streams, model.TimePeriods,
         bounds=get_FP_bounds)
 
     # spd(j, t) in GAMS
     def get_Discount_Total_bounds(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.AmountPurchasedUB_Discount[j,t])
     model.AmountPurchasedTotal_Discount = Var(model.Streams, model.TimePeriods,
         bounds=get_Discount_Total_bounds)
@@ -227,6 +341,22 @@ def build_model():
     # Amount purchased below min amount for discount under discount contract
     # spd1(j, t) in GAMS
     def get_Discount_BelowMin_bounds(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.AmountPurchasedBelowMinUB_Discount[j,t])
     model.AmountPurchasedBelowMin_Discount = Var(model.Streams,
         model.TimePeriods, bounds=get_Discount_BelowMin_bounds)
@@ -234,6 +364,22 @@ def build_model():
     # spd2(j, t) in GAMS
     # Amount purchased above min amount for discount under discount contract
     def get_Discount_AboveMin_bounds(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.AmountPurchasedBelowMinUB_Discount[j,t])
     model.AmountPurchasedAboveMin_Discount = Var(model.Streams,
         model.TimePeriods, bounds=get_Discount_AboveMin_bounds)
@@ -241,6 +387,22 @@ def build_model():
     # Amount purchased under bulk contract
     # spb(j, t) in GAMS
     def get_bulk_bounds(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.AmountPurchasedUB_Bulk[j,t])
     model.AmountPurchased_Bulk = Var(model.Streams, model.TimePeriods,
         bounds=get_bulk_bounds)
@@ -248,6 +410,22 @@ def build_model():
     # spl(j, t) in GAMS
     # Amount purchased under Fixed Duration contract
     def get_FD_bounds(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.AmountPurchasedUB_FD[j,t])
     model.AmountPurchased_FD = Var(model.Streams, model.TimePeriods,
         bounds=get_FD_bounds)
@@ -258,18 +436,66 @@ def build_model():
     # costpl(j, t) in GAMS
     # cost of variable length contract
     def get_CostUBs_FD(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+           Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.CostUB_FD[j,t])
     model.Cost_FD = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FD)
 
     # costpf(j, t) in GAMS
     # cost of fixed duration contract
     def get_CostUBs_FP(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.CostUB_FP[j,t])
     model.Cost_FP = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FP)
 
     # costpd(j, t) in GAMS
     # cost of discount contract
     def get_CostUBs_Discount(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.CostUB_Discount[j,t])
     model.Cost_Discount = Var(model.Streams, model.TimePeriods,
         bounds=get_CostUBs_Discount)
@@ -277,6 +503,22 @@ def build_model():
     # costpb(j, t) in GAMS
     # cost of bulk contract
     def get_CostUBs_Bulk(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (0, model.CostUB_Bulk[j,t])
     model.Cost_Bulk = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_Bulk)
 
@@ -295,6 +537,19 @@ def build_model():
 
     # Objective: maximize profit
     def profit_rule(model):
+        """
+        Objective function: maximize profit
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         salesIncome = sum(model.Prices[j,t] * model.FlowRate[j,t]
             for j in model.Products for t in model.TimePeriods)
         purchaseCost = sum(model.Cost_FD[j,t]
@@ -317,6 +572,22 @@ def build_model():
 
     # flow of raw materials is the total amount purchased (accross all contracts)
     def raw_material_flow_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[j,t] == model.AmountPurchased_FD[j,t] + \
             model.AmountPurchased_FP[j,t] + model.AmountPurchased_Bulk[j,t] + \
             model.AmountPurchasedTotal_Discount[j,t]
@@ -324,6 +595,22 @@ def build_model():
         rule=raw_material_flow_rule)
 
     def discount_amount_total_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.AmountPurchasedTotal_Discount[j,t] == \
             model.AmountPurchasedBelowMin_Discount[j,t] + \
             model.AmountPurchasedAboveMin_Discount[j,t]
@@ -333,10 +620,38 @@ def build_model():
     # mass balance equations for each node
     # these are specific to the process network in this example.
     def mass_balance_rule1(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[1, t] == model.FlowRate[2, t] + model.FlowRate[3, t]
     model.mass_balance1 = Constraint(model.TimePeriods, rule=mass_balance_rule1)
 
     def mass_balance_rule2(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[5, t] == model.FlowRate[4, t] + model.FlowRate[8,t]
     model.mass_balance2 = Constraint(model.TimePeriods, rule=mass_balance_rule2)
 
@@ -345,26 +660,96 @@ def build_model():
     model.mass_balance3 = Constraint(model.TimePeriods, rule=mass_balance_rule3)
 
     def mass_balance_rule4(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[3, t] == 10*model.FlowRate[5, t]
     model.mass_balance4 = Constraint(model.TimePeriods, rule=mass_balance_rule4)
 
     # process input/output constraints
     # these are also totally specific to the process network
     def process_balance_rule1(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[9, t] == model.ProcessConstants[1] * model.FlowRate[2, t]
     model.process_balance1 = Constraint(model.TimePeriods, rule=process_balance_rule1)
 
     def process_balance_rule2(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[10, t] == model.ProcessConstants[2] * \
             (model.FlowRate[5, t] + model.FlowRate[3, t])
     model.process_balance2 = Constraint(model.TimePeriods, rule=process_balance_rule2)
 
     def process_balance_rule3(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[8, t] == RandomConst_Line264 * \
             model.ProcessConstants[3] * model.FlowRate[7, t]
     model.process_balance3 = Constraint(model.TimePeriods, rule=process_balance_rule3)
 
     def process_balance_rule4(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[11, t] == RandomConst_Line265 * \
             model.ProcessConstants[3] * model.FlowRate[7, t]
     model.process_balance4 = Constraint(model.TimePeriods, rule=process_balance_rule4)
@@ -372,14 +757,56 @@ def build_model():
     # process capacity contraints
     # these are hardcoded based on the three processes and the process flow structure
     def process_capacity_rule1(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[9, t] <= model.Capacity[1]
     model.process_capacity1 = Constraint(model.TimePeriods, rule=process_capacity_rule1)
 
     def process_capacity_rule2(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[10, t] <= model.Capacity[2]
     model.process_capacity2 = Constraint(model.TimePeriods, rule=process_capacity_rule2)
 
     def process_capacity_rule3(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[11, t] + model.FlowRate[8, t] <= model.Capacity[3]
     model.process_capacity3 = Constraint(model.TimePeriods, rule=process_capacity_rule3)
 
@@ -387,11 +814,39 @@ def build_model():
     # again, these are hardcoded.
 
     def inventory_balance1(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         prev = 0 if t == min(model.TimePeriods) else model.InventoryLevel[12, t-1]
         return prev + model.FlowRate[9, t] == model.FlowRate[12, t] + model.InventoryLevel[12,t]
     model.inventory_balance1 = Constraint(model.TimePeriods, rule=inventory_balance1)
 
     def inventory_balance_rule2(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if t != 1:
             return Constraint.Skip
         return model.FlowRate[10, t] + model.FlowRate[11, t] == \
@@ -399,6 +854,20 @@ def build_model():
     model.inventory_balance2 = Constraint(model.TimePeriods, rule=inventory_balance_rule2)
 
     def inventory_balance_rule3(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if t <= 1:
             return Constraint.Skip
         return model.InventoryLevel[13, t-1] + model.FlowRate[10, t] + \
@@ -407,30 +876,126 @@ def build_model():
 
     # Max capacities of inventories
     def inventory_capacity_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.InventoryLevel[j,t] <= model.InventoryLevelUB[j,t]
     model.inventory_capacity_rule = Constraint(model.Products, model.TimePeriods, rule=inventory_capacity_rule)
 
     # Shortfall calculation
     def shortfall_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.Shortfall[j, t] == model.SupplyAndDemandUBs[j, t] - model.FlowRate[j,t]
     model.shortfall = Constraint(model.Products, model.TimePeriods, rule=shortfall_rule)
 
     # maximum shortfall allowed
     def shortfall_max_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.Shortfall[j, t] <= model.ShortfallUB[j, t]
     model.shortfall_max = Constraint(model.Products, model.TimePeriods, rule=shortfall_max_rule)
 
     # maxiumum capacities of suppliers
     def supplier_capacity_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[j, t] <= model.SupplyAndDemandUBs[j, t]
     model.supplier_capacity = Constraint(model.RawMaterials, model.TimePeriods, rule=supplier_capacity_rule)
 
     # demand upper bound
     def demand_UB_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[j, t] <= model.SupplyAndDemandUBs[j,t]
     model.demand_UB = Constraint(model.Products, model.TimePeriods, rule=demand_UB_rule)
     # demand lower bound
     def demand_LB_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[j, t] >= model.DemandLB[j,t]
     model.demand_LB = Constraint(model.Products, model.TimePeriods, rule=demand_LB_rule)
 
@@ -439,6 +1004,19 @@ def build_model():
 
     # Disjunction for Fixed Price contract buying options
     def FP_contract_disjunct_rule(disjunct, j, t, buy):
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+        buy : _type_
+            _description_
+        """
         model = disjunct.model()
         if buy:
             disjunct.c = Constraint(expr=model.AmountPurchased_FP[j,t] <= MAX_AMOUNT_FP)
@@ -449,12 +1027,44 @@ def build_model():
 
     # Fixed price disjunction
     def FP_contract_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [model.FP_contract_disjunct[j,t,buy] for buy in model.BuyFPContract]
     model.FP_disjunction = Disjunction(model.RawMaterials, model.TimePeriods,
         rule=FP_contract_rule)
 
-    # cost constraint for fixed price contract (independent contraint)
+    # cost constraint for fixed price contract (independent constraint)
     def FP_contract_cost_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.Cost_FP[j,t] == model.AmountPurchased_FP[j,t] * \
             model.Prices[j,t]
     model.FP_contract_cost = Constraint(model.RawMaterials, model.TimePeriods,
@@ -465,6 +1075,24 @@ def build_model():
 
     # Disjunction for Discount contract
     def discount_contract_disjunct_rule(disjunct, j, t, buy):
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            _description_
+        buy : _type_
+            _description_
+
+        Raises
+        ------
+        RuntimeError
+            _description_
+        """
         model = disjunct.model()
         if buy == 'BelowMin':
             disjunct.belowMin = Constraint(
@@ -490,6 +1118,22 @@ def build_model():
 
     # Discount contract disjunction
     def discount_contract_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [model.discount_contract_disjunct[j,t,buy] \
             for buy in model.BuyDiscountContract]
     model.discount_contract = Disjunction(model.RawMaterials, model.TimePeriods,
@@ -497,6 +1141,22 @@ def build_model():
 
     # cost constraint for discount contract (independent constraint)
     def discount_cost_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.Cost_Discount[j,t] == model.RegPrice_Discount[j,t] * \
             model.AmountPurchasedBelowMin_Discount[j,t] + \
             model.DiscountPrice_Discount[j,t] * model.AmountPurchasedAboveMin_Discount[j,t]
@@ -508,6 +1168,24 @@ def build_model():
 
     # Bulk contract buying options disjunct
     def bulk_contract_disjunct_rule(disjunct, j, t, buy):
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+        buy : _type_
+            _description_
+
+        Raises
+        ------
+        RuntimeError
+            _description_
+        """
         model = disjunct.model()
         if buy == 'BelowMin':
             disjunct.amount = Constraint(
@@ -531,6 +1209,22 @@ def build_model():
 
     # Bulk contract disjunction
     def bulk_contract_rule(model, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [model.bulk_contract_disjunct[j,t,buy] for buy in model.BuyBulkContract]
     model.bulk_contract = Disjunction(model.RawMaterials, model.TimePeriods,
         rule=bulk_contract_rule)
@@ -539,53 +1233,97 @@ def build_model():
     # FIXED DURATION CONTRACT
 
     def FD_1mo_contract(disjunct, j, t):
-       model = disjunct.model()
-       disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
-           MIN_AMOUNT_FD_1MONTH)
-       disjunct.price1 = Constraint(expr=model.Cost_FD[j,t] == \
-           model.Prices_Length[j,1,t] * model.AmountPurchased_FD[j,t])
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+        """
+        model = disjunct.model()
+        disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
+            MIN_AMOUNT_FD_1MONTH)
+        disjunct.price1 = Constraint(expr=model.Cost_FD[j,t] == \
+            model.Prices_Length[j,1,t] * model.AmountPurchased_FD[j,t])
     model.FD_1mo_contract = Disjunct(
        model.RawMaterials, model.TimePeriods, rule=FD_1mo_contract)
 
     def FD_2mo_contract(disjunct, j, t):
-       model = disjunct.model()
-       disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
-           model.MinAmount_Length[j,2])
-       disjunct.price1 = Constraint(expr=model.Cost_FD[j,t] == \
-           model.Prices_Length[j,2,t] * model.AmountPurchased_FD[j,t])
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+        """
+        model = disjunct.model()
+        disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
+            model.MinAmount_Length[j,2])
+        disjunct.price1 = Constraint(expr=model.Cost_FD[j,t] == \
+            model.Prices_Length[j,2,t] * model.AmountPurchased_FD[j,t])
        # only enforce these if we aren't in the last time period
-       if t < model.TimePeriods[-1]:
-           disjunct.amount2 = Constraint(expr=model.AmountPurchased_FD[j, t+1] >= \
-               model.MinAmount_Length[j,2])
-           disjunct.price2 = Constraint(expr=model.Cost_FD[j,t+1] == \
-               model.Prices_Length[j,2,t] * model.AmountPurchased_FD[j, t+1])
+        if t < model.TimePeriods[-1]:
+            disjunct.amount2 = Constraint(expr=model.AmountPurchased_FD[j, t+1] >= \
+                model.MinAmount_Length[j,2])
+            disjunct.price2 = Constraint(expr=model.Cost_FD[j,t+1] == \
+                model.Prices_Length[j,2,t] * model.AmountPurchased_FD[j, t+1])
     model.FD_2mo_contract = Disjunct(
        model.RawMaterials, model.TimePeriods, rule=FD_2mo_contract)
 
     def FD_3mo_contract(disjunct, j, t):
-       model = disjunct.model()
-       # NOTE: I think there is a mistake in the GAMS file in line 327.
-       # they use the bulk minamount rather than the length one.
-       #I am doing the same here for validation purposes.
-       disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
-           model.MinAmount_Bulk[j,3])
-       disjunct.cost1 = Constraint(expr=model.Cost_FD[j,t] == \
-           model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t])
-       # check we aren't in one of the last two time periods
-       if t < model.TimePeriods[-1]:
-           disjunct.amount2 = Constraint(expr=model.AmountPurchased_FD[j,t+1] >= \
-               model.MinAmount_Length[j,3])
-           disjunct.cost2 = Constraint(expr=model.Cost_FD[j,t+1] == \
-               model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t+1])
-       if t < model.TimePeriods[-2]:
-           disjunct.amount3 = Constraint(expr=model.AmountPurchased_FD[j,t+2] >= \
-               model.MinAmount_Length[j,3])
-           disjunct.cost3 = Constraint(expr=model.Cost_FD[j,t+2] == \
-               model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t+2])
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+        """
+        model = disjunct.model()
+        # NOTE: I think there is a mistake in the GAMS file in line 327.
+        # they use the bulk minamount rather than the length one.
+        #I am doing the same here for validation purposes.
+        disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
+            model.MinAmount_Bulk[j,3])
+        disjunct.cost1 = Constraint(expr=model.Cost_FD[j,t] == \
+            model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t])
+        # check we aren't in one of the last two time periods
+        if t < model.TimePeriods[-1]:
+            disjunct.amount2 = Constraint(expr=model.AmountPurchased_FD[j,t+1] >= \
+                model.MinAmount_Length[j,3])
+            disjunct.cost2 = Constraint(expr=model.Cost_FD[j,t+1] == \
+                model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t+1])
+        if t < model.TimePeriods[-2]:
+            disjunct.amount3 = Constraint(expr=model.AmountPurchased_FD[j,t+2] >= \
+                model.MinAmount_Length[j,3])
+            disjunct.cost3 = Constraint(expr=model.Cost_FD[j,t+2] == \
+                model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t+2])
     model.FD_3mo_contract = Disjunct(
-       model.RawMaterials, model.TimePeriods, rule=FD_3mo_contract)
+        model.RawMaterials, model.TimePeriods, rule=FD_3mo_contract)
 
     def FD_no_contract(disjunct, j, t):
+        """_summary_
+
+        Parameters
+        ----------
+        disjunct :  Index
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+        """
         model = disjunct.model()
         disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] == 0)
         disjunct.cost1 = Constraint(expr=model.Cost_FD[j,t] == 0)
@@ -596,10 +1334,26 @@ def build_model():
             disjunct.amount3 = Constraint(expr=model.AmountPurchased_FD[j,t+2] == 0)
             disjunct.cost3 = Constraint(expr=model.Cost_FD[j,t+2] == 0)
     model.FD_no_contract = Disjunct(
-       model.RawMaterials, model.TimePeriods, rule=FD_no_contract)
+        model.RawMaterials, model.TimePeriods, rule=FD_no_contract)
 
     def FD_contract(model, j, t):
-       return [ model.FD_1mo_contract[j,t], model.FD_2mo_contract[j,t],
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            _description_
+        j : _type_
+            _description_
+        t :  Index
+            Time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
+        return [ model.FD_1mo_contract[j,t], model.FD_2mo_contract[j,t],
                 model.FD_3mo_contract[j,t], model.FD_no_contract[j,t], ]
     model.FD_contract = Disjunction(model.RawMaterials, model.TimePeriods,
        rule=FD_contract)
@@ -608,6 +1362,14 @@ def build_model():
 
 
 def build_concrete():
+    """
+    Build a concrete model applying the data of the medium-term purchasing contracts problem on build_model().
+
+    Returns
+    -------
+    Pyomo.ConcreteModel
+        A concrete model for the medium-term purchasing contracts problem.
+    """
     return build_model().create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
 
 
