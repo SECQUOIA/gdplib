@@ -37,15 +37,15 @@ def build_model():
     """
     Build and return a jobshop scheduling model.
 
-    This function constructs a Pyomo abstract model for jobshop scheduling, aiming to minimize the makespan. 
-    It includes sets of jobs and stages, with the assumption of a zero-wait policy between stages. 
+    This function constructs a Pyomo abstract model for jobshop scheduling, aiming to minimize the makespan.
+    It includes sets of jobs and stages, with the assumption of a zero-wait policy between stages.
     The model enforces constraints to avoid job clashes at any stage and minimizes the total completion time.
 
-    
+
     Parameters
     ----------
     None
-    
+
     Returns
     -------
     model : Pyomo.AbstractModel
@@ -75,7 +75,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel 
+        model : Pyomo.Abstractmodel
             The job shop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -102,12 +102,12 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel 
+        model : Pyomo.Abstractmodel
             The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
             job index
-        K : str 
+        K : str
             job index that is greater than I (After I)
         J : int
             stage index
@@ -115,7 +115,7 @@ def build_model():
         Returns
         -------
         bool
-            Returns `True` if job `I` precedes job `K` and both jobs require processing at stage `J`, indicating a potential scheduling clash. 
+            Returns `True` if job `I` precedes job `K` and both jobs require processing at stage `J`, indicating a potential scheduling clash.
             'False' otherwise.
         """
         return I < K and model.tau[I, J] and model.tau[K, J]
@@ -138,7 +138,7 @@ def build_model():
         model : Pyomo.Abstractmodel
             The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
-        I : str 
+        I : str
             job index
 
         Returns
@@ -164,11 +164,11 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Disjunct 
+        model : Pyomo.Disjunct
             The disjunction of the model.
-        I : str 
+        I : str
             job index
-        K : str 
+        K : str
             job index that is greater than I (After I)
         J : int
             stage index
@@ -202,18 +202,18 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel 
+        model : Pyomo.Abstractmodel
             jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-        I : str 
+        I : str
             job index
-        K : str 
+        K : str
             job index that is greater than I (After I)
-        J : int 
+        J : int
             stage index
 
         Returns
         -------
-        list of Pyomo.Disjunct 
+        list of Pyomo.Disjunct
             A list of disjunctions for the given jobs and stage, enforcing that one job must precede the other to avoid clashes.
         """
         return [model.NoClash[I, K, J, IthenK] for IthenK in model.I_BEFORE_K]
@@ -243,7 +243,7 @@ def build_small_concrete():
 
     Returns
     -------
-    ConcreteModel : Pyomo.ConcreteModel 
+    ConcreteModel : Pyomo.ConcreteModel
         A concrete instance of the jobshop scheduling model populated with data from 'jobshop-small.dat', ready for optimization.
     """
     return build_model().create_instance(join(this_file_dir(), 'jobshop-small.dat'))
