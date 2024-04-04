@@ -35,19 +35,26 @@ from os.path import join
 
 def build_model():
     """
-    Build the jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-    A zero wait transfer policy is assumed between stages.
-    To obtain a feasible solution it is necessary to eliminate all clashes between jobs.
-    It requires that no two jobs be performed at any stage at any time. The objective is to minimize the makespan, the time to complete all jobs.
+    Build and return a jobshop scheduling model.
 
-    References:
-        Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
-        Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
+    This function constructs a Pyomo abstract model for jobshop scheduling, aiming to minimize the makespan. 
+    It includes sets of jobs and stages, with the assumption of a zero-wait policy between stages. 
+    The model enforces constraints to avoid job clashes at any stage and minimizes the total completion time.
+
     
-    Args: None
+    Parameters
+    ----------
+    None
     
-    Returns:
-        AbstractModel: jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+    Returns
+    -------
+    model : Pyomo.AbstractModel
+        The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+
+    References
+    ----------
+    Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
+    Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
     """
     model = AbstractModel()
 
@@ -66,13 +73,18 @@ def build_model():
         """
         Calculate the time bounds for the start time of each job in a scheduling model.
 
-        Args:
-            model (Pyomo.Abstractmodel): job shop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-                A zero wait transfer policy is assumed between stages.
-            I (str): job index
+        Parameters
+        ----------
+        model : Pyomo.Abstractmodel 
+            The job shop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+            A zero wait transfer policy is assumed between stages.
+        I : str
+            The index of the job index
 
-        Returns:
-            tuple: (lower bound, upper bound) for the start time of each job in a scheduling model.
+        Returns
+        -------
+        tuple
+            A tuple containing the lower and upper bounds for the start time of the job.
         """
         return (0, sum(value(model.tau[idx]) for idx in model.tau))
 
@@ -86,17 +98,25 @@ def build_model():
     # Auto-generate the L set (potential collisions between 2 jobs at any stage.
     def _L_filter(model, I, K, J):
         """
-        Filter for the L set (potential collisions between 2 jobs at any stage.
+        Filter for the L set (potential collisions between 2 jobs at any stage).
 
-        Args:
-            model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-                A zero wait transfer policy is assumed between stages.
-            I (str): job index
-            K (str): job index that is greater than I (After I)
-            J (int): stage index
+        Parameters
+        ----------
+        model : Pyomo.Abstractmodel 
+            The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+            A zero wait transfer policy is assumed between stages.
+        I : str
+            job index
+        K : str 
+            job index that is greater than I (After I)
+        J : int
+            stage index
 
-        Returns:
-            expression: True if I < K and the parameters, model.tau[I,J] and model.tau[K,J]
+        Returns
+        -------
+        bool
+            Returns `True` if job `I` precedes job `K` and both jobs require processing at stage `J`, indicating a potential scheduling clash. 
+            'False' otherwise.
         """
         return I < K and model.tau[I, J] and model.tau[K, J]
 
@@ -113,13 +133,18 @@ def build_model():
         """
         This function creates a constraint that ensures the makespan is greater than the sum of the start time of every job and that job's total duration.
 
-        Args:
-            model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+        Parameters
+        ----------
+        model : Pyomo.Abstractmodel
+            The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
-            I (str): job index
+        I : str 
+            job index
 
-        Returns:
-            expression: True if the makespan is greater than the sum of the start time of every job and that job's total duration.
+        Returns
+        -------
+        Pyomo.Constraint.Expression
+            A constraint expression that ensures the makespan is greater than or equal to the sum of the start time and total duration for the job.
         """
         return model.ms >= model.t[I] + sum(model.tau[I, M] for M in model.STAGES)
 
@@ -137,15 +162,23 @@ def build_model():
         """
         Disjunctions to prevent clashes at a stage: This creates a set of disjunct pairs: one if job I occurs before job K and the other if job K occurs before job I.
 
-        Args:
-            model (Pyomo.Disjunction): The disjunction of the model.
-            I (str): job index
-            K (str): job index that is greater than I (After I)
-            J (int): stage index
-            IthenK (bool): True if I occurs before K, False if K occurs before I
+        Parameters
+        ----------
+        model : Pyomo.Disjunct 
+            The disjunction of the model.
+        I : str 
+            job index
+        K : str 
+            job index that is greater than I (After I)
+        J : int
+            stage index
+        IthenK : bool
+            A boolean flag indicating if job I is scheduled before job K (`True`) or vice versa (`False`).
 
-        Returns:
-            None, but creates a disjunction to prevent clashes at a stage.
+        Returns
+        -------
+        None
+            However, a constraint is added to the disjunction to prevent clashes at a stage.
         """
         model = disjunct.model()
         lhs = model.t[I] + sum([M < J and model.tau[I, M] or 0 for M in model.STAGES])
@@ -167,14 +200,21 @@ def build_model():
         """
         Define the disjunctions: either job I occurs before K or K before I
 
-        Args:
-            model (Pyomo.Abstractmodel): jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-            I (str): job index
-            K (str): job index that is greater than I (After I)
-            J (int): stage index
+        Parameters
+        ----------
+        model : Pyomo.Abstractmodel 
+            jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
+        I : str 
+            job index
+        K : str 
+            job index that is greater than I (After I)
+        J : int 
+            stage index
 
-        Returns:
-            list: list of disjunctions to prevent clashes at a stage.
+        Returns
+        -------
+        list of Pyomo.Disjunct 
+            A list of disjunctions for the given jobs and stage, enforcing that one job must precede the other to avoid clashes.
         """
         return [model.NoClash[I, K, J, IthenK] for IthenK in model.I_BEFORE_K]
 
@@ -194,14 +234,17 @@ def build_model():
 def build_small_concrete():
     """
     Build a small jobshop scheduling model for testing purposes.
-    The AbstractModel is instantiated with the data in the file jobshop-small.dat turning it into a ConcreteModel.
+    The AbstractModel is instantiated with the data from 'jobshop-small.dat' turning it into a ConcreteModel.
 
-    Args:
-        None, but the data file jobshop-small.dat must be in the same directory as this file.
+    Parameters
+    ----------
+    None
+        However the data file jobshop-small.dat must be in the same directory as this file.
 
-    Returns:
-        ConcreteModel: jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
-            A zero wait transfer policy is assumed between stages.
+    Returns
+    -------
+    ConcreteModel : Pyomo.ConcreteModel 
+        A concrete instance of the jobshop scheduling model populated with data from 'jobshop-small.dat', ready for optimization.
     """
     return build_model().create_instance(join(this_file_dir(), 'jobshop-small.dat'))
 
