@@ -4,14 +4,14 @@ from pyomo.common.fileutils import this_file_dir
 from pyomo.environ import *
 from pyomo.gdp import *
 
-'''Problem from http://www.minlp.org/library/problem/index.php?i=172&lib=GDP
-We are minimizing the cost of a design of a plant with parallel processing units and storage tanks
-in between. We decide the number and volume of units, and the volume and location of the storage
-tanks. The problem is convexified and has a nonlinear objective and global constraints
+# Problem from http://www.minlp.org/library/problem/index.php?i=172&lib=GDP
+# We are minimizing the cost of a design of a plant with parallel processing units and storage tanks
+# in between. We decide the number and volume of units, and the volume and location of the storage
+# tanks. The problem is convexified and has a nonlinear objective and global constraints
 
-NOTE: When I refer to 'gams' in the comments, that is Batch101006_BM.gms for now. It's confusing
-because the _opt file is different (It has hard-coded bigM parameters so that each constraint 
-has the "optimal" bigM).'''
+# NOTE: When I refer to 'gams' in the comments, that is Batch101006_BM.gms for now. It's confusing
+# because the _opt file is different (It has hard-coded bigM parameters so that each constraint 
+# has the "optimal" bigM).
 
 
 def build_model():
@@ -66,7 +66,9 @@ def build_model():
 
     # TODO: this seems like an over-complicated way to accomplish this task...
     def filter_out_last(model, j):
-        """_summary_
+        """
+        Filters out the last stage from the set of stages to avoid considering it in certain constraints 
+        or disjunctions where the next stage would be required but doesn't exist.
 
         Parameters
         ----------
@@ -78,8 +80,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        bool
+            Returns True if the stage is not the last one in the set, False otherwise.
         """
         return j != model.STAGES.last()
     model.STAGESExceptLast = Set(initialize=model.STAGES, filter=filter_out_last)
@@ -90,11 +92,11 @@ def build_model():
 
     # Parameters
 
-    model.HorizonTime = Param()
-    model.Alpha1 = Param()
-    model.Alpha2 = Param()
-    model.Beta1 = Param()
-    model.Beta2 = Param()
+    model.HorizonTime = Param(doc='Horizon Time')
+    model.Alpha1 = Param(doc='Cost Parameter of the units')
+    model.Alpha2 = Param(doc='Cost Parameter of the intermediate storage tanks')
+    model.Beta1 = Param(doc='Exponent Parameter of the units')
+    model.Beta2 = Param(doc='Exponent Parameter of the intermediate storage tanks')
 
     model.ProductionAmount = Param(model.PRODUCTS)
     model.ProductSizeFactor = Param(model.PRODUCTS, model.STAGES)
@@ -110,27 +112,29 @@ def build_model():
     # I made PRODUCTS ordered so I could do this... Is that bad? And it does index
     # from 1, right?
     def get_log_coeffs(model, k):
-        """_summary_
+        """
+        Calculates the logarithmic coefficients used in the model, typically for transforming linear 
+        relationships into logarithmic form for optimization purposes.
 
         Parameters
         ----------
         model : Pyomo.ConcreteModel
             The Pyomo model for the batch processing optimization problem.
-        k : _type_
-            _description_
+        k : int
+            The index representing a parallel unit.
 
         Returns
         -------
-        _type_
-            _description_
+        float
+            The logarithm of the position of the parallel unit within its set, used as a coefficient in the model.
         """
         return log(model.PARALLELUNITS.ord(k))
 
     model.LogCoeffs = Param(model.PARALLELUNITS, initialize=get_log_coeffs)
 
     # bounds
-    model.volumeLB = Param(model.STAGES, default=VolumeLB)
-    model.volumeUB = Param(model.STAGES, default=VolumeUB)
+    model.volumeLB = Param(model.STAGES, default=VolumeLB, doc='Lower Bound of Volume of the Units')
+    model.volumeUB = Param(model.STAGES, default=VolumeUB, doc='Upper Bound of Volume of the Units')
     model.storageTankSizeLB = Param(model.STAGES, default=StorageTankSizeLB)
     model.storageTankSizeUB = Param(model.STAGES, default=StorageTankSizeUB)
     model.unitsInPhaseUB = Param(model.STAGES, default=UnitsInPhaseUB)
@@ -162,7 +166,8 @@ def build_model():
     # GAMS never un-logs them, I don't think. And I think the GAMs ones
     # must be the log ones.
     def get_volume_bounds(model, j):
-        """_summary_
+        """
+        Defines the bounds for the volume of processing units at each stage.
 
         Parameters
         ----------
@@ -173,8 +178,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple containing the lower and upper bounds for the volume of processing units at stage j..
         """
         return (model.volumeLB[j], model.volumeUB[j])
     model.volume_log = Var(model.STAGES, bounds=get_volume_bounds)
@@ -182,7 +187,8 @@ def build_model():
     model.cycleTime_log = Var(model.PRODUCTS)
 
     def get_unitsOutOfPhase_bounds(model, j):
-        """_summary_
+        """
+        Defines the bounds for the logarithmic representation of the number of units out of phase at each stage.
 
         Parameters
         ----------
@@ -193,13 +199,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple containing the lower and upper bounds for the logarithmic representation of the number of units out of phase at stage j.
         """
         return (0, model.unitsOutOfPhaseUB[j])
     model.unitsOutOfPhase_log = Var(model.STAGES, bounds=get_unitsOutOfPhase_bounds)
+
     def get_unitsInPhase_bounds(model, j):
-        """_summary_
+        """
+        Defines the allowable bounds for the logarithmic number of processing units operating in phase at a given stage in the manufacturing process.
 
         Parameters
         ----------
@@ -210,14 +218,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple containing the minimum and maximum bounds for the logarithmic number of units in phase at stage j, ensuring model constraints are met.
         """
         return (0, model.unitsInPhaseUB[j])
     model.unitsInPhase_log = Var(model.STAGES, bounds=get_unitsInPhase_bounds)
 
     def get_storageTankSize_bounds(model, j):
-        """_summary_
+        """
+        Determines the lower and upper bounds for the logarithmic representation of the storage tank size between stages j and j+1.
 
         Parameters
         ----------
@@ -228,8 +237,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple containing the lower and upper bounds for the storage tank size at the specified stage.
         """
         return (model.storageTankSizeLB[j], model.storageTankSizeUB[j])
     # TODO: these bounds make it infeasible...
@@ -242,7 +251,8 @@ def build_model():
     # Objective
 
     def get_cost_rule(model):
-        """_summary_
+        """
+        Defines the objective function for the model, representing the total cost of the plant design.
 
         Parameters
         ----------
@@ -251,8 +261,13 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo expression representing the total cost of the plant design.
+
+        Notes
+        -----
+        The cost is a function of the volume of processing units and the size of storage tanks, each scaled by respective cost 
+        parameters and exponentiated to reflect non-linear cost relationships.
         """
         return model.Alpha1 * sum(exp(model.unitsInPhase_log[j] + model.unitsOutOfPhase_log[j] + \
                                               model.Beta1 * model.volume_log[j]) for j in model.STAGES) +\
@@ -261,7 +276,9 @@ def build_model():
 
     # Constraints
     def processing_capacity_rule(model, j, i):
-        """_summary_
+        """
+        Ensures that the volume of each processing unit at stage j is sufficient to accommodate the batch size of product i, 
+        taking into account the size factor of the product and the number of units in phase at that stage.
 
         Parameters
         ----------
@@ -275,7 +292,7 @@ def build_model():
 
         Returns
         -------
-        Pyomo.Constraint.Expression
+        Pyomo.Expression
             A Pyomo expression that defines the processing capacity constraint for product `i` at stage `j`.
         """
         return model.volume_log[j] >= log(model.ProductSizeFactor[i, j]) + model.batchSize_log[i, j] - \
@@ -283,7 +300,8 @@ def build_model():
     model.processing_capacity = Constraint(model.STAGES, model.PRODUCTS, rule=processing_capacity_rule)
 
     def processing_time_rule(model, j, i):
-        """_summary_
+        """
+        Ensures that the cycle time for product i at stage j, adjusted for the number of out-of-phase units, meets the required processing time.
 
         Parameters
         ----------
@@ -297,7 +315,7 @@ def build_model():
 
         Returns
         -------
-        Pyomo.Constraint.Expression
+        Pyomo.Expression
             A Pyomo expression defining the constraint that the cycle time for processing product `i` at stage `j`
             must not exceed the maximum allowed, considering the batch size and the units out of phase at this stage.
         """
@@ -306,7 +324,8 @@ def build_model():
     model.processing_time = Constraint(model.STAGES, model.PRODUCTS, rule=processing_time_rule)
 
     def finish_in_time_rule(model):
-        """_summary_
+        """
+        Ensures that the total production time across all products does not exceed the defined time horizon for the process.
 
         Parameters
         ----------
@@ -315,8 +334,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo constraint expression ensuring the total production time does not exceed the time horizon for the plant.
         """
         return model.HorizonTime >= sum(model.ProductionAmount[i]*exp(model.cycleTime_log[i]) \
                                         for i in model.PRODUCTS)
@@ -345,7 +364,7 @@ def build_model():
         model = disjunct.model()
         def volume_stage_j_rule(disjunct, i):
             """ 
-            
+
 
             Parameters
             ----------
@@ -434,7 +453,8 @@ def build_model():
                                            rule=storage_tank_selection_disjunct_rule)
 
     def select_storage_tanks_rule(model, j):
-        """_summary_
+        """
+        Defines a disjunction for the model to choose between including or not including a storage tank between stages j and j+1.
 
         Parameters
         ----------
@@ -445,8 +465,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        list
+            A list of disjuncts representing the choices for including or not including a storage tank between stages j and j+1.
         """
         return [model.storage_tank_selection_disjunct[selectTank, j] for selectTank in [0,1]]
     model.select_storage_tanks = Disjunction(model.STAGESExceptLast, rule=select_storage_tanks_rule)
@@ -505,13 +525,14 @@ def build_model():
         Returns
         -------
         _type_
-            _description_
+            A Pyomo constraint expression calculating the logarithmic representation of the number of units out of phase at stage j
         """
         return sum(model.outOfPhase[j,k] for k in model.PARALLELUNITS) == 1
     model.units_out_of_phase_xor = Constraint(model.STAGES, rule=units_out_of_phase_xor_rule)
 
     def units_in_phase_xor_rule(model, j):
-        """_summary_
+        """
+        Enforces an exclusive OR (XOR) constraint ensuring that exactly one configuration for the number of units out of phase is selected at stage j.
 
         Parameters
         ----------
@@ -522,8 +543,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A Pyomo constraint expression enforcing the XOR condition for units out of phase at stage j.
         """
         return sum(model.inPhase[j,k] for k in model.PARALLELUNITS) == 1
     model.units_in_phase_xor = Constraint(model.STAGES, rule=units_in_phase_xor_rule)
