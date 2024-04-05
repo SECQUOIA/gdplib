@@ -1,12 +1,3 @@
-"""
-batch_processing.py
-This problem seeks to minimize the investment cost in the design of a plant with multiple units in parallel and intermediate storage tanks [1].
-
-Reference:
-    [1] Ravemark, E. Optimization models for design and operation of chemical batch processes. Ph.D. Thesis, ETH Zurich, 1995.
-    [2] Vecchietti, A.; Grossmann, I. E. LOGMIP: a disjunctive 0-1 non-linear optimizer for process system models. Computers and Chemical Engineering 1994, 23, 555–565.
-
-"""
 from os.path import join
 
 from pyomo.common.fileutils import this_file_dir
@@ -24,12 +15,28 @@ has the "optimal" bigM).'''
 
 
 def build_model():
-    """_summary_
+    """
+    Constructs and initializes a Pyomo model for the batch processing problem. 
+
+    The model is designed to minimize the total cost associated with the design and operation of a plant consisting of multiple
+    parallel processing units with intermediate storage tanks. 
+    It involves determining the optimal number and sizes of processing units, batch sizes for different products at various stages, and sizes and
+    placements of storage tanks to ensure operational efficiency while meeting production requirements within a specified time horizon.
+
+    Parameters
+    ----------
+    None
 
     Returns
     -------
-    _type_
-        _description_
+    Pyomo.ConcreteModel
+        An instance of the Pyomo ConcreteModel class representing the batch processing optimization model, 
+        ready to be solved with an appropriate solver.
+
+    References
+    ----------
+    Ravemark, E. Optimization models for design and operation of chemical batch processes. Ph.D. Thesis, ETH Zurich, 1995.
+    Vecchietti, A., & Grossmann, I. E. (1999). LOGMIP: a disjunctive 0–1 non-linear optimizer for process system models. Computers & chemical engineering, 23(4-5), 555-565.
     """
     model = AbstractModel()
 
@@ -53,9 +60,9 @@ def build_model():
 
     # Sets
 
-    model.PRODUCTS = Set()
-    model.STAGES = Set(ordered=True)
-    model.PARALLELUNITS = Set(ordered=True)
+    model.PRODUCTS = Set(doc='Set of Products')
+    model.STAGES = Set(doc='Set of Stages', ordered=True)
+    model.PARALLELUNITS = Set(doc='Set of Parallel Units', ordered=True)
 
     # TODO: this seems like an over-complicated way to accomplish this task...
     def filter_out_last(model, j):
@@ -63,10 +70,11 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            The index representing the stage in the processing sequence. Stages are ordered and include various
+            processing steps required for product completion.
 
         Returns
         -------
@@ -102,6 +110,20 @@ def build_model():
     # I made PRODUCTS ordered so I could do this... Is that bad? And it does index
     # from 1, right?
     def get_log_coeffs(model, k):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        k : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return log(model.PARALLELUNITS.ord(k))
 
     model.LogCoeffs = Param(model.PARALLELUNITS, initialize=get_log_coeffs)
@@ -144,10 +166,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -158,15 +180,16 @@ def build_model():
     model.volume_log = Var(model.STAGES, bounds=get_volume_bounds)
     model.batchSize_log = Var(model.PRODUCTS, model.STAGES)
     model.cycleTime_log = Var(model.PRODUCTS)
+
     def get_unitsOutOfPhase_bounds(model, j):
         """_summary_
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -180,10 +203,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -192,15 +215,16 @@ def build_model():
         """
         return (0, model.unitsInPhaseUB[j])
     model.unitsInPhase_log = Var(model.STAGES, bounds=get_unitsInPhase_bounds)
+
     def get_storageTankSize_bounds(model, j):
         """_summary_
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -222,8 +246,8 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
 
         Returns
         -------
@@ -241,17 +265,18 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
-        i : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
+        i : int
+            The index representing a specific product. Products have unique processing requirements, including
+            batch sizes and processing times, that vary by stage.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint.Expression
+            A Pyomo expression that defines the processing capacity constraint for product `i` at stage `j`.
         """
         return model.volume_log[j] >= log(model.ProductSizeFactor[i, j]) + model.batchSize_log[i, j] - \
             model.unitsInPhase_log[j]
@@ -262,17 +287,19 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
-        i : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
+        i : int
+            Product index, representing different products being processed in the plant, each with its own set of
+            processing times across various stages.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint.Expression
+            A Pyomo expression defining the constraint that the cycle time for processing product `i` at stage `j`
+            must not exceed the maximum allowed, considering the batch size and the units out of phase at this stage.
         """
         return model.cycleTime_log[i] >= log(model.ProcessingTime[i, j]) - model.batchSize_log[i, j] - \
             model.unitsOutOfPhase_log[j]
@@ -283,8 +310,8 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
 
         Returns
         -------
@@ -307,8 +334,8 @@ def build_model():
             _description_
         selectStorageTank : _type_
             _description_
-        j : _type_
-            _description_
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -317,14 +344,16 @@ def build_model():
         """
         model = disjunct.model()
         def volume_stage_j_rule(disjunct, i):
-            """_summary_
+            """ 
+            
 
             Parameters
             ----------
-            disjunct : _type_
+            disjunct : 
                 _description_
-            i : _type_
-                _description_
+            i : int
+                Product index, representing different products being processed in the plant, each with its own set of
+                processing times across various stages.
 
             Returns
             -------
@@ -341,8 +370,9 @@ def build_model():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
+            i : int
+                Product index, representing different products being processed in the plant, each with its own set of
+                processing times across various stages.
 
             Returns
             -------
@@ -359,8 +389,9 @@ def build_model():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
+            i : int
+                Product index, representing different products being processed in the plant, each with its own set of
+                processing times across various stages.
 
             Returns
             -------
@@ -370,6 +401,7 @@ def build_model():
             return inequality(-log(model.StorageTankSizeFactorByProd[i,j]),
                               model.batchSize_log[i,j] - model.batchSize_log[i, j+1],
                               log(model.StorageTankSizeFactorByProd[i,j]))
+        
         def no_batch_rule(disjunct, i):
             """_summary_
 
@@ -377,8 +409,9 @@ def build_model():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
+            i : int
+                Product index, representing different products being processed in the plant, each with its own set of
+                processing times across various stages.
 
             Returns
             -------
@@ -405,10 +438,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -425,10 +458,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -444,10 +477,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -464,10 +497,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
@@ -482,10 +515,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
+        model : Pyomo.ConcreteModel
+            The Pyomo model for the batch processing optimization problem.
+        j : int
+            Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
