@@ -302,8 +302,9 @@ def build_model():
     return model
 
 
-# # disjuncts
-# # high beta disjuncts
+# disjuncts
+# The commented code sets up explicit high and low beta constraints for the SIR model using a big-M reformulation, bypassing Pyomo's built-in disjunctive programming tools.
+# high beta disjuncts
 # def highbeta_L(m,i):
 #     """
 #     Defines the lower bound constraint for the high transmission parameter beta in the SIR model.
@@ -317,6 +318,7 @@ def build_model():
 
 #     Returns
 #     -------
+#     tuple
 #         A tuple (0.0, expr, None) where expr is the Pyomo expression for the lower bound of the high beta disjunct at the i-th biweekly period.
 #         This represents the lower bound of the high beta disjunct at the i-th biweekly period.
 
@@ -340,7 +342,9 @@ def build_model():
 #     i : int
 #         Index of biweekly periods in the data set.
 
-#     Returns:
+#     Returns
+#     -------
+#     tuple
 #         A tuple (None, expr, 0.0) where expr is the Pyomo expression for the upper bound of the high beta disjunct at the i-th biweekly period.
 #         This represents the upper bound of the high beta disjunct at the i-th biweekly period.
 
@@ -386,6 +390,7 @@ def build_model():
 
 #     Returns
 #     -------
+#     tuple
 #         A tuple (0.0, expr, None) where expr is the Pyomo expression for the lower bound of the low beta disjunct at the i-th biweekly period.
 #         This represents the lower bound of the low beta disjunct at the i-th biweekly period.
 
