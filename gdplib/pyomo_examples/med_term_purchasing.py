@@ -49,7 +49,8 @@ def build_model():
     References
     ----------
     [1] Vecchietti, Aldo, and I. Grossmann. "Computational experience with logmip solving linear and nonlinear disjunctive programming problems." In Proc. of FOCAPD, pp. 587-590. 2004.
-    [2] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial & Engineering Chemistry Research, 45(14), 5013-5026. DOI: https://doi.org/10.1021/ie0513144
+    [2] Vecchietti, A., S. Lee and I.E. Grossmann, “Modeling of Discrete/Continuous Optimization Problems: Characterization and Formulation of Disjunctions and their Relaxations,”
+        Computers and Chemical Engineering 27, 433-448 (2003).
     """
     model = AbstractModel()
 
@@ -129,15 +130,15 @@ def build_model():
 
     # Price for quantities less than min amount under discount contract
     # pd1(j, t) in GAMS
-    model.RegPrice_Discount = Param(model.Streams, model.TimePeriods)
+    model.RegPrice_Discount = Param(model.Streams, model.TimePeriod, doc='Price for quantities less than min amount under discount contract')
 
     # Discounted price for the quantity purchased exceeding the min amount
     # pd2(j,t0 in GAMS
-    model.DiscountPrice_Discount = Param(model.Streams, model.TimePeriods)
+    model.DiscountPrice_Discount = Param(model.Streams, model.TimePeriods, doc='Discounted price for the quantity purchased exceeding the min amount')
 
     # Price for quantities below min amount
     # pb1(j,t) in GAMS
-    model.RegPrice_Bulk = Param(model.Streams, model.TimePeriods)
+    model.RegPrice_Bulk = Param(model.Streams, model.TimePeriods, doc='Price for quantities below min amount under bulk contract')
 
     # Price for quantities above min amount
     # pb2(j, t) in GAMS
@@ -177,71 +178,73 @@ def build_model():
     # epsilon_jt
     # cinv(j, t) in GAMS
     # inventory cost of material j at time t
-    model.InventoryCost = Param(model.Streams, model.TimePeriods)
+    model.InventoryCost = Param(model.Streams, model.TimePeriods, doc='Inventory cost of material j at time t')
 
     # invub(j, t) in GAMS
     # inventory upper bound
-    model.InventoryLevelUB = Param(model.Streams, model.TimePeriods, default=0)
+    model.InventoryLevelUB = Param(model.Streams, model.TimePeriods, default=0, doc='Inventory upper bound')
 
     ## UPPER BOUNDS HARDCODED INTO GAMS MODEL
 
     # All of these upper bounds are hardcoded. So I am just leaving them that way.
     # This means they all have to be the same as each other right now.
     def getAmountUBs(model, j, t):
-        """_summary_
+        """
+        Retrieves the upper bound for the amount that can be purchased or processed for a given material j and time period t.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        float
+            The hardcoded upper bound on the amount for any material and time period, defined by the global variable `AMOUNT_UB`.
         """
         return AMOUNT_UB
 
     def getCostUBs(model, j, t):
-        """_summary_
+        """
+        Retrieves the upper bound for the cost associated with purchasing or processing a given material in a specific time period.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        float
+            The hardcoded upper bound on costs for any material and time period, specified by the global variable `COST_UB`.
         """
         return COST_UB
 
     model.AmountPurchasedUB_FP = Param(model.Streams, model.TimePeriods,
-        initialize=getAmountUBs)
+        initialize=getAmountUBs, doc='Upper bound on amount purchased under fixed price contract')
     model.AmountPurchasedUB_Discount = Param(model.Streams, model.TimePeriods,
-        initialize=getAmountUBs)
+        initialize=getAmountUBs, doc='Upper bound on amount purchased under discount contract')
     model.AmountPurchasedBelowMinUB_Discount = Param(model.Streams, model.TimePeriods,
-        initialize=getAmountUBs)
+        initialize=getAmountUBs, doc='Upper bound on amount purchased below min amount for discount under discount contract')
     model.AmountPurchasedAboveMinUB_Discount = Param(model.Streams, model.TimePeriods,
-        initialize=getAmountUBs)
+        initialize=getAmountUBs, doc='Upper bound on amount purchased above min amount for discount under discount contract')
     model.AmountPurchasedUB_FD = Param(model.Streams, model.TimePeriods,
-        initialize=getAmountUBs)
+        initialize=getAmountUBs, doc='Upper bound on amount purchased under fixed duration contract')
     model.AmountPurchasedUB_Bulk = Param(model.Streams, model.TimePeriods,
-        initialize=getAmountUBs)
+        initialize=getAmountUBs, doc='Upper bound on amount purchased under bulk contract')
 
-    model.CostUB_FP = Param(model.Streams, model.TimePeriods, initialize=getCostUBs)
-    model.CostUB_FD = Param(model.Streams, model.TimePeriods, initialize=getCostUBs)
-    model.CostUB_Discount = Param(model.Streams, model.TimePeriods, initialize=getCostUBs)
-    model.CostUB_Bulk = Param(model.Streams, model.TimePeriods, initialize=getCostUBs)
+    model.CostUB_FP = Param(model.Streams, model.TimePeriods, initialize=getCostUBs, doc='Upper bound on cost of fixed price contract')
+    model.CostUB_FD = Param(model.Streams, model.TimePeriods, initialize=getCostUBs, doc='Upper bound on cost of fixed duration contract')
+    model.CostUB_Discount = Param(model.Streams, model.TimePeriods, initialize=getCostUBs, DOC='Upper bound on cost of discount contract')
+    model.CostUB_Bulk = Param(model.Streams, model.TimePeriods, initialize=getCostUBs, doc='Upper bound on cost of bulk contract')
 
 
     ####################
@@ -261,44 +264,52 @@ def build_model():
     # inventory level of chemical j at time period t
     def getInventoryBounds(model, i, j):
         """
-        Inventory level of chemical j at time period t
+        Defines the lower and upper bounds for the inventory level of material j associated with process i.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        i : _type_
-            _description_
-        j : _type_
-            _description_
+        i : int
+            Index of processes.
+        j : int
+            Index of materials.
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple containing two floats: the lower bound (0) and the upper bound for the inventory level of material j. 
+            The upper bound is retrieved from the model's 'InventoryLevelUB' parameter using indices i and j.
         """
         return (0, model.InventoryLevelUB[i,j])
     model.InventoryLevel = Var(model.Streams, model.TimePeriods,
-        bounds=getInventoryBounds)
+        bounds=getInventoryBounds, doc='Inventory level of material j at time period t')
 
     # SF_jt
     # sf(j, t) in GAMS
     # Shortfall of demand for chemical j at time period t
     def getShortfallBounds(model, i, j):
-        """_summary_
+        """
+        Defines the lower and upper bounds for the shortfall in demand for material j during a specific time period, associated with process i.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        i : _type_
-            _description_
-        j : _type_
-            _description_
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        i : int
+            Index of processes.
+        j : int
+            Index of materials.
+
+        Returns
+        -------
+        tuple
+            A tuple (0, upper_bound), where 0 is the lower bound (nonnegative shortfalls) and 'upper_bound' is extracted from 'model.ShortfallUB[i, j]'.
+            'model.ShortfallUB[i, j]' represents the maximal permitted shortfall for material i in the context of process i.
         """
         return(0, model.ShortfallUB[i,j])
     model.Shortfall = Var(model.Products, model.TimePeriods,
-        bounds=getShortfallBounds)
+        bounds=getShortfallBounds, doc='Shortfall of demand for material j at time period t')
 
 
     # amounts purchased under different contracts
@@ -306,139 +317,151 @@ def build_model():
     # spf(j, t) in GAMS
     # Amount of raw material j bought under fixed price contract at time period t
     def get_FP_bounds(model, j, t):
-        """_summary_
+        """
+        Determines the bounds for the amount of raw material 'j' that can be purchased under a fixed price contract during time period 't'.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
         _type_
-            _description_
+            A tuple (0, upper_bound), where '0' is the lower bound (non-negative constraint) and 'upper_bound' is sourced from 'model.AmountPurchasedUB_FP[j,t]'. 
+            'model.AmountPurchasedUB_FP[j,t]' represents the maximum allowed purchase amount for material 'j' in period 't'
         """
         return (0, model.AmountPurchasedUB_FP[j,t])
     model.AmountPurchased_FP = Var(model.Streams, model.TimePeriods,
-        bounds=get_FP_bounds)
+        bounds=get_FP_bounds, doc='Amount of raw material j bought under fixed price contract at time period t')
 
     # spd(j, t) in GAMS
     def get_Discount_Total_bounds(model, j, t):
-        """_summary_
+        """
+        Determines the lower and upper bounds for the total amount of material j that can be purchased under discount contracts during time period t.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple containing two elements: the lower bound (0) and the upper bound for the total amount of material j that can be purchased under discount contracts in period t. 
+            The upper bound is retrieved from 'model.AmountPurchasedUB_Discount[j, t]'.
         """
         return (0, model.AmountPurchasedUB_Discount[j,t])
     model.AmountPurchasedTotal_Discount = Var(model.Streams, model.TimePeriods,
-        bounds=get_Discount_Total_bounds)
+        bounds=get_Discount_Total_bounds, doc='Total amount of material j bought under discount contract at time period t')
 
     # Amount purchased below min amount for discount under discount contract
     # spd1(j, t) in GAMS
     def get_Discount_BelowMin_bounds(model, j, t):
-        """_summary_
+        """
+        Determines the lower and upper bounds for the amount of material j purchased below the minimum quantity for discounts under discount contracts during time period t.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple (0, upper_bound), where '0' is the lower bound, and 'upper_bound' is 'model.AmountPurchasedBelowMinUB_Discount[j, t]'. 
+            'model.AmountPurchasedBelowMinUB_Discount[j, t] indicates the maximal purchasable amount below the discount threshold for material j in period't.
         """
         return (0, model.AmountPurchasedBelowMinUB_Discount[j,t])
     model.AmountPurchasedBelowMin_Discount = Var(model.Streams,
-        model.TimePeriods, bounds=get_Discount_BelowMin_bounds)
+        model.TimePeriods, bounds=get_Discount_BelowMin_bounds, doc='Amount purchased below min amount for discount under discount contract')
 
     # spd2(j, t) in GAMS
     # Amount purchased above min amount for discount under discount contract
     def get_Discount_AboveMin_bounds(model, j, t):
-        """_summary_
+        """
+        Determines the lower and upper bounds for the amount of material j purchased above the minimum quantity eligible for discounts under discount contracts during time period t.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple (0, upper_bound), where '0' is the lower bound and 'upper_bound' is sourced from 'model.AmountPurchasedBelowMinUB_Discount[j, t]'. 
+            'model.AmountPurchasedBelowMinUB_Discount[j, t]' indicates the maximum amount that can be purchased above the discount threshold for material j in period t.
         """
         return (0, model.AmountPurchasedBelowMinUB_Discount[j,t])
     model.AmountPurchasedAboveMin_Discount = Var(model.Streams,
-        model.TimePeriods, bounds=get_Discount_AboveMin_bounds)
+        model.TimePeriods, bounds=get_Discount_AboveMin_bounds, doc='Amount purchased above min amount for discount under discount contract')
 
     # Amount purchased under bulk contract
     # spb(j, t) in GAMS
     def get_bulk_bounds(model, j, t):
-        """_summary_
+        """
+        Sets the lower and upper bounds for the amount of material j that can be purchased under a bulk contract during time period t.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple (0, upper_bound), where '0' is the lower bound and 'upper_bound' is sourced from 'model.AmountPurchasedUB_Bulk[j,t]'.
+            'model.AmountPurchasedUB_Bulk[j,t]' indicates the maximal allowable bulk purchase amount for material 'j' in period 't'.
         """
         return (0, model.AmountPurchasedUB_Bulk[j,t])
     model.AmountPurchased_Bulk = Var(model.Streams, model.TimePeriods,
-        bounds=get_bulk_bounds)
+        bounds=get_bulk_bounds, doc='Amount purchased under bulk contract')
 
     # spl(j, t) in GAMS
     # Amount purchased under Fixed Duration contract
     def get_FD_bounds(model, j, t):
-        """_summary_
+        """
+        Sets the lower and upper bounds for the quantity of material j that can be acquired under a fixed duration contract during the time period t.
 
         Parameters
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
-            _description_
+        tuple
+            A tuple (0, upper_bound), where '0' is the lower bound and upper_bound is taken from 'model.AmountPurchasedUB_FD[j, t]'.
+            'model.AmountPurchasedUB_FD[j, t]' indicates the maximum permissible purchase quantity for material j under a fixed duration contract in time period t.
         """
         return (0, model.AmountPurchasedUB_FD[j,t])
     model.AmountPurchased_FD = Var(model.Streams, model.TimePeriods,
-        bounds=get_FD_bounds)
+        bounds=get_FD_bounds, doc='Amount purchased under Fixed Duration contract')
 
 
     # costs
@@ -451,19 +474,19 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-           Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+           Index of time period.
 
         Returns
         -------
-        _type_
+        tuple
             _description_
         """
         return (0, model.CostUB_FD[j,t])
-    model.Cost_FD = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FD)
+    model.Cost_FD = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FD, doc='Cost of variable length contract')
 
     # costpf(j, t) in GAMS
     # cost of fixed duration contract
@@ -474,18 +497,18 @@ def build_model():
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
+        tuple
             _description_
         """
         return (0, model.CostUB_FP[j,t])
-    model.Cost_FP = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FP)
+    model.Cost_FP = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FP, doc='Cost of fixed price contract')
 
     # costpd(j, t) in GAMS
     # cost of discount contract
@@ -496,19 +519,19 @@ def build_model():
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            _description_
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
+        tuple
             _description_
         """
         return (0, model.CostUB_Discount[j,t])
     model.Cost_Discount = Var(model.Streams, model.TimePeriods,
-        bounds=get_CostUBs_Discount)
+        bounds=get_CostUBs_Discount, doc='Cost of discount contract')
 
     # costpb(j, t) in GAMS
     # cost of bulk contract
@@ -519,18 +542,18 @@ def build_model():
         ----------
         model : Pyomo.AbstractModel
             Pyomo abstract model for medium-term purchasing contracts problem.
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
-        _type_
+        tuple
             _description_
         """
         return (0, model.CostUB_Bulk[j,t])
-    model.Cost_Bulk = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_Bulk)
+    model.Cost_Bulk = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_Bulk, doc='Cost of bulk contract')
 
 
     # binary variables
@@ -557,8 +580,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Objective
+            Objective function: maximize profit of the medium-term purchasing contracts problem.
         """
         salesIncome = sum(model.Prices[j,t] * model.FlowRate[j,t]
             for j in model.Products for t in model.TimePeriods)
@@ -578,7 +601,7 @@ def build_model():
         inventoryCost = sum(model.InventoryCost[j,t] * model.InventoryLevel[j,t]
             for j in model.Products for t in model.TimePeriods)
         return salesIncome - purchaseCost - productionCost - inventoryCost - shortfallCost
-    model.profit = Objective(rule=profit_rule, sense=maximize)
+    model.profit = Objective(rule=profit_rule, sense=maximize, doc='Maximize profit')
 
     # flow of raw materials is the total amount purchased (accross all contracts)
     def raw_material_flow_rule(model, j, t):
@@ -586,12 +609,12 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -609,12 +632,12 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -634,10 +657,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -652,10 +675,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -674,10 +697,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -694,10 +717,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -712,10 +735,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -731,10 +754,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -750,10 +773,10 @@ def build_model():
 
         Parameters
         ----------
-        model : _type_
-            _description_
-        t :  Index
-            Time period.
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -772,9 +795,9 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -790,9 +813,9 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -808,9 +831,9 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -829,9 +852,9 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -848,9 +871,9 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -869,9 +892,9 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -891,11 +914,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -912,11 +935,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -933,11 +956,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -954,11 +977,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -975,11 +998,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -995,11 +1018,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -1018,12 +1041,12 @@ def build_model():
 
         Parameters
         ----------
-        disjunct :  Index
+        disjunct : Pyomo.Disjunct
             _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
         buy : _type_
             _description_
         """
@@ -1042,11 +1065,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -1064,11 +1087,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -1089,14 +1112,14 @@ def build_model():
 
         Parameters
         ----------
-        disjunct :  Index
+        disjunct : Pyomo.Disjunct
             _description_
-        j : _type_
-            _description_
-        t :  Index
-            _description_
-        buy : _type_
-            _description_
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
+        buy : str
+            Decision parameter that indicates whether to buy under the fixed price contract or not.
 
         Raises
         ------
@@ -1133,11 +1156,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -1156,11 +1179,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -1182,14 +1205,14 @@ def build_model():
 
         Parameters
         ----------
-        disjunct :  Index
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
-        buy : _type_
-            _description_
+        disjunct :  Pyomo.Disjunct
+            -description_
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
+        buy : str
+            Decision parameter that indicates whether to buy under the fixed price contract or not.
 
         Raises
         ------
@@ -1224,11 +1247,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            _description_
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
@@ -1249,10 +1272,10 @@ def build_model():
         ----------
         disjunct :  Index
             _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
         """
         model = disjunct.model()
         disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
@@ -1269,10 +1292,10 @@ def build_model():
         ----------
         disjunct :  Index
             _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
         """
         model = disjunct.model()
         disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] >= \
@@ -1295,10 +1318,10 @@ def build_model():
         ----------
         disjunct :  Index
             _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
         """
         model = disjunct.model()
         # NOTE: I think there is a mistake in the GAMS file in line 327.
@@ -1329,10 +1352,10 @@ def build_model():
         ----------
         disjunct :  Index
             _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
         """
         model = disjunct.model()
         disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j,t] == 0)
@@ -1352,11 +1375,11 @@ def build_model():
         Parameters
         ----------
         model : Pyomo.AbstractModel
-            _description_
-        j : _type_
-            _description_
-        t :  Index
-            Time period.
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        j : int
+            Index of materials.
+        t : int
+            Index of time period.
 
         Returns
         -------
