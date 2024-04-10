@@ -1,3 +1,13 @@
+#  ___________________________________________________________________________
+#
+#  Pyomo: Python Optimization Modeling Objects
+#  Copyright 2017 National Technology and Engineering Solutions of Sandia, LLC
+#  Under the terms of Contract DE-NA0003525 with National Technology and
+#  Engineering Solutions of Sandia, LLC, the U.S. Government retains certain
+#  rights in this software.
+#  This software is distributed under the 3-clause BSD License.
+#  ___________________________________________________________________________
+
 from os.path import join
 
 from pyomo.common.fileutils import this_file_dir
@@ -528,7 +538,6 @@ def build_model():
                                                 for k in model.PARALLELUNITS)
     model.units_in_phase = Constraint(model.STAGES, rule=units_in_phase_rule)
 
-    # and since I didn't do the disjunction as a disjunction, we need the XORs:
     def units_out_of_phase_xor_rule(model, j):
         """
         Enforces an exclusive OR (XOR) constraint ensuring that exactly one configuration for the number of units out of phase is selected at stage j.
