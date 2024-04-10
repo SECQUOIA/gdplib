@@ -345,97 +345,103 @@ def build_model():
     # Disjunctions
 
     def storage_tank_selection_disjunct_rule(disjunct, selectStorageTank, j):
-        """_summary_
+        """
+        Defines the conditions under which a storage tank will be included or excluded between stages j and j+1. 
+        This rule is applied to a disjunct, which is part of a disjunction representing this binary decision.
 
         Parameters
         ----------
-        disjunct : _type_
-            _description_
-        selectStorageTank : _type_
-            _description_
+        disjunct :  Pyomo.Disjunct
+            A Pyomo Disjunct object representing a specific case within the disjunction.
+        selectStorageTank : int
+            A binary indicator (0 or 1) where 1 means a storage tank is included and 0 means it is not.
         j : int
             Index for the processing stages in the plant. Stages are ordered and include various processing steps.
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            This function defines constraints within the disjunct based on the decision to include (selectStorageTank=1) or exclude (selectStorageTank=0) a storage tank. 
+            Constraints ensure the storage tank's volume can accommodate the batch sizes at stage j and j+1 if included, or ensure batch size continuity if excluded.
         """
         model = disjunct.model()
         def volume_stage_j_rule(disjunct, i):
             """ 
-
+            Ensures the storage tank size between stages j and j+1 is sufficient to accommodate the batch size of product i at stage j, considering the storage tank size factor.
 
             Parameters
             ----------
-            disjunct : 
-                _description_
+            disjunct : Pyomo.Disjunct
+                The disjunct within which this constraint is defined.
             i : int
                 Product index, representing different products being processed in the plant, each with its own set of
                 processing times across various stages.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                A constraint ensuring the storage tank size is sufficient for the batch size at stage j.
             """
             return model.storageTankSize_log[j] >= log(model.StorageTankSizeFactor[j]) + \
                 model.batchSize_log[i, j]
         
         def volume_stage_jPlus1_rule(disjunct, i):
-            """_summary_
+            """
+            Ensures the storage tank size between stages j and j+1 is sufficient to accommodate the batch size of product i at stage j+1, considering the storage tank size factor.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                The disjunct within which this constraint is defined.
             i : int
                 Product index, representing different products being processed in the plant, each with its own set of
                 processing times across various stages.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                A constraint ensuring the storage tank size is sufficient for the batch size at stage j+1.
             """
             return model.storageTankSize_log[j] >= log(model.StorageTankSizeFactor[j]) + \
                 model.batchSize_log[i, j+1]
         
         def batch_size_rule(disjunct, i):
-            """_summary_
+            """
+            Ensures the difference in batch sizes between stages j and j+1 for product i is within the acceptable limits defined by the storage tank size factor by product.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+               The disjunct within which this constraint is defined.
             i : int
                 Product index, representing different products being processed in the plant, each with its own set of
                 processing times across various stages.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                A constraint enforcing acceptable batch size differences between stages j and j+1.
             """
             return inequality(-log(model.StorageTankSizeFactorByProd[i,j]),
                               model.batchSize_log[i,j] - model.batchSize_log[i, j+1],
                               log(model.StorageTankSizeFactorByProd[i,j]))
         
         def no_batch_rule(disjunct, i):
-            """_summary_
+            """
+            Enforces batch size continuity between stages j and j+1 for product i, applicable when no storage tank is selected.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                The disjunct within which this constraint is defined.
             i : int
                 Product index, representing different products being processed in the plant, each with its own set of
                 processing times across various stages.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                A constraint ensuring batch size continuity between stages j and j+1
             """
             return model.batchSize_log[i,j] - model.batchSize_log[i,j+1] == 0
 
@@ -474,7 +480,8 @@ def build_model():
     # though this is a disjunction in the GAMs model, it is more efficiently formulated this way:
     # TODO: what on earth is k?
     def units_out_of_phase_rule(model, j):
-        """_summary_
+        """
+        Defines the constraints for the logarithmic representation of the number of units k out of phase in stage j.
 
         Parameters
         ----------
@@ -485,8 +492,13 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            Adds a constraint to the Pyomo model representing the logarithmic sum of out-of-phase units at stage j. 
+            This constraint is not returned but directly added to the model.
+
+        Notes
+        -----
+        These are not directly related to disjunctions but more to the logical modeling of unit operations.
         """
         return model.unitsOutOfPhase_log[j] == sum(model.LogCoeffs[k] * model.outOfPhase[j,k] \
                                                    for k in model.PARALLELUNITS)
@@ -504,8 +516,13 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            Incorporates a constraint into the Pyomo model that corresponds to the logarithmic sum of in-phase units at stage j. 
+            The constraint is directly applied to the model without an explicit return value.
+
+        Notes
+        -----
+        These are not directly related to disjunctions but more to the logical modeling of unit operations.
         """
         return model.unitsInPhase_log[j] == sum(model.LogCoeffs[k] * model.inPhase[j,k] \
                                                 for k in model.PARALLELUNITS)
@@ -513,7 +530,8 @@ def build_model():
 
     # and since I didn't do the disjunction as a disjunction, we need the XORs:
     def units_out_of_phase_xor_rule(model, j):
-        """_summary_
+        """
+        Enforces an exclusive OR (XOR) constraint ensuring that exactly one configuration for the number of units out of phase is selected at stage j.
 
         Parameters
         ----------
@@ -524,7 +542,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             A Pyomo constraint expression calculating the logarithmic representation of the number of units out of phase at stage j
         """
         return sum(model.outOfPhase[j,k] for k in model.PARALLELUNITS) == 1
@@ -532,7 +550,7 @@ def build_model():
 
     def units_in_phase_xor_rule(model, j):
         """
-        Enforces an exclusive OR (XOR) constraint ensuring that exactly one configuration for the number of units out of phase is selected at stage j.
+        Enforces an exclusive OR (XOR) constraint ensuring that exactly one configuration for the number of units in phase is selected at stage j.
 
         Parameters
         ----------
