@@ -579,7 +579,8 @@ def build_model():
     # Objective: maximize profit
     def profit_rule(model):
         """
-        Objective function: maximize profit
+        Objective function: maximize profit of the medium-term purchasing contracts problem.
+        The profit  is given by sales revenues, operating costs, purchasing costs, inventory costs, and shortfall penalties
 
         Parameters
         ----------
@@ -613,7 +614,8 @@ def build_model():
 
     # flow of raw materials is the total amount purchased (accross all contracts)
     def raw_material_flow_rule(model, j, t):
-        """_summary_
+        """
+        Ensures the total flow of raw material j in time period t equals the sum of amounts purchased under all contract types.
 
         Parameters
         ----------
@@ -627,16 +629,17 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            An equality constraint ensuring the material flow balance for each raw material j in each time period t.
         """
         return model.FlowRate[j,t] == model.AmountPurchased_FD[j,t] + \
             model.AmountPurchased_FP[j,t] + model.AmountPurchased_Bulk[j,t] + \
             model.AmountPurchasedTotal_Discount[j,t]
     model.raw_material_flow = Constraint(model.RawMaterials, model.TimePeriods,
-        rule=raw_material_flow_rule)
+        rule=raw_material_flow_rule, doc='Material flow balance for each raw material j in each time period t')
 
     def discount_amount_total_rule(model, j, t):
-        """_summary_
+        """
+        Balances the total amount of material j purchased under discount contracts in time period t with the sum of amounts purchased below and above the minimum discount threshold.
 
         Parameters
         ----------
@@ -650,13 +653,13 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            An equality constraint that ensures the total discounted purchase amount of material j in time period t is the sum of amounts bought below and above the discount threshold.
         """
         return model.AmountPurchasedTotal_Discount[j,t] == \
             model.AmountPurchasedBelowMin_Discount[j,t] + \
             model.AmountPurchasedAboveMin_Discount[j,t]
     model.discount_amount_total_rule = Constraint(model.RawMaterials, model.TimePeriods,
-        rule=discount_amount_total_rule)
+        rule=discount_amount_total_rule, doc='Total discounted purchase amount of material j in time period t is the sum of amounts bought below and above the discount threshold')
 
     # mass balance equations for each node
     # these are specific to the process network in this example.
@@ -697,6 +700,20 @@ def build_model():
     model.mass_balance2 = Constraint(model.TimePeriods, rule=mass_balance_rule2)
 
     def mass_balance_rule3(model, t):
+        """_summary_
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return model.FlowRate[6, t] == model.FlowRate[7, t]
     model.mass_balance3 = Constraint(model.TimePeriods, rule=mass_balance_rule3)
 
