@@ -469,7 +469,8 @@ def build_model():
     # costpl(j, t) in GAMS
     # cost of variable length contract
     def get_CostUBs_FD(model, j, t):
-        """_summary_
+        """
+        Build the lower and upper bounds for the cost of purchasing material j under a fixed duration contract during time period t.
 
         Parameters
         ----------
@@ -483,7 +484,8 @@ def build_model():
         Returns
         -------
         tuple
-            _description_
+            A tuple (0, upper_bound), where '0' is the lower bound, the minimal cost scenario, and 'upper_bound' is retrieved from 'model.CostUB_FD[j, t]', 
+            'model.CostUB_FD[j, t]' represents the highest permissible cost for purchasing material j under a fixed duration contract in time period t.
         """
         return (0, model.CostUB_FD[j,t])
     model.Cost_FD = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FD, doc='Cost of variable length contract')
@@ -491,7 +493,8 @@ def build_model():
     # costpf(j, t) in GAMS
     # cost of fixed duration contract
     def get_CostUBs_FP(model, j, t):
-        """_summary_
+        """
+        Sets the lower and upper bounds for the cost of purchasing material j under a fixed price contract during time period t.
 
         Parameters
         ----------
@@ -505,7 +508,8 @@ def build_model():
         Returns
         -------
         tuple
-            _description_
+            A tuple (0, upper_bound), where '0' is the lower bound and upper_bound is sourced from 'model.CostUB_FP[j, t]'.
+            'model.CostUB_FP[j, t]' denotes the highest permissible cost for purchasing material 'j' under a fixed price contract in time period 't'
         """
         return (0, model.CostUB_FP[j,t])
     model.Cost_FP = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_FP, doc='Cost of fixed price contract')
@@ -513,7 +517,8 @@ def build_model():
     # costpd(j, t) in GAMS
     # cost of discount contract
     def get_CostUBs_Discount(model, j, t):
-        """_summary_
+        """
+        Set the lower and upper bounds for the cost of acquiring material j under discount contracts during time period t.
 
         Parameters
         ----------
@@ -527,7 +532,8 @@ def build_model():
         Returns
         -------
         tuple
-            _description_
+            A tuple (0, upper bound), where 0' represents the lower bound, indicating the lowest possible cost condition, and upper bound is the 'model.CostUB_Discount[j, t]'. 
+            'model.CostUB_Discount[j, t]' represents the maximum allowed cost for purchasing material j under a discount contract in the given time period t.
         """
         return (0, model.CostUB_Discount[j,t])
     model.Cost_Discount = Var(model.Streams, model.TimePeriods,
@@ -536,7 +542,8 @@ def build_model():
     # costpb(j, t) in GAMS
     # cost of bulk contract
     def get_CostUBs_Bulk(model, j, t):
-        """_summary_
+        """
+        Set the lower and upper bounds for the cost incurred from purchasing material j under bulk contracts during time period t.
 
         Parameters
         ----------
@@ -550,7 +557,8 @@ def build_model():
         Returns
         -------
         tuple
-            _description_
+            A tuple with 0 as the lower bound and 'model.CostUB_Bulk[j, t]' as the upper bound.
+            'model.CostUB_Bulk[j, t]' represents the maximum cost for purchasing material j under a bulk contract in time period t.
         """
         return (0, model.CostUB_Bulk[j,t])
     model.Cost_Bulk = Var(model.Streams, model.TimePeriods, bounds=get_CostUBs_Bulk, doc='Cost of bulk contract')
@@ -558,10 +566,10 @@ def build_model():
 
     # binary variables
 
-    model.BuyFPContract = RangeSet(0,1)
-    model.BuyDiscountContract = Set(initialize=('BelowMin', 'AboveMin', 'NotSelected'))
-    model.BuyBulkContract = Set(initialize=('BelowMin', 'AboveMin', 'NotSelected'))
-    model.BuyFDContract = Set(initialize=('1Month', '2Month', '3Month', 'NotSelected'))
+    model.BuyFPContract = RangeSet(0,1) # buy fixed price contract
+    model.BuyDiscountContract = Set(initialize=('BelowMin', 'AboveMin', 'NotSelected'), doc='Buy discount contract')
+    model.BuyBulkContract = Set(initialize=('BelowMin', 'AboveMin', 'NotSelected'), doc='Buy bulk contract')
+    model.BuyFDContract = Set(initialize=('1Month', '2Month', '3Month', 'NotSelected'), doc='Buy fixed duration contract')
 
 
     ################
@@ -618,7 +626,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[j,t] == model.AmountPurchased_FD[j,t] + \
@@ -641,7 +649,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.AmountPurchasedTotal_Discount[j,t] == \
@@ -664,7 +672,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[1, t] == model.FlowRate[2, t] + model.FlowRate[3, t]
@@ -682,7 +690,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[5, t] == model.FlowRate[4, t] + model.FlowRate[8,t]
@@ -704,7 +712,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[3, t] == 10*model.FlowRate[5, t]
@@ -724,7 +732,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[9, t] == model.ProcessConstants[1] * model.FlowRate[2, t]
@@ -742,7 +750,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[10, t] == model.ProcessConstants[2] * \
@@ -761,7 +769,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[8, t] == RandomConst_Line264 * \
@@ -780,7 +788,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[11, t] == RandomConst_Line265 * \
@@ -801,7 +809,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[9, t] <= model.Capacity[1]
@@ -819,7 +827,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[10, t] <= model.Capacity[2]
@@ -837,7 +845,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.FlowRate[11, t] + model.FlowRate[8, t] <= model.Capacity[3]
@@ -989,7 +997,7 @@ def build_model():
             _description_
         """
         return model.FlowRate[j, t] <= model.SupplyAndDemandUBs[j, t]
-    model.supplier_capacity = Constraint(model.RawMaterials, model.TimePeriods, rule=supplier_capacity_rule)
+    model.supplier_capacity = Constraint(model.RawMaterials, model.TimePeriods, rule=supplier_capacity_rule, doc='')
 
     # demand upper bound
     def demand_UB_rule(model, j, t):
@@ -1047,8 +1055,8 @@ def build_model():
             Index of materials.
         t : int
             Index of time period.
-        buy : _type_
-            _description_
+        buy : str
+            Decision parameter that indicates whether to buy under the fixed price contract or not.
         """
         model = disjunct.model()
         if buy:
