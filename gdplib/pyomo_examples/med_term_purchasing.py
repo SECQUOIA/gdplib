@@ -1147,7 +1147,7 @@ def build_model():
         buy : str
             A decision parameter indicating whether to purchase ('buy' is True) under the FP contract or not ('buy' is False) for material j in time period t
 
-         Notes
+        Notes
         -----
         The 'buy' parameter is treated as a binary variable in the context of the model, where True indicates a decision to engage in purchasing under the FP contract, and False indicates otherwise.
         """
@@ -1212,7 +1212,11 @@ def build_model():
 
     # Disjunction for Discount contract
     def discount_contract_disjunct_rule(disjunct, j, t, buy):
-        """_summary_
+        """
+        Sets rules for purchasing materials j in time t under discount contracts based on the buying decision 'buy'. 
+
+        For discount contracts, the decision involves purchasing below or above a minimum amount for a discount, or not selecting the contract at all. 
+        This rule reflects these choices by adjusting purchasing amounts and enforcing corresponding constraints.
 
         Parameters
         ----------
@@ -1223,12 +1227,8 @@ def build_model():
         t : int
             Index of time period.
         buy : str
-            Decision parameter that indicates whether to buy under the fixed price contract or not.
-
-        Raises
-        ------
-        RuntimeError
-            _description_
+             Decision on purchasing strategy: 'BelowMin', 'AboveMin', or 'NotSelected'.
+        
         """
         model = disjunct.model()
         if buy == 'BelowMin':
@@ -1251,11 +1251,14 @@ def build_model():
         else:
             raise RuntimeError("Unrecognized choice for discount contract: %s" % buy)
     model.discount_contract_disjunct = Disjunct(model.RawMaterials, model.TimePeriods,
-        model.BuyDiscountContract, rule=discount_contract_disjunct_rule)
+        model.BuyDiscountContract, rule=discount_contract_disjunct_rule, doc='Disjunctive constraints for Discount contract buying options')
 
     # Discount contract disjunction
     def discount_contract_rule(model, j, t):
-        """_summary_
+        """
+        Determines the disjunction for purchasing under discount contracts for each material and time period, based on available decisions.
+
+        This function sets up the model to choose among different discount purchasing strategies, enhancing the flexibility in procurement planning.
 
         Parameters
         ----------
@@ -1268,17 +1271,20 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            The disjunction representing the choice among discount contract purchasing strategies.
         """
         return [model.discount_contract_disjunct[j,t,buy] \
             for buy in model.BuyDiscountContract]
     model.discount_contract = Disjunction(model.RawMaterials, model.TimePeriods,
-        rule=discount_contract_rule)
+        rule=discount_contract_rule, doc='Disjunction for Discount contract buying options')
 
     # cost constraint for discount contract (independent constraint)
     def discount_cost_rule(model, j, t):
-        """_summary_
+        """
+        Calculates the cost of purchasing material 'j' in time 't' under a discount contract, accounting for different price levels.
+
+        This constraint ensures the model correctly accounts for the total cost of purchases under discount contracts, which may involve different prices based on quantity thresholds.
 
         Parameters
         ----------
@@ -1292,13 +1298,13 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            The constraint that calculates the total cost of purchases under discount contracts.
         """
         return model.Cost_Discount[j,t] == model.RegPrice_Discount[j,t] * \
             model.AmountPurchasedBelowMin_Discount[j,t] + \
             model.DiscountPrice_Discount[j,t] * model.AmountPurchasedAboveMin_Discount[j,t]
     model.discount_cost = Constraint(model.RawMaterials, model.TimePeriods,
-        rule=discount_cost_rule)
+        rule=discount_cost_rule, doc='Cost constraint for Discount contract')
 
 
     # BULK CONTRACT
@@ -1316,7 +1322,7 @@ def build_model():
         t : int
             Index of time period.
         buy : str
-            Decision parameter that indicates whether to buy under the fixed price contract or not.
+            _description_
 
         Raises
         ------
