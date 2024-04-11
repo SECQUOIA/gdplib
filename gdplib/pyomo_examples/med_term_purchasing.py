@@ -1221,8 +1221,7 @@ def build_model():
         Parameters
         ----------
         disjunct : Pyomo.Disjunct
-            _description_
-        j : int
+            A Pyomo Disjunct object representing a part of the disjunction. It encapsulates the constraints that are valid under a specific scenario ('BelowMin', 'AboveMin', or 'NotSelected').
             Index of materials.
         t : int
             Index of time period.
@@ -1311,23 +1310,23 @@ def build_model():
 
     # Bulk contract buying options disjunct
     def bulk_contract_disjunct_rule(disjunct, j, t, buy):
-        """_summary_
+        """
+        Defines conditions for bulk purchases of material j at time t based on the decision 'buy'.
+
+        This rule determines how much of a material is bought under a bulk contract and at what price, based on whether purchases are below or above a specified minimum amount, or if the bulk option is not selected. 
+        It enforces different constraints for the amount and cost of materials under these scenarios.
 
         Parameters
         ----------
         disjunct :  Pyomo.Disjunct
-            -description_
+            A Pyomo Disjunct object representing a part of the disjunction. It encapsulates the constraints that are valid under a specific scenario ('BelowMin', 'AboveMin', or 'NotSelected').
         j : int
             Index of materials.
         t : int
             Index of time period.
         buy : str
-            _description_
+            The decision on how to engage with the bulk contract: 'BelowMin', 'AboveMin', or 'NotSelected'.
 
-        Raises
-        ------
-        RuntimeError
-            _description_
         """
         model = disjunct.model()
         if buy == 'BelowMin':
@@ -1348,11 +1347,15 @@ def build_model():
         else:
             raise RuntimeError("Unrecognized choice for bulk contract: %s" % buy)
     model.bulk_contract_disjunct = Disjunct(model.RawMaterials, model.TimePeriods,
-        model.BuyBulkContract, rule=bulk_contract_disjunct_rule)
+        model.BuyBulkContract, rule=bulk_contract_disjunct_rule, doc='Disjunctive constraints for Bulk contract buying options')
 
     # Bulk contract disjunction
     def bulk_contract_rule(model, j, t):
-        """_summary_
+        """
+        Establishes a decision-making framework for bulk purchases, allowing the model to choose among predefined scenarios.
+
+        This function sets up a flexible structure for deciding on bulk purchases. 
+        Each material and time period can be evaluated independently, allowing the model to adapt to various conditions and optimize procurement strategies under bulk contracts.
 
         Parameters
         ----------
@@ -1365,12 +1368,12 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            A set of disjunctive conditions that the model can choose from when making bulk purchasing decisions.
         """
         return [model.bulk_contract_disjunct[j,t,buy] for buy in model.BuyBulkContract]
     model.bulk_contract = Disjunction(model.RawMaterials, model.TimePeriods,
-        rule=bulk_contract_rule)
+        rule=bulk_contract_rule, doc='Disjunction for Bulk contract buying options')
 
 
     # FIXED DURATION CONTRACT
