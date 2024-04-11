@@ -664,7 +664,11 @@ def build_model():
     # mass balance equations for each node
     # these are specific to the process network in this example.
     def mass_balance_rule1(model, t):
-        """_summary_
+        """
+        Represents the mass balance equation for the first node in the process network.
+        
+        Stream 1 is the inlet stream, and streams 2 and 3 are the outlet streams.
+        The mass balance equation states that the total flow rate into the node (stream 1) is equal to the sum of the flow rates out of the node (streams 2 and 3).
 
         Parameters
         ----------
@@ -676,13 +680,17 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the mass balance equation for the first node in the process network.
         """
         return model.FlowRate[1, t] == model.FlowRate[2, t] + model.FlowRate[3, t]
-    model.mass_balance1 = Constraint(model.TimePeriods, rule=mass_balance_rule1)
+    model.mass_balance1 = Constraint(model.TimePeriods, rule=mass_balance_rule1, doc='Mass balance equation for the first node in the process network')
 
     def mass_balance_rule2(model, t):
-        """_summary_
+        """
+        Represents the mass balance equation for the second node in the process network.
+
+        Stream 4 and 8 are the inlet streams, and stream 5 is the outlet stream.
+        The mass balance equation states that the total flow rate into the node (streams 4 and 8) is equal to the flow rate out of the node (stream 5).
 
         Parameters
         ----------
@@ -694,31 +702,17 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the mass balance equation for the second node in the process network.
         """
         return model.FlowRate[5, t] == model.FlowRate[4, t] + model.FlowRate[8,t]
-    model.mass_balance2 = Constraint(model.TimePeriods, rule=mass_balance_rule2)
+    model.mass_balance2 = Constraint(model.TimePeriods, rule=mass_balance_rule2, doc='Mass balance equation for the second node in the process network')
 
     def mass_balance_rule3(model, t):
-        """_summary_
-
-        Parameters
-        ----------
-        model : Pyomo.AbstractModel
-            Pyomo abstract model for medium-term purchasing contracts problem.
-        t : int
-            Index of time period.
-
-        Returns
-        -------
-        _type_
-            _description_
         """
-        return model.FlowRate[6, t] == model.FlowRate[7, t]
-    model.mass_balance3 = Constraint(model.TimePeriods, rule=mass_balance_rule3)
+        Represents the mass balance equation for the third node in the process network.
 
-    def mass_balance_rule4(model, t):
-        """_summary_
+        Stream 6 is the inlet stream, and stream 7 is the outlet stream.
+        The mass balance equation states that the total flow rate into the node (stream 6) is equal to the flow rate out of the node (stream 7).
 
         Parameters
         ----------
@@ -730,15 +724,40 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the mass balance equation for the third node in the process network.
+        """
+        return model.FlowRate[6, t] == model.FlowRate[7, t]
+    model.mass_balance3 = Constraint(model.TimePeriods, rule=mass_balance_rule3, doc='Mass balance equation for the third node in the process network')
+
+    def mass_balance_rule4(model, t):
+        """
+        Represents the mass balance equation for Process 2 in the process network.
+
+        Stream 3 and Stream 5 are the inlet of Process 2.
+        The mass flowrate of Stream 3 is 10 times the mass flowrate of Stream 5.
+
+        Parameters
+        ----------
+        model : Pyomo.AbstractModel
+            Pyomo abstract model for medium-term purchasing contracts problem.
+        t : int
+            Index of time period.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            A constraint that enforces the mass balance equation for Process 2 in the process network.
         """
         return model.FlowRate[3, t] == 10*model.FlowRate[5, t]
-    model.mass_balance4 = Constraint(model.TimePeriods, rule=mass_balance_rule4)
+    model.mass_balance4 = Constraint(model.TimePeriods, rule=mass_balance_rule4, doc='Mass balance equation for Process 2 in the process network')
 
     # process input/output constraints
     # these are also totally specific to the process network
     def process_balance_rule1(model, t):
-        """_summary_
+        """
+        Represents the input/output balance equation for Process 1 in the process network.
+
+        Process 1 has input Streams 2 and output Stream 9.
 
         Parameters
         ----------
@@ -750,13 +769,16 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the input/output balance equation for Process 1 in the process network.
         """
         return model.FlowRate[9, t] == model.ProcessConstants[1] * model.FlowRate[2, t]
-    model.process_balance1 = Constraint(model.TimePeriods, rule=process_balance_rule1)
+    model.process_balance1 = Constraint(model.TimePeriods, rule=process_balance_rule1, doc='Input/output balance equation for Process 1 in the process network')
 
     def process_balance_rule2(model, t):
-        """_summary_
+        """
+        Represents the input/output balance equation for Process 2 in the process network.
+
+        Process 2 has input Streams 5 and 3 and output Stream 10.
 
         Parameters
         ----------
@@ -768,14 +790,18 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the input/output balance equation for Process 2 in the process network.
         """
         return model.FlowRate[10, t] == model.ProcessConstants[2] * \
             (model.FlowRate[5, t] + model.FlowRate[3, t])
-    model.process_balance2 = Constraint(model.TimePeriods, rule=process_balance_rule2)
+    model.process_balance2 = Constraint(model.TimePeriods, rule=process_balance_rule2, doc='Input/output balance equation for Process 2 in the process network')
 
     def process_balance_rule3(model, t):
-        """_summary_
+        """
+        Represents the input/output balance equation for Process 3 in the process network.
+
+        Process 3 has input Stream 7 and outputs Streams 11 and 8.
+        RandomConst_Line264 is a hardcoded constant and determines the portion of Stream 7 that goes to Stream 8.
 
         Parameters
         ----------
@@ -787,14 +813,18 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the input/output balance equation for Process 3 in the process network.
         """
         return model.FlowRate[8, t] == RandomConst_Line264 * \
             model.ProcessConstants[3] * model.FlowRate[7, t]
-    model.process_balance3 = Constraint(model.TimePeriods, rule=process_balance_rule3)
+    model.process_balance3 = Constraint(model.TimePeriods, rule=process_balance_rule3, doc='Input/output balance equation 1 for Process 3 in the process network')
 
     def process_balance_rule4(model, t):
-        """_summary_
+        """
+        Represents the input/output balance equation for Process 3 in the process network.
+
+        Process 3 has input Stream 7 and outputs Streams 11 and 8.
+        RandomConst_Line265 is a hardcoded constant and determines the portion of Stream 7 that goes to Stream 11.
 
         Parameters
         ----------
@@ -806,16 +836,19 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the input/output balance equation for Process 3 in the process network.
         """
         return model.FlowRate[11, t] == RandomConst_Line265 * \
             model.ProcessConstants[3] * model.FlowRate[7, t]
-    model.process_balance4 = Constraint(model.TimePeriods, rule=process_balance_rule4)
+    model.process_balance4 = Constraint(model.TimePeriods, rule=process_balance_rule4, doc='Input/output balance equation 2 for Process 3 in the process network')
 
     # process capacity contraints
     # these are hardcoded based on the three processes and the process flow structure
     def process_capacity_rule1(model, t):
-        """_summary_
+        """
+        Set the capacity constraint for Process 1 in the process network.
+
+        Process 1 has a capacity constraint on Stream 9, which is the output stream of Process 1.
 
         Parameters
         ----------
@@ -827,13 +860,16 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the capacity constraint for Process 1 in the process network.
         """
         return model.FlowRate[9, t] <= model.Capacity[1]
-    model.process_capacity1 = Constraint(model.TimePeriods, rule=process_capacity_rule1)
+    model.process_capacity1 = Constraint(model.TimePeriods, rule=process_capacity_rule1, doc='Capacity constraint for Process 1 in the process network')
 
     def process_capacity_rule2(model, t):
-        """_summary_
+        """
+        Set the capacity constraint for Process 2 in the process network.
+
+        Process 2 has a capacity constraint on Stream 10, which is the output stream of Process 2.
 
         Parameters
         ----------
@@ -845,13 +881,16 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the capacity constraint for Process 2 in the process network.
         """
         return model.FlowRate[10, t] <= model.Capacity[2]
-    model.process_capacity2 = Constraint(model.TimePeriods, rule=process_capacity_rule2)
+    model.process_capacity2 = Constraint(model.TimePeriods, rule=process_capacity_rule2, doc='Capacity constraint for Process 2 in the process network')
 
     def process_capacity_rule3(model, t):
-        """_summary_
+        """
+        Set the capacity constraint for Process 3 in the process network.
+
+        Process 3 has capacity constraints on Streams 11 and 8, which are the output streams of Process 3.
 
         Parameters
         ----------
@@ -863,10 +902,10 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that enforces the capacity constraint for Process 3 in the process network.
         """
         return model.FlowRate[11, t] + model.FlowRate[8, t] <= model.Capacity[3]
-    model.process_capacity3 = Constraint(model.TimePeriods, rule=process_capacity_rule3)
+    model.process_capacity3 = Constraint(model.TimePeriods, rule=process_capacity_rule3, doc='Capacity constraint for Process 3 in the process network')
 
     # Inventory balance of final products
     # again, these are hardcoded.
