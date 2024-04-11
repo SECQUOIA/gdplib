@@ -331,7 +331,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        tuple
             A tuple (0, upper_bound), where '0' is the lower bound (non-negative constraint) and 'upper_bound' is sourced from 'model.AmountPurchasedUB_FP[j,t]'. 
             'model.AmountPurchasedUB_FP[j,t]' represents the maximum allowed purchase amount for material 'j' in period 't'
         """
@@ -911,7 +911,11 @@ def build_model():
     # again, these are hardcoded.
 
     def inventory_balance1(model, t):
-        """_summary_
+        """
+        Maintains inventory balance for the material associated with stream 12 at the first inventory node across time periods.
+
+        This constraint ensures that the inventory level of the material at the beginning of each time period t, combined with the incoming flow from stream 9, equals the sum of the outflow to the next process (or demand) represented by stream 12 and the inventory level at the end of the time period. For the initial time period, the previous inventory is assumed to be zero. 
+        This balance is vital for tracking inventory levels accurately, allowing the model to make informed decisions about production, storage, and sales to maximize overall profit.
 
         Parameters
         ----------
@@ -922,15 +926,19 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint enforcing the balance of inventory levels for the material flowing through stream 12 at the first inventory node, taking into account the material inflows and outflows as well as changes in inventory from the previous to the current time period.
         """
         prev = 0 if t == min(model.TimePeriods) else model.InventoryLevel[12, t-1]
         return prev + model.FlowRate[9, t] == model.FlowRate[12, t] + model.InventoryLevel[12,t]
-    model.inventory_balance1 = Constraint(model.TimePeriods, rule=inventory_balance1)
+    model.inventory_balance1 = Constraint(model.TimePeriods, rule=inventory_balance1, doc='Inventory balance for material associated with stream 12 at the first inventory node')
 
     def inventory_balance_rule2(model, t):
-        """_summary_
+        """
+        Ensures inventory balance for the material associated with stream 13 at the second inventory node for the first time period.
+
+        This constraint is applied only to the first time period (t=1) and ensures that the sum of incoming flows from streams 10 and 11 equals the sum of the outflow to the next process represented by stream 13 and the inventory level at the end of the period. 
+        For periods beyond the first, this constraint is skipped, as the balance for these periods may be governed by other conditions or constraints within the model. This selective application is crucial for accurately modeling the startup phase of the inventory system, where initial conditions significantly impact subsequent operations.
 
         Parameters
         ----------
@@ -941,17 +949,23 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Constraint.Skip
+            A constraint enforcing the inventory balance for the material flowing through stream 13 at the second inventory node during the first time period. 
+            For all other periods, the function returns `Constraint.Skip`, indicating no constraint is applied.
         """
         if t != 1:
             return Constraint.Skip
         return model.FlowRate[10, t] + model.FlowRate[11, t] == \
             model.InventoryLevel[13,t] + model.FlowRate[13, t]
-    model.inventory_balance2 = Constraint(model.TimePeriods, rule=inventory_balance_rule2)
+    model.inventory_balance2 = Constraint(model.TimePeriods, rule=inventory_balance_rule2, doc='Inventory balance for material associated with stream 13 at the second inventory node')
 
     def inventory_balance_rule3(model, t):
-        """_summary_
+        """
+        Maintains the inventory balance for material associated with stream 13 at the second inventory node for all time periods after the first.
+
+        This constraint is crucial for modeling the dynamic behavior of inventory levels over time, ensuring that the sum of the previous period's inventory level and the current period's inflows from streams 10 and 11 equals the current period's outflow (through stream 13) and ending inventory level. 
+        It reflects the principle of inventory continuity, accounting for inflows, outflows, and storage from one period to the next. 
+        The constraint is skipped for the first period (t=1) to accommodate initial conditions or startup behaviors specific to the model's context.
 
         Parameters
         ----------
@@ -962,18 +976,20 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Constraint.Skip
+            A constraint enforcing the inventory balance for the material flowing through stream 13 at the second inventory node from the second period onwards. 
+            For the first period, the function returns `Constraint.Skip`, indicating the constraint does not apply.
         """
         if t <= 1:
             return Constraint.Skip
         return model.InventoryLevel[13, t-1] + model.FlowRate[10, t] + \
             model.FlowRate[11,t] == model.InventoryLevel[13, t] + model.FlowRate[13, t]
-    model.inventory_balance3 = Constraint(model.TimePeriods, rule=inventory_balance_rule3)
+    model.inventory_balance3 = Constraint(model.TimePeriods, rule=inventory_balance_rule3, doc='Inventory balance for material associated with stream 13 at the second inventory node')
 
     # Max capacities of inventories
     def inventory_capacity_rule(model, j, t):
-        """_summary_
+        """
+        Sets the maximum inventory capacity for each material j at each time period t.
 
         Parameters
         ----------
@@ -986,15 +1002,17 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that sets the maximum permissible inventory level for material j in time period t, ensuring that the inventory does not exceed the predefined upper bound 'InventoryLevelUB[j, t]'. 
+            This maintains the model's alignment with practical storage limitations.
         """
         return model.InventoryLevel[j,t] <= model.InventoryLevelUB[j,t]
-    model.inventory_capacity_rule = Constraint(model.Products, model.TimePeriods, rule=inventory_capacity_rule)
+    model.inventory_capacity_rule = Constraint(model.Products, model.TimePeriods, rule=inventory_capacity_rule, doc='Maximum inventory capacity for each material j at each time period t')
 
     # Shortfall calculation
     def shortfall_rule(model, j, t):
-        """_summary_
+        """
+        Calculates the shortfall for each product 'j' in each time period 't'.
 
         Parameters
         ----------
@@ -1007,15 +1025,17 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint defining the shortfall for product j during time period t as the difference between the supply or demand upper bound and the actual flow rate. 
+            This calculation is pivotal for evaluating performance and identifying bottlenecks or excess capacities within the supply chain.
         """
         return model.Shortfall[j, t] == model.SupplyAndDemandUBs[j, t] - model.FlowRate[j,t]
-    model.shortfall = Constraint(model.Products, model.TimePeriods, rule=shortfall_rule)
+    model.shortfall = Constraint(model.Products, model.TimePeriods, rule=shortfall_rule, doc='Shortfall calculation for each product j in each time period t')
 
     # maximum shortfall allowed
     def shortfall_max_rule(model, j, t):
-        """_summary_
+        """
+        Imposes an upper limit on the shortfall allowed for each product j in each time period t.
 
         Parameters
         ----------
@@ -1028,15 +1048,17 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that limits the shortfall for product j during time period t to a maximum value specified by 'ShortfallUB[j, t]'. 
+            This constraint is instrumental in aligning the model's solutions with real-world operational constraints and strategic objectives.
         """
         return model.Shortfall[j, t] <= model.ShortfallUB[j, t]
-    model.shortfall_max = Constraint(model.Products, model.TimePeriods, rule=shortfall_max_rule)
+    model.shortfall_max = Constraint(model.Products, model.TimePeriods, rule=shortfall_max_rule, doc='Maximum shortfall allowed for each product j in each time period t')
 
     # maxiumum capacities of suppliers
     def supplier_capacity_rule(model, j, t):
-        """_summary_
+        """
+        Enforces the upper limits on the supply capacity for each raw material j provided by suppliers in each time period t.
 
         Parameters
         ----------
@@ -1049,15 +1071,17 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that limits the flow rate of raw material j from suppliers in time period t to not exceed the predefined upper bound 'SupplyAndDemandUBs[j, t]'. 
+            This constraint is crucial for ensuring the feasibility of the supply chain model and its alignment with practical supply capabilities.
         """
         return model.FlowRate[j, t] <= model.SupplyAndDemandUBs[j, t]
-    model.supplier_capacity = Constraint(model.RawMaterials, model.TimePeriods, rule=supplier_capacity_rule, doc='')
+    model.supplier_capacity = Constraint(model.RawMaterials, model.TimePeriods, rule=supplier_capacity_rule, doc='Maximum supply capacity for each raw material j in each time period t')
 
     # demand upper bound
     def demand_UB_rule(model, j, t):
-        """_summary_
+        """
+        Ensures that the supply of each product j does not exceed its maximum demand in each time period t.
 
         Parameters
         ----------
@@ -1070,14 +1094,16 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint limiting the flow rate of product j to not exceed the predefined maximum demand 'SupplyAndDemandUBs[j, t]' in time period t, ensuring production is demand-driven.
         """
         return model.FlowRate[j, t] <= model.SupplyAndDemandUBs[j,t]
-    model.demand_UB = Constraint(model.Products, model.TimePeriods, rule=demand_UB_rule)
+    model.demand_UB = Constraint(model.Products, model.TimePeriods, rule=demand_UB_rule, doc='Maximum demand allowed for each product j in each time period t')
+
     # demand lower bound
     def demand_LB_rule(model, j, t):
-        """_summary_
+        """
+        Ensures that the supply of each product j meets at least the minimum demand in each time period t.
 
         Parameters
         ----------
@@ -1090,11 +1116,11 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint ensuring that the flow rate of product j meets or exceeds the minimum demand 'DemandLB[j, t]' in time period t, supporting effective market engagement.
         """
         return model.FlowRate[j, t] >= model.DemandLB[j,t]
-    model.demand_LB = Constraint(model.Products, model.TimePeriods, rule=demand_LB_rule)
+    model.demand_LB = Constraint(model.Products, model.TimePeriods, rule=demand_LB_rule, doc='Minimum demand required for each product j in each time period t')
 
 
     # FIXED PRICE CONTRACT
@@ -1137,7 +1163,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return [model.FP_contract_disjunct[j,t,buy] for buy in model.BuyFPContract]
@@ -1159,7 +1185,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.Cost_FP[j,t] == model.AmountPurchased_FP[j,t] * \
@@ -1251,7 +1277,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return model.Cost_Discount[j,t] == model.RegPrice_Discount[j,t] * \
