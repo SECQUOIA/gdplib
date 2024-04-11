@@ -1379,12 +1379,14 @@ def build_model():
     # FIXED DURATION CONTRACT
 
     def FD_1mo_contract(disjunct, j, t):
-        """_summary_
+        """
+        Defines the constraints for engaging in a 1-month fixed duration contract for material j at time t. 
+        This includes a minimum purchase amount and the cost calculation based on contract-specific prices.
 
         Parameters
         ----------
-        disjunct :  Index
-            _description_
+        disjunct :  Pyomo.Disjunct
+            A component representing the 1-month contract scenario.
         j : int
             Index of materials.
         t : int
@@ -1396,15 +1398,17 @@ def build_model():
         disjunct.price1 = Constraint(expr=model.Cost_FD[j,t] == \
             model.Prices_Length[j,1,t] * model.AmountPurchased_FD[j,t])
     model.FD_1mo_contract = Disjunct(
-       model.RawMaterials, model.TimePeriods, rule=FD_1mo_contract)
+       model.RawMaterials, model.TimePeriods, rule=FD_1mo_contract, doc='1-month fixed duration contract')
 
     def FD_2mo_contract(disjunct, j, t):
-        """_summary_
+        """
+        Establishes conditions for a 2-month fixed duration contract. 
+        This involves a minimum purchase requirement for two consecutive periods and corresponding cost calculations.
 
         Parameters
         ----------
-        disjunct :  Index
-            _description_
+        disjunct :  Pyomo.Disjunct
+            The 2-month contract scenario component
         j : int
             Index of materials.
         t : int
@@ -1422,15 +1426,16 @@ def build_model():
             disjunct.price2 = Constraint(expr=model.Cost_FD[j,t+1] == \
                 model.Prices_Length[j,2,t] * model.AmountPurchased_FD[j, t+1])
     model.FD_2mo_contract = Disjunct(
-       model.RawMaterials, model.TimePeriods, rule=FD_2mo_contract)
+       model.RawMaterials, model.TimePeriods, rule=FD_2mo_contract, doc='2-month fixed duration contract')
 
     def FD_3mo_contract(disjunct, j, t):
-        """_summary_
+        """
+        Sets up a 3-month fixed duration contract scenario with minimum purchase requirements extending over three periods and the cost calculation.
 
         Parameters
         ----------
-        disjunct :  Index
-            _description_
+        disjunct :  Pyomo.Disjunct
+            The 3-month contract scenario component.
         j : int
             Index of materials.
         t : int
@@ -1456,15 +1461,17 @@ def build_model():
             disjunct.cost3 = Constraint(expr=model.Cost_FD[j,t+2] == \
                 model.Prices_Length[j,3,t] * model.AmountPurchased_FD[j,t+2])
     model.FD_3mo_contract = Disjunct(
-        model.RawMaterials, model.TimePeriods, rule=FD_3mo_contract)
+        model.RawMaterials, model.TimePeriods, rule=FD_3mo_contract, doc='3-month fixed duration contract')
 
     def FD_no_contract(disjunct, j, t):
-        """_summary_
+        """
+        Represents the scenario where no fixed duration contract is selected for material j at time t. 
+        Ensures no purchases or costs are accounted for under FD contracts.
 
         Parameters
         ----------
-        disjunct :  Index
-            _description_
+        disjunct : Pyomo.Disjunct
+            The 'no contract' scenario component.
         j : int
             Index of materials.
         t : int
@@ -1480,10 +1487,11 @@ def build_model():
             disjunct.amount3 = Constraint(expr=model.AmountPurchased_FD[j,t+2] == 0)
             disjunct.cost3 = Constraint(expr=model.Cost_FD[j,t+2] == 0)
     model.FD_no_contract = Disjunct(
-        model.RawMaterials, model.TimePeriods, rule=FD_no_contract)
+        model.RawMaterials, model.TimePeriods, rule=FD_no_contract, doc='No fixed duration contract')
 
     def FD_contract(model, j, t):
-        """_summary_
+        """
+        Consolidates the FD contract scenarios into a single decision framework, allowing the model to choose the most optimal contract length or to not select an FD contract for each material and time period.
 
         Parameters
         ----------
@@ -1496,13 +1504,13 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            The disjunctive decision structure for FD contracts.
         """
         return [ model.FD_1mo_contract[j,t], model.FD_2mo_contract[j,t],
                 model.FD_3mo_contract[j,t], model.FD_no_contract[j,t], ]
     model.FD_contract = Disjunction(model.RawMaterials, model.TimePeriods,
-       rule=FD_contract)
+       rule=FD_contract, doc='Fixed duration contract scenarios')
 
     return model
 
