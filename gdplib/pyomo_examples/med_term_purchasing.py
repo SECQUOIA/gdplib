@@ -1127,18 +1127,29 @@ def build_model():
 
     # Disjunction for Fixed Price contract buying options
     def FP_contract_disjunct_rule(disjunct, j, t, buy):
-        """_summary_
+        """
+        Defines disjunctive constraints for procurement decisions under a Fixed Price (FP) contract for material j in time period t.
+
+        A decision must be made whether to engage in purchasing under the contract terms or not for each material in each time period. 
+        This function encapsulates the disjunctive nature of this decision: if the decision is to buy ('buy' parameter is True), 
+        the amount purchased under the FP contract is limited by a predefined maximum ('MAX_AMOUNT_FP'); 
+        otherwise, no purchase is made under the FP contract for that material and period. 
+        This disjunctive approach allows for modeling complex decision-making processes in procurement strategies.
 
         Parameters
         ----------
         disjunct : Pyomo.Disjunct
-            _description_
+            A Pyomo Disjunct object representing a part of the disjunction. It encapsulates the constraints that are valid under a specific scenario ('buy' or not buy).
         j : int
             Index of materials.
         t : int
             Index of time period.
         buy : str
-            Decision parameter that indicates whether to buy under the fixed price contract or not.
+            A decision parameter indicating whether to purchase ('buy' is True) under the FP contract or not ('buy' is False) for material j in time period t
+
+         Notes
+        -----
+        The 'buy' parameter is treated as a binary variable in the context of the model, where True indicates a decision to engage in purchasing under the FP contract, and False indicates otherwise.
         """
         model = disjunct.model()
         if buy:
@@ -1146,11 +1157,14 @@ def build_model():
         else:
             disjunct.c = Constraint(expr=model.AmountPurchased_FP[j,t] == 0)
     model.FP_contract_disjunct = Disjunct(model.RawMaterials, model.TimePeriods,
-        model.BuyFPContract, rule=FP_contract_disjunct_rule)
+        model.BuyFPContract, rule=FP_contract_disjunct_rule, doc='Disjunctive constraints for Fixed Price contract buying options')
 
     # Fixed price disjunction
     def FP_contract_rule(model, j, t):
-        """_summary_
+        """
+        Creates a choice between buying or not buying materials under a Fixed Price contract for each material 'j' and time 't'.
+
+        This function sets up a disjunction, which is like a crossroads for the model: for each material and time period, it can choose one of the paths defined in the 'FP_contract_disjunct_rule'.
 
         Parameters
         ----------
@@ -1163,12 +1177,12 @@ def build_model():
 
         Returns
         -------
-        Pyomo.Constraint
-            _description_
+        Pyomo.Disjunction
+            A disjunction that represents the decision-making point for FP contract purchases, contributing to the model's overall procurement strategy.
         """
         return [model.FP_contract_disjunct[j,t,buy] for buy in model.BuyFPContract]
     model.FP_disjunction = Disjunction(model.RawMaterials, model.TimePeriods,
-        rule=FP_contract_rule)
+        rule=FP_contract_rule, doc='Disjunction for Fixed Price contract buying options')
 
     # cost constraint for fixed price contract (independent constraint)
     def FP_contract_cost_rule(model, j, t):
@@ -1186,12 +1200,12 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint equating the FP contract cost for material j in period t to the product of the purchased amount and its price, ensuring accurate financial accounting in the model.
         """
         return model.Cost_FP[j,t] == model.AmountPurchased_FP[j,t] * \
             model.Prices[j,t]
     model.FP_contract_cost = Constraint(model.RawMaterials, model.TimePeriods,
-        rule=FP_contract_cost_rule)
+        rule=FP_contract_cost_rule, doc='Cost constraint for Fixed Price contract')
 
 
     # DISCOUNT CONTRACT
