@@ -23,10 +23,22 @@ import pandas as pd
 
 
 def build_model():
+    """
+    Build the optimal positioning model
+
+    Returns
+    -------
+    m : Pyomo.ConcreteModel
+        The optimal positioning model
+    
+    Notes
+    -----
+
+    """
     m = ConcreteModel()
-    m.locations = RangeSet(5)
-    m.consumers = RangeSet(25)
-    m.products = RangeSet(10)
+    m.locations = RangeSet(5) # 5 locations
+    m.consumers = RangeSet(25) # 25 consumers
+    m.products = RangeSet(10) # 10 products
 
     fixed_profit_data = {
         1: 1,
@@ -55,7 +67,7 @@ def build_model():
         24: 0.7,
         25: 0.7,
     }
-    m.fixed_profit = Param(m.consumers, initialize=fixed_profit_data)
+    m.fixed_profit = Param(m.consumers, initialize=fixed_profit_data, doc='Fixed profit for each consumer') # fixed profit for each consumer
 
     minimum_weights_data = {
         1: 77.84,
@@ -84,7 +96,9 @@ def build_model():
         24: 340.581,
         25: 407.52,
     }
-    m.minimum_weights = Param(m.consumers, initialize=minimum_weights_data)
+    m.minimum_weights = Param(m.consumers, initialize=minimum_weights_data, doc='Minimum weights for each consumer') # minimum weights for each consumer
+
+    # Bounds for the locations
     location_bounds = {
         1: (2, 4.5),
         2: (0, 8.0),
@@ -121,8 +135,8 @@ def build_model():
     24      8.79    5.04    4.83    6.94    0.38
     25      2.66    4.19    6.49    8.04    1.66 
     """)
-    ideal_points_table = pd.read_csv(ideal_points_data, delimiter=r'\s+')
-    ideal_points_dict = {(k[0], int(k[1])): v for k, v in ideal_points_table.stack().to_dict().items()}
+    ideal_points_table = pd.read_csv(ideal_points_data, delimiter=r'\s+') # ideal points for each consumer and product
+    ideal_points_dict = {(k[0], int(k[1])): v for k, v in ideal_points_table.stack().to_dict().items()} 
     m.ideal_points = Param(m.consumers, m.locations, initialize=ideal_points_dict)
 
     weights_data = StringIO("""
@@ -188,6 +202,20 @@ def build_model():
 
     @m.Disjunction(m.consumers)
     def d(m, i):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            _description_
+        i : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [
             [sum(m.weights[i, k] * (m.x[k] - m.ideal_points[i, k]) ** 2 for k in m.locations) - r[i] <= m.U],
             []
