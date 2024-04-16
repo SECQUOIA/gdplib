@@ -13,7 +13,7 @@ from pyomo.gdp import *
 from pyomo.common.fileutils import this_file_dir
 from os.path import join
 
-# Medium-term Purchasing Contracts problem from http://minlp.org/library/lib.php?lib=GDP
+# Medium-term Purchasing Contracts problem from https://www.minlp.org/library/problem/index.php?i=129
 # This model maximizes profit in a short-term horizon in which various contracts
 # are available for purchasing raw materials. The model decides inventory levels,
 # amounts to purchase, amount sold, and flows through the process nodes while
