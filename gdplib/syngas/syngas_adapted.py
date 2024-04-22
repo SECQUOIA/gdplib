@@ -858,10 +858,11 @@ def build_model():
         unit_exists = m.unit_exists[this_unit]
         unit_exists.minimum_flow = Constraint(expr=m.total_flow_into[this_unit] >= m.total_flow_from['ms1'] * m.min_flow_division, doc="minimum flow into each unit for operational stability")
 
-    # Flash
+    # Flash separator
     @m.Constraint(m.species)
     def m1_mass_balance(m, species):
-        """_summary_
+        """
+        Ensures total mass balance at the mixer 'm1' node for each chemical species, meaning all mass entering must equal all mass leaving the mixer.
 
         Parameters
         ----------
@@ -872,8 +873,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A Pyomo constraint ensures the mass conservation at mixer 'm1' for each chemical species
         """
         return m.flow_into['m1', species] == m.flow_out_from['m1', species]
 
@@ -881,27 +882,29 @@ def build_model():
 
     @flash_exists.Constraint(m.species)
     def flash_mass_balance(disj, species):
-        """_summary_
+        """
+        Ensures mass balance for each species through the flash unit, excluding water which is separated out.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct which indicates the mass balance is relevant when the flash unit is operational.
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that ensures all species except water have balanced mass flows in and out of the flash unit.
         """
         return m.flow_out_from['flash', species] == (m.flow_into['flash', species] if not species == 'H2O' else 0)
 
-    flash_exists.water_sep = Constraint(expr=m.flash_water == m.flow_into['flash', 'H2O'])
+    flash_exists.water_sep = Constraint(expr=m.flash_water == m.flow_into['flash', 'H2O'], doc="Captures the total water separated out in the flash process.")
 
     @m.Constraint(m.species)
     def post_flash_split_outlet(m, species):
-        """_summary_
+        """
+        Balances the distribution of each species from the flash unit to the PSA and mixer(ms2), ensuring flow continuity.
 
         Parameters
         ----------
@@ -912,34 +915,35 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Ensures that the sum of species flows to PSA and mixer2(ms2) equals the output from the flash unit.
         """
         return m.flow_out_from['flash', species] == m.flow_into['PSA', species] + m.flow_into['ms2', species]
 
     flash_exists.cost = Constraint(expr=m.aux_unit_capital_cost['flash'] == (
         (m.p1['flash'] * 100 * m.flash_water + m.p2['flash'])
         * m.aux_module_factors['flash'] / 8000 * m.cost_index_ratio
-    ))
+    ), doc="the capital cost for the flash unit based on the amount of water separated [$·h-1]")
 
-    # PSA
+    # PSA(pressure swing adsorption)
     psa_exists = m.unit_exists['PSA']
 
     @psa_exists.Constraint(m.species)
     def psa_inlet_composition_balance(disj, species):
-        """_summary_
+        """
+        Ensures the compositional ratios at the PSA's inlet mirror those at the output of splitter 's1', maintaining consistency in feed composition.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct which represent the active constraint when the PSA unit is operational.
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Balances feed ratios entering the PSA to uphold system integrity and performance accuracy.
         """
         total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['PSA', jj] for jj in m.species)
@@ -948,19 +952,20 @@ def build_model():
 
     @m.Constraint(m.species)
     def ms2_inlet_composition_balance(disj, species):
-        """_summary_
+        """
+        Ensures the compositional ratios at the mixer 'ms2's inlet align with those from the splitter 's1', for consistent mixture preparation.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct which can be applied, when consider
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Maintains consistent inlet compositions to the mixer 'ms2' from the splitter 's1'.
         """
         total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['ms2', jj] for jj in m.species)
@@ -969,37 +974,39 @@ def build_model():
 
     @psa_exists.Constraint(m.species)
     def psa_mass_balance(disj, species):
-        """_summary_
+        """
+        Ensures that all species entering the PSA are either processed inside or exit as part of the recovered stream.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct indicates operational context for PSA
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Ensures total incoming flow of each species equals the outgoing plus recovered flow in the PSA.
         """
         return m.flow_out_from['PSA', species] + m.psa_recovered[species] == m.flow_into['PSA', species]
 
     @psa_exists.Constraint(m.species)
     def psa_recovery(disj, species):
-        """_summary_
+        """
+        Defines the recovery efficiency for hydrogen and purity constraints for other gases in the PSA.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct indicates operational context for PSA
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Enforces hydrogen recovery rate and purity levels for other gases.
         """
         return m.flow_out_from['PSA', species] == m.flow_into['PSA', species] * (
             (1 - m.psa_hydrogen_recovery if species == 'H2' else m.psa_separation_hydrogen_purity)
@@ -1008,46 +1015,48 @@ def build_model():
     psa_exists.cost = Constraint(expr=m.aux_unit_capital_cost['PSA'] == (
         (m.p1['PSA'] * m.flow_into['PSA', 'H2'] + m.p2['PSA'])
         * m.aux_module_factors['PSA'] / 8000
-    ))
+    ), doc="PSA's capital cost based on hydrogen flow and cost parameters [$·h-1]")
     psa_exists.psa_utility = Constraint(expr=m.psa_power*m.first_stage_outlet_pressure**(1.5-1/1.5) == (
         (1.5/(1.5-1))/0.8*(40+273) * 8.314 * m.total_flow_into['PSA']
-        * ((30+1e-6)**(1.5-1/1.5) - m.first_stage_outlet_pressure**(1.5-1/1.5))))
+        * ((30+1e-6)**(1.5-1/1.5) - m.first_stage_outlet_pressure**(1.5-1/1.5))), doc="power needs for the PSA based on flow and pressure requirements [kW]")
 
     psa_absent = m.unit_absent['PSA']
 
     @psa_absent.Constraint(m.species)
     def no_psa_recovery(disj, species):
-        """_summary_
+        """
+        Ensures no species recovery when the PSA unit is not operational.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct where PSA is not in use.
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Prevents any unintended recovery flows when PSA is inactive.
         """
         return m.psa_recovered[species] == 0
 
     @psa_absent.Constraint(m.species)
     def no_purge(disj, species):
-        """_summary_
+        """
+        Prevents purge flow of any species when PSA is not operational, avoiding errors in system dynamics.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo disjunct where PSA is not in use.
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Blocks any purge flow for species when PSA is deactivated.
         """
         return m.purge_flow[species] == 0
 
