@@ -1063,7 +1063,8 @@ def build_model():
     # ms4
     @m.Constraint(m.species)
     def ms4_inlet_mass_balance(m, species):
-        """_summary_
+        """
+        Ensures all species' flow from PSA is equal to their inflow to the mixer (ms4), maintaining continuity.
 
         Parameters
         ----------
@@ -1074,14 +1075,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A Pyomo Constraint which matches inflow to mixer(ms4) with outflow from PSA for each species.
         """
         return m.flow_out_from['PSA', species] == m.flow_into['ms4', species]
 
     @m.Constraint(m.species)
     def ms4_outlet_mass_balance(m, species):
-        """_summary_
+        """
+        Balances the total outflow from mixer(ms4), including any purge flows, with its inflow, ensuring mass conservation.
 
         Parameters
         ----------
@@ -1092,14 +1094,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Ensures the sum of outflow and purge equals the inflow for the mixer(ms4) across all species.
         """
         return m.flow_out_from['ms4', species] + m.purge_flow[species] == m.flow_into['ms4', species]
 
     @m.Constraint(m.species)
     def purge_flow_limit(m, species):
-        """_summary_
+        """
+        Limits the purge flow of each species to no more than 1% of its inflow to the mixer(ms4).
 
         Parameters
         ----------
@@ -1110,14 +1113,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constrains the purge flow to a maximum of 1% of the respective species' inflow to the MS4, aiding in maintaining environmental and process control standards.
         """
         return m.purge_flow[species] <= m.flow_into['ms4', species] * 0.01
 
     @m.Constraint(m.species)
     def s2_inlet_composition(m, species):
-        """_summary_
+        """
+        Ensures flow composition into splitter (s2) from mixer(ms4) is proportional to overall flow into splitter.
 
         Parameters
         ----------
@@ -1128,8 +1132,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Proportional flow composition constraint for splitter(s2) inlet.
         """
         total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['s2', jj] for jj in m.species)
@@ -1138,7 +1142,8 @@ def build_model():
 
     @m.Constraint(m.species)
     def ms4_to_ms3_composition(m, species):
-        """_summary_
+        """
+        Balances species flow from mixer(ms4) to splitter(s2) to match total flow ratios.
 
         Parameters
         ----------
@@ -1149,8 +1154,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that maintains proportional species distribution between mixer(ms4) and splitter(s2).
         """
         total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow['ms4', 's2', jj] for jj in m.species)
@@ -1160,7 +1165,8 @@ def build_model():
     # s2
     @m.Constraint(m.species)
     def s2_mass_balance(m, species):
-        """_summary_
+        """
+        Ensures mass conservation at splitter S2 by equating the total inflow of each species to its outflow.
 
         Parameters
         ----------
@@ -1171,14 +1177,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Enforces that the inflow of each species into splitter(s2) equals the outflow from splitter(s2) to the mixer(ms1).
         """
         return m.flow_into['s2', species] == m.flow['s2', 'ms1', species]
 
     @m.Constraint(m.species)
     def no_flow_s2_to_m1(m, species):
-        """_summary_
+        """
+        Prevents any flow from the splitter(s2) to the mixer(m1).
 
         Parameters
         ----------
@@ -1189,15 +1196,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Ensures that no species inadvertently flows back from splitter(s2) to mixer(m1), maintaining intended flow paths.
         """
         return m.flow['s2', 'm1', species] == 0
 
     # ms2
     @m.Constraint(m.species)
     def ms2_mass_balance(m, species):
-        """_summary_
+        """_
 
         Parameters
         ----------
@@ -1208,7 +1215,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_out_from['ms2', species] == (
@@ -1230,7 +1237,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_into['bypass3', species] == m.flow_out_from['bypass3', species]
@@ -1251,7 +1258,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_into['compressor', species] == m.flow_out_from['ms2', species]
@@ -1269,7 +1276,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_out_from['compressor', species] == m.flow_into['compressor', species]
