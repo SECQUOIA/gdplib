@@ -222,155 +222,162 @@ def build_model():
     Variables
     """
 
-    m.flow = Var(m.streams, m.species, bounds=(0, m.flow_limit), doc="molar flow of each species in each stream [kmol·h-1]")
-    m.wgs_steam = Var(doc="steam molar flow provided in the WGS reactor [kmol·h-1]", bounds=(0, None))
-    m.oxygen_flow = Var(doc="O2 molar flow provided in the selective oxidation reactor [kmol·h-1]", bounds=(0, None))
-    m.Fabs1 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber1 [kmol·h-1]")
-    m.Fabs2 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber2 [kmol·h-1]")
-    m.flash_water = Var(bounds=(0, None), doc="water removed in flash [kmol·h-1]")
-    m.co2_inject = Var(bounds=(0, None), doc="molar flow of CO2 used to adjust syngas composition [kmol·h-1]")
-    m.psa_recovered = Var(m.species, bounds=(0, None), doc="pure hydrogen stream retained in the PSA [kmol·h-1]")
-    m.purge_flow = Var(m.species, bounds=(0, None), doc="purged molar flow from the PSA [kmol·h-1]")
-    m.final_syngas_flow = Var(m.species, bounds=(0, m.flow_limit), doc="final adjusted syngas molar flow [kmol·h-1]")
+    m.flow = Var(m.streams, m.species, bounds=(0, m.flow_limit), doc="molar flow of each species in each stream [kmol·s-1]")
+    m.wgs_steam = Var(doc="steam molar flow provided in the WGS reactor [kmol·s-1]", bounds=(0, None))
+    m.oxygen_flow = Var(doc="O2 molar flow provided in the selective oxidation reactor [kmol·s-1]", bounds=(0, None))
+    m.Fabs1 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber1 [kmol·s-1]")
+    m.Fabs2 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber2 [kmol·s-1]")
+    m.flash_water = Var(bounds=(0, None), doc="water removed in flash [kmol·s-1]")
+    m.co2_inject = Var(bounds=(0, None), doc="molar flow of CO2 used to adjust syngas composition [kmol·s-1]")
+    m.psa_recovered = Var(m.species, bounds=(0, None), doc="pure hydrogen stream retained in the PSA [kmol·s-1]")
+    m.purge_flow = Var(m.species, bounds=(0, None), doc="purged molar flow from the PSA [kmol·s-1]")
+    m.final_syngas_flow = Var(m.species, bounds=(0, m.flow_limit), doc="final adjusted syngas molar flow [kmol·s-1]")
 
     @m.Expression(m.superstructure_nodes, m.species)
     def flow_into(m, option, species):
-        """_summary_
+        """
+        Calculate the total incoming flow of a specific chemical species to a designated process node (option) within the syngas production superstructure. This expression aggregates the flow rates for each species entering a particular node from all connected upstream nodes (sources).
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        option : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        option : str
+            The specific node in the superstructure to which the flow is being calculated. This node acts as the destination for various streams in the model. 'option is the element of 'm.superstructure_nodes'.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression that sums up all the incoming flow rates of the specified `species` to the `option` node. The sum is over all streams that terminate at this node. The unit is in [kmol·s-1].
         """
         return sum(m.flow[src, sink, species] for src, sink in m.streams if sink == option)
 
     @m.Expression(m.superstructure_nodes, m.species)
     def flow_out_from(m, option, species):
-        """_summary_
+        """
+        Calculate the total outgoing flow of a specific chemical species from a designated process node (option) within the syngas production superstructure. This expression sums the flow rates for each species leaving a particular node to all connected downstream nodes (destinations).
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        option : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        option : str
+            The specific node in the superstructure to which the flow is being calculated. This node acts as the destination for various streams in the model. 'option is the element of 'm.superstructure_nodes'.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression that sums up all the outgoing flow rates of the specified 'species' from the 'option' node. The sum is over all streams that originate from this node. The unit is in [kmol·s-1].
         """
         return sum(m.flow[src, sink, species] for src, sink in m.streams if src == option)
 
     @m.Expression(m.superstructure_nodes)
     def total_flow_into(m, option):
-        """_summary_
+        """
+        Calculate the total incoming flow to a specified node (option) in the syngas production superstructure, aggregating across all chemical species.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        option : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        option : str
+            The specific node in the superstructure to which the flow is being calculated. This node acts as the destination for various streams in the model. 'option is the element of 'm.superstructure_nodes'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression summing all incoming flows (across all species) to the node 'option'. The unit is in [kmol·s-1].
         """
         return sum(m.flow_into[option, species] for species in m.species)
 
     @m.Expression(m.superstructure_nodes)
     def total_flow_from(m, option):
-        """_summary_
+        """
+        Calculate the total outgoing flow from a specified node (option) in the syngas production superstructure, aggregating across all chemical species.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        option : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        option : str
+            The specific node in the superstructure to which the flow is being calculated. This node acts as the destination for various streams in the model. 'option is the element of 'm.superstructure_nodes'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression summing all outgoing flows (across all species) from the node 'option'. The unit is in [kmol·s-1].
         """
         return sum(m.flow_out_from[option, species] for species in m.species)
 
-    m.base_tech_capital_cost = Var(m.syngas_techs, m.syngas_tech_units, bounds=(0, None))
-    m.base_tech_operating_cost = Var(m.syngas_techs, m.utilities, bounds=(0, None))
+    m.base_tech_capital_cost = Var(m.syngas_techs, m.syngas_tech_units, bounds=(0, None), doc="capital cost for each syngas technology and process unit combination [$·h-1]")
+    m.base_tech_operating_cost = Var(m.syngas_techs, m.utilities, bounds=(0, None), doc="perating cost for each syngas technology and utility used [$·h-1]")
     m.raw_material_total_cost = Var(bounds=(0, None), doc="total cost of raw materials [$·s-1]")
 
     @m.Expression(m.species)
     def raw_material_flow(m, species):
-        """_summary_
+        """
+        Calculate the total input flow of a specific chemical species across all syngas technologies.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression representing the total flow of the specified 'species' into the process from all entry points. The unit is in [kmol·s-1].
         """
         return sum(m.flow['in', tech, species] for tech in m.syngas_techs)
 
     m.syngas_tech_cost = Var(bounds=(0, None), doc="total cost of sygas process [$·y-1]")
-    m.syngas_tech_emissions = Var(bounds=(0, None), doc="CO2 emission of syngas processes")
+    m.syngas_tech_emissions = Var(bounds=(0, None), doc="CO2 emission of syngas processes [kmol·s-1]")
 
     @m.Expression(m.syngas_techs, m.syngas_tech_units)
     def module_factors(m, tech, equip):
-        """_summary_
+        """
+        Compute the module factors for each combination of syngas technology and equipment.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        tech : _type_
-            _description_
-        equip : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
+        equip : str
+            Index of the equipment type (e.g., compressor, exchanger, reformer) begin modeled.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression that calculates the module factor for the specified technology and equipment combination. This is done by summing the baseline module parameter (B1) and the product of the second baseline module parameter (B2), the material factor, and the syngas pressure factor specific to the technology and equipment.
         """
         return m.B1[equip] + m.B2[equip] * m.material_factor[equip] * m.syngas_pressure_factor[equip, tech]
 
     @m.Expression(m.syngas_techs, m.syngas_tech_units)
     def variable_utilization(m, tech, equip):
-        """_summary_
+        """
+        Calculate the utilization rate for different equipment types within each syngas technology based on the methane input flow.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        tech : _type_
-            _description_
-        equip : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
+        equip : str
+            Index of the equipment type (e.g., compressor, exchanger, reformer) begin modeled.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression that calculates the equipment-specific utilization rate. It multiplies the relevant equipment parameter (power usage, exchanger area, or reformer duty) by the methane input flow and then scales this product to an hourly basis (multiplied by 3600 seconds/hour). The result is a key factor in determining how effectively each piece of equipment is used in the syngas process based on the input flow rates.
         """
         variable_rate_term = {'compressor': m.syngas_tech_utility_rate['power', tech],
                               'exchanger': m.syngas_tech_exchanger_area[tech],
@@ -390,23 +397,24 @@ def build_model():
     m.psa_power = Var(bounds=(0, None), doc="power consumed by the PSA [kWh]")
     m.syngas_power = Var(bounds=(0, None), doc="power needed to compress syngas from Pinlet to 30.01 bar")
 
-    m.syngas_total_flow = Expression(expr=sum(m.final_syngas_flow[species] for species in {'H2', 'CO2', 'CO', 'CH4'}))
+    m.syngas_total_flow = Expression(expr=sum(m.final_syngas_flow[species] for species in {'H2', 'CO2', 'CO', 'CH4'}), doc="total molar flow of syngas comonents at final stage of process [kmol·s-1]")
 
     @m.Expression(m.aux_equipment)
     def aux_module_factors(m, equip):
-        """_summary_
+        """
+        Calculate the module factors for each type of auxiliary equipment used in the syngas production process.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        equip : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        equip : str
+            Index of the equipment type (e.g., compressor, exchanger, reformer) begin modeled.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression that computes the module factor for the specified type of equipment. The calculation uses the base module parameter (B1), enhanced by the product of the second base module parameter (B2) and the material factor for the equipment.
         """
         return m.B1[equip] + m.B2[equip] * m.material_factor[equip]
 
@@ -418,14 +426,14 @@ def build_model():
         + m.purge_flow['CO2']*3600*44
         + (m.psa_power + m.syngas_power + sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs)
            )*m.utility_emission['power']
-        + m.wgs_heater*0.094316389565193)
+        + m.wgs_heater*0.094316389565193, doc="total estimated emissions from the syngas process, combining CO2 and power-related outputs, adjusted for sequestration and purification [kgCO2·h-1]")
 
     m.final_total_cost = Expression(
         expr=m.syngas_tech_cost*3600 + m.syngas_tech_compressor_cost
         + sum(m.aux_unit_capital_cost[option] for option in m.aux_equipment) * m.annualization_factor
         + (m.psa_power + m.syngas_power + sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs)
            )*m.utility_cost['power']
-        + m.wgs_heater*0.064)
+        + m.wgs_heater*0.064, doc="total cost of syngas production, including capital and operating expenses[$·h-1]")
 
     """
     Constraints
@@ -437,12 +445,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        tech : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -459,12 +467,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        tech : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -486,7 +494,7 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        option : _type_
+        option : str
             _description_
         """
         pass
@@ -499,7 +507,7 @@ def build_model():
         ----------
         no_unit : _type_
             _description_
-        option : _type_
+        option : str
             _description_
 
         Returns
@@ -515,8 +523,8 @@ def build_model():
             ----------
             disj : _type_
                 _description_
-            species : _type_
-                _description_
+            species : str
+                The index of chemical species which is the element of the set 'm.species'.
 
             Returns
             -------
@@ -533,8 +541,8 @@ def build_model():
             ----------
             disj : _type_
                 _description_
-            species : _type_
-                _description_
+            species : str
+                The index of chemical species which is the element of the set 'm.species'.
 
             Returns
             -------
@@ -551,7 +559,7 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        option : _type_
+        option : str
             _description_
 
         Returns
@@ -577,8 +585,8 @@ def build_model():
             ----------
             disj : _type_
                 _description_
-            equip : _type_
-                _description_
+            equip : str
+                Index of the equipment type (e.g., compressor, exchanger, reformer) begin modeled.
 
             Returns
             -------
@@ -635,8 +643,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        tech : _type_
-            _description_
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
         """
         disj.compressor_power_calc = Constraint(expr=m.syngas_tech_compressor_power[tech] == (
             (1.5 / (1.5 - 1)) / 0.8 * (40 + 273) * 8.314 * sum(m.flow[tech, 'ms1', species] for species in m.species)
@@ -652,8 +660,8 @@ def build_model():
         ----------
         bypass : _type_
             _description_
-        tech : _type_
-            _description_
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
         """
         bypass.no_pressure_increase = Constraint(expr=m.syngas_tech_outlet_pressure[tech] == m.process_tech_pressure[tech])
         pass
@@ -664,10 +672,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        tech : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
 
         Returns
         -------
@@ -686,10 +694,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        tech : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        tech : str
+            Index of the syngas process technology (e.g., SMR, POX, ATR).
 
         Returns
         -------
@@ -715,10 +723,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -738,8 +746,8 @@ def build_model():
             ----------
             disj : _type_
                 _description_
-            species : _type_
-                _description_
+            species : str
+                The index of chemical species which is the element of the set 'm.species'.
 
             Returns
             -------
@@ -789,8 +797,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -810,8 +818,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -840,10 +848,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -862,8 +870,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -880,10 +888,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -908,8 +916,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -929,8 +937,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -950,8 +958,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -968,8 +976,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -998,8 +1006,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1016,8 +1024,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1033,10 +1041,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1051,10 +1059,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1069,10 +1077,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1087,10 +1095,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1108,10 +1116,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1130,10 +1138,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1148,10 +1156,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1167,10 +1175,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1191,8 +1199,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1212,8 +1220,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1230,8 +1238,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1267,10 +1275,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1290,8 +1298,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1311,8 +1319,8 @@ def build_model():
         ----------
         disj : _type_
             _description_
-        species : _type_
-            _description_
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
@@ -1338,10 +1346,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        species : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            The concrete model instance which contains sets, parameters, and variables that define the syngas production process.
+        species : str
+            The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
