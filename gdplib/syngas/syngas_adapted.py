@@ -12,6 +12,20 @@ syngas_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def build_model():
+    """_summary_
+
+    Returns
+    -------
+    Pyomo.ConcreteModel
+        Build the ConcreteModel of combined synthesis gas reforming technologies
+    Notes
+    -----
+
+    References
+    ----------
+    [1] Chen, Q. (2020). Pyosyn: Advanced Computational Tools for Process Synthesis (Doctoral dissertation, Carnegie Mellon University).
+    [2] Medrano-García, J. D., Ruiz-Femenia, R., & Caballero, J. A. (2017). Multi-objective optimization of combined synthesis gas reforming technologies. Journal of CO2 Utilization, 22, 355-373. https://doi.org/10.1016/j.jcou.2017.09.019
+    """
     m = ConcreteModel()
 
     m.syngas_techs = Set(
@@ -71,7 +85,7 @@ def build_model():
     Parameters
     """
 
-    m.flow_limit = Param(initialize=5)
+    m.flow_limit = Param(initialize=5, doc="upper bound of the flow")
     m.min_flow_division = Param(initialize=0.1, doc="minimum flow fraction into active unit")
 
     m.raw_material_cost = Param(
@@ -96,7 +110,7 @@ def build_model():
     }
 
     data_dict = pd.read_csv('%s/syngas_conversion_data.txt' % syngas_dir, delimiter=r'\s+').fillna(0).stack().to_dict()
-    m.syngas_conversion_factor = Param(m.species, m.syngas_techs, initialize=data_dict)
+    m.syngas_conversion_factor = Param(m.species, m.syngas_techs, initialize=data_dict, doc="conversion factor of the chemical species with different technology")
     m.co2_ratio = Param(doc="CO2-CO ratio of total carbon in final syngas", initialize=0.05)
 
     # Capital costs -->  cap = (p1*x + p2)*(B1 + B2*Fmf*Fp)
@@ -162,7 +176,7 @@ def build_model():
     m.interest_rate = Param(initialize=0.1, doc="annualization index")
     m.project_years = Param(initialize=8, doc="annualization years")
     m.annualization_factor = Expression(
-        expr=m.interest_rate * (1 + m.interest_rate)**m.project_years / ((1 + m.interest_rate)**m.project_years - 1))
+        expr=m.interest_rate * (1 + m.interest_rate)**m.project_years / ((1 + m.interest_rate)**m.project_years - 1), doc="Factor for annualized payments")
     m.CEPCI2015 = Param(initialize=560, doc="equipment cost index 2015")
     m.CEPCI2001 = Param(initialize=397, doc="equipment cost index 2001")
     m.cost_index_ratio = Param(initialize=m.CEPCI2015 / m.CEPCI2001, doc="cost index ratio")
@@ -208,31 +222,91 @@ def build_model():
     Variables
     """
 
-    m.flow = Var(m.streams, m.species, bounds=(0, m.flow_limit))
-    m.wgs_steam = Var(doc="steam molar flow provided in the WGS reactor [kmol·s-1]", bounds=(0, None))
-    m.oxygen_flow = Var(doc="O2 molar flow provided in the selective oxidation reactor [kmol·s-1]", bounds=(0, None))
-    m.Fabs1 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber1 [kmol·s-1]")
-    m.Fabs2 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber2 [kmol·s-1]")
-    m.flash_water = Var(bounds=(0, None), doc="water removed in flash [kmol·s-1]")
-    m.co2_inject = Var(bounds=(0, None), doc="molar flow of CO2 used to adjust syngas composition [kmol·s-1]")
-    m.psa_recovered = Var(m.species, bounds=(0, None), doc="pure hydrogen stream retained in the PSA [kmol·s-1]")
-    m.purge_flow = Var(m.species, bounds=(0, None), doc="purged molar flow from the PSA [kmol·s-1]")
-    m.final_syngas_flow = Var(m.species, bounds=(0, m.flow_limit), doc="final adjusted syngas molar flow [kmol·s-1]")
+    m.flow = Var(m.streams, m.species, bounds=(0, m.flow_limit), doc="molar flow of each species in each stream [kmol·h-1]")
+    m.wgs_steam = Var(doc="steam molar flow provided in the WGS reactor [kmol·h-1]", bounds=(0, None))
+    m.oxygen_flow = Var(doc="O2 molar flow provided in the selective oxidation reactor [kmol·h-1]", bounds=(0, None))
+    m.Fabs1 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber1 [kmol·h-1]")
+    m.Fabs2 = Var(bounds=(0, None), doc="molar flow of CO2 absorbed in absorber2 [kmol·h-1]")
+    m.flash_water = Var(bounds=(0, None), doc="water removed in flash [kmol·h-1]")
+    m.co2_inject = Var(bounds=(0, None), doc="molar flow of CO2 used to adjust syngas composition [kmol·h-1]")
+    m.psa_recovered = Var(m.species, bounds=(0, None), doc="pure hydrogen stream retained in the PSA [kmol·h-1]")
+    m.purge_flow = Var(m.species, bounds=(0, None), doc="purged molar flow from the PSA [kmol·h-1]")
+    m.final_syngas_flow = Var(m.species, bounds=(0, m.flow_limit), doc="final adjusted syngas molar flow [kmol·h-1]")
 
     @m.Expression(m.superstructure_nodes, m.species)
     def flow_into(m, option, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        option : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.flow[src, sink, species] for src, sink in m.streams if sink == option)
 
     @m.Expression(m.superstructure_nodes, m.species)
     def flow_out_from(m, option, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        option : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.flow[src, sink, species] for src, sink in m.streams if src == option)
 
     @m.Expression(m.superstructure_nodes)
     def total_flow_into(m, option):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        option : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.flow_into[option, species] for species in m.species)
 
     @m.Expression(m.superstructure_nodes)
     def total_flow_from(m, option):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        option : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.flow_out_from[option, species] for species in m.species)
 
     m.base_tech_capital_cost = Var(m.syngas_techs, m.syngas_tech_units, bounds=(0, None))
@@ -241,6 +315,20 @@ def build_model():
 
     @m.Expression(m.species)
     def raw_material_flow(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.flow['in', tech, species] for tech in m.syngas_techs)
 
     m.syngas_tech_cost = Var(bounds=(0, None), doc="total cost of sygas process [$·y-1]")
@@ -248,10 +336,42 @@ def build_model():
 
     @m.Expression(m.syngas_techs, m.syngas_tech_units)
     def module_factors(m, tech, equip):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        tech : _type_
+            _description_
+        equip : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.B1[equip] + m.B2[equip] * m.material_factor[equip] * m.syngas_pressure_factor[equip, tech]
 
     @m.Expression(m.syngas_techs, m.syngas_tech_units)
     def variable_utilization(m, tech, equip):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        tech : _type_
+            _description_
+        equip : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         variable_rate_term = {'compressor': m.syngas_tech_utility_rate['power', tech],
                               'exchanger': m.syngas_tech_exchanger_area[tech],
                               'reformer': m.syngas_tech_reformer_duty[tech]}
@@ -274,6 +394,20 @@ def build_model():
 
     @m.Expression(m.aux_equipment)
     def aux_module_factors(m, equip):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        equip : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.B1[equip] + m.B2[equip] * m.material_factor[equip]
 
     m.final_total_emissions = Expression(
@@ -299,12 +433,44 @@ def build_model():
 
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_process_feed_species_ratio(m, tech, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        tech : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if species == 'CH4':
             return Constraint.Skip
         return m.flow['in', tech, species] == feed_ratios.get((tech, species), 0) * m.flow['in', tech, 'CH4']
 
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_conversion_calc(m, tech, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        tech : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow[tech, 'ms1', species] == m.flow['in', tech, 'CH4'] * m.syngas_conversion_factor[species, tech]
 
     m.raw_material_cost_calc = Constraint(expr=m.raw_material_total_cost == (
@@ -314,20 +480,85 @@ def build_model():
 
     @m.Disjunct(m.process_options)
     def unit_exists(disj, option):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        option : _type_
+            _description_
+        """
         pass
 
     @m.Disjunct(m.process_options)
     def unit_absent(no_unit, option):
+        """_summary_
+
+        Parameters
+        ----------
+        no_unit : _type_
+            _description_
+        option : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         @no_unit.Constraint(m.species)
         def no_flow_in(disj, species):
+            """_summary_
+
+            Parameters
+            ----------
+            disj : _type_
+                _description_
+            species : _type_
+                _description_
+
+            Returns
+            -------
+            _type_
+                _description_
+            """
             return m.flow_into[option, species] == 0
 
         @no_unit.Constraint(m.species)
         def no_flow_out(disj, species):
+            """_summary_
+
+            Parameters
+            ----------
+            disj : _type_
+                _description_
+            species : _type_
+                _description_
+
+            Returns
+            -------
+            _type_
+                _description_
+            """
             return m.flow_out_from[option, species] == 0
 
     @m.Disjunction(m.process_options)
     def unit_exists_or_not(disj, option):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        option : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.unit_exists[option], m.unit_absent[option]]
 
     m.Yunit = BooleanVar(m.process_options, doc="Boolean variable for existence of a process unit")
@@ -340,6 +571,20 @@ def build_model():
 
         @tech_selected.Constraint(m.syngas_tech_units)
         def base_tech_capital_cost_calc(disj, equip):
+            """_summary_
+
+            Parameters
+            ----------
+            disj : _type_
+                _description_
+            equip : _type_
+                _description_
+
+            Returns
+            -------
+            _type_
+                _description_
+            """
             return m.base_tech_capital_cost[tech, equip] == (
                 (m.p1[equip] * m.variable_utilization[tech, equip]
                  + m.p2[equip] * m.syngas_tech_num_units[equip, tech] * m.module_factors[tech, equip])
@@ -348,6 +593,20 @@ def build_model():
 
         @tech_selected.Constraint(m.utilities)
         def base_tech_operating_cost_calc(disj, util):
+            """_summary_
+
+            Parameters
+            ----------
+            disj : _type_
+                _description_
+            util : _type_
+                _description_
+
+            Returns
+            -------
+            _type_
+                _description_
+            """
             return m.base_tech_operating_cost[tech, util] == (
                 m.syngas_tech_utility_rate[util, tech] * m.flow['in', tech, 'CH4'] * 3600 * m.utility_cost[util]
             )
@@ -370,6 +629,15 @@ def build_model():
 
     @m.Disjunct(m.syngas_techs)
     def stage_one_compressor(disj, tech):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        tech : _type_
+            _description_
+        """
         disj.compressor_power_calc = Constraint(expr=m.syngas_tech_compressor_power[tech] == (
             (1.5 / (1.5 - 1)) / 0.8 * (40 + 273) * 8.314 * sum(m.flow[tech, 'ms1', species] for species in m.species)
             * ((m.syngas_tech_outlet_pressure[tech] / m.process_tech_pressure[tech]) ** (1.5 - 1 / 1.5) - 1)
@@ -378,11 +646,34 @@ def build_model():
 
     @m.Disjunct(m.syngas_techs)
     def stage_one_bypass(bypass, tech):
+        """_summary_
+
+        Parameters
+        ----------
+        bypass : _type_
+            _description_
+        tech : _type_
+            _description_
+        """
         bypass.no_pressure_increase = Constraint(expr=m.syngas_tech_outlet_pressure[tech] == m.process_tech_pressure[tech])
         pass
 
     @m.Disjunction(m.syngas_techs)
     def stage_one_compressor_or_bypass(m, tech):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        tech : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.stage_one_compressor[tech], m.stage_one_bypass[tech]]
 
     m.Ycomp = BooleanVar(m.syngas_techs)
@@ -391,6 +682,20 @@ def build_model():
 
     @m.LogicalConstraint(m.syngas_techs)
     def compressor_implies_tech(m, tech):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        tech : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.Ycomp[tech].implies(m.Yunit[tech])
 
     m.syngas_tech_compressor_cost_calc = Constraint(expr=m.syngas_tech_compressor_cost == (
@@ -406,6 +711,20 @@ def build_model():
     # ms1 balances
     @m.Constraint(m.species)
     def ms1_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['ms1', species] == m.flow_out_from['ms1', species]
 
     for this_unit in {'absorber1', 'WGS'}:
@@ -413,6 +732,20 @@ def build_model():
 
         @unit_exists.Constraint(m.species)
         def unit_inlet_composition_balance(disj, species):
+            """_summary_
+
+            Parameters
+            ----------
+            disj : _type_
+                _description_
+            species : _type_
+                _description_
+
+            Returns
+            -------
+            _type_
+                _description_
+            """
             total_flow = sum(m.flow_out_from['ms1', jj] for jj in m.species)
             total_flow_to_this_unit = sum(m.flow_into[this_unit, jj] for jj in m.species)
             total_flow_species = m.flow_out_from['ms1', species]
@@ -450,6 +783,20 @@ def build_model():
 
     @bypass1_exists.Constraint(m.species)
     def bypass1_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['bypass1', species] == m.flow_out_from['bypass1', species]
 
     # Absorber
@@ -457,6 +804,20 @@ def build_model():
 
     @absorber_exists.Constraint(m.species)
     def absorber_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['absorber1', species] == m.flow_into['absorber1', species] - (
             m.Fabs1 if species == 'CO2' else 0)
 
@@ -475,18 +836,60 @@ def build_model():
     # Flash
     @m.Constraint(m.species)
     def m1_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['m1', species] == m.flow_out_from['m1', species]
 
     flash_exists = m.unit_exists['flash']
 
     @flash_exists.Constraint(m.species)
     def flash_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['flash', species] == (m.flow_into['flash', species] if not species == 'H2O' else 0)
 
     flash_exists.water_sep = Constraint(expr=m.flash_water == m.flow_into['flash', 'H2O'])
 
     @m.Constraint(m.species)
     def post_flash_split_outlet(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['flash', species] == m.flow_into['PSA', species] + m.flow_into['ms2', species]
 
     flash_exists.cost = Constraint(expr=m.aux_unit_capital_cost['flash'] == (
@@ -499,6 +902,20 @@ def build_model():
 
     @psa_exists.Constraint(m.species)
     def psa_inlet_composition_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['PSA', jj] for jj in m.species)
         total_flow_species = m.flow_out_from['s1', species]
@@ -506,6 +923,20 @@ def build_model():
 
     @m.Constraint(m.species)
     def ms2_inlet_composition_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['ms2', jj] for jj in m.species)
         total_flow_species = m.flow_out_from['s1', species]
@@ -513,10 +944,38 @@ def build_model():
 
     @psa_exists.Constraint(m.species)
     def psa_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['PSA', species] + m.psa_recovered[species] == m.flow_into['PSA', species]
 
     @psa_exists.Constraint(m.species)
     def psa_recovery(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['PSA', species] == m.flow_into['PSA', species] * (
             (1 - m.psa_hydrogen_recovery if species == 'H2' else m.psa_separation_hydrogen_purity)
         )
@@ -533,27 +992,111 @@ def build_model():
 
     @psa_absent.Constraint(m.species)
     def no_psa_recovery(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.psa_recovered[species] == 0
 
     @psa_absent.Constraint(m.species)
     def no_purge(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.purge_flow[species] == 0
 
     # ms4
     @m.Constraint(m.species)
     def ms4_inlet_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['PSA', species] == m.flow_into['ms4', species]
 
     @m.Constraint(m.species)
     def ms4_outlet_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['ms4', species] + m.purge_flow[species] == m.flow_into['ms4', species]
 
     @m.Constraint(m.species)
     def purge_flow_limit(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.purge_flow[species] <= m.flow_into['ms4', species] * 0.01
 
     @m.Constraint(m.species)
     def s2_inlet_composition(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['s2', jj] for jj in m.species)
         total_flow_species = m.flow_into['ms4', species]
@@ -561,6 +1104,20 @@ def build_model():
 
     @m.Constraint(m.species)
     def ms4_to_ms3_composition(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow['ms4', 's2', jj] for jj in m.species)
         total_flow_species = m.flow_into['ms4', species]
@@ -569,15 +1126,57 @@ def build_model():
     # s2
     @m.Constraint(m.species)
     def s2_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['s2', species] == m.flow['s2', 'ms1', species]
 
     @m.Constraint(m.species)
     def no_flow_s2_to_m1(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow['s2', 'm1', species] == 0
 
     # ms2
     @m.Constraint(m.species)
     def ms2_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['ms2', species] == (
                 m.flow_into['ms2', species] + (m.co2_inject if species == 'CO2' else 0))
 
@@ -586,6 +1185,20 @@ def build_model():
 
     @bypass3_exists.Constraint(m.species)
     def bypass3_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['bypass3', species] == m.flow_out_from['bypass3', species]
 
     # compressor
@@ -593,10 +1206,38 @@ def build_model():
 
     @compressor_exists.Constraint(m.species)
     def compressor_inlet_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['compressor', species] == m.flow_out_from['ms2', species]
 
     @compressor_exists.Constraint(m.species)
     def compressor_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['compressor', species] == m.flow_into['compressor', species]
 
     compressor_exists.cost = Constraint(expr=m.aux_unit_capital_cost['compressor'] == (
@@ -622,6 +1263,20 @@ def build_model():
     # ms3
     @m.Constraint(m.species)
     def ms3_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['ms3', species] == m.flow_out_from['ms3', species]
 
     # bypass 4
@@ -629,6 +1284,20 @@ def build_model():
 
     @bypass4_exists.Constraint(m.species)
     def bypass4_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_into['bypass4', species] == m.flow_out_from['bypass4', species]
 
     # absorber 2
@@ -636,6 +1305,20 @@ def build_model():
     
     @absorber2_exists.Constraint(m.species)
     def absorber2_mass_balance(disj, species):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.flow_out_from['absorber2', species] == (
             m.flow_into['absorber2', species] - (m.Fabs2 if species == 'CO2' else 0))
     
@@ -651,6 +1334,20 @@ def build_model():
 
     @m.Constraint(m.species)
     def final_mass_balance(m, species):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        species : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.final_syngas_flow[species] == m.flow_into['m2', species]
 
     m.syngas_stoich_number = Constraint(
@@ -741,6 +1438,18 @@ def build_model():
 
 
 def display_nonzeros(var):
+    """_summary_
+
+    Parameters
+    ----------
+    var : _type_
+        _description_
+
+    Yields
+    ------
+    _type_
+        _description_
+    """
     if var.is_indexed():
         def nonzero_rows():
             for k, v in var.items():
