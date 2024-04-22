@@ -433,7 +433,7 @@ def build_model():
         + sum(m.aux_unit_capital_cost[option] for option in m.aux_equipment) * m.annualization_factor
         + (m.psa_power + m.syngas_power + sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs)
            )*m.utility_cost['power']
-        + m.wgs_heater*0.064, doc="total cost of syngas production, including capital and operating expenses[$·h-1]")
+        + m.wgs_heater*0.064, doc="total cost of syngas production, including capital and operating expenses [$·h-1]")
 
     """
     Constraints
@@ -441,7 +441,8 @@ def build_model():
 
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_process_feed_species_ratio(m, tech, species):
-        """_summary_
+        """
+        Enforce the stoichiometric feeding ratio of various chemical species relative to methane (CH4) for different syngas technologies.
 
         Parameters
         ----------
@@ -454,8 +455,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Constraint.Skip
+            A constraint object that sets the flow of `species` in relation to methane flow according to specified ratios. The constraint is skipped if the species is methane.
         """
         if species == 'CH4':
             return Constraint.Skip
@@ -463,7 +464,8 @@ def build_model():
 
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_conversion_calc(m, tech, species):
-        """_summary_
+        """
+        Defines the conversion rates for each species within a specified syngas technology at the mixer stage 'ms1'.
 
         Parameters
         ----------
@@ -476,96 +478,101 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Sets the flow of `species` in the mixer (ms1) to the product of incoming methane flow and the species-specific conversion factor.
+
+        Notes
+        -----
+        This constraint ensures the output flow for each species is proportional to the methane input flow, scaled by the conversion factor specific to that species and technology.
         """
         return m.flow[tech, 'ms1', species] == m.flow['in', tech, 'CH4'] * m.syngas_conversion_factor[species, tech]
 
     m.raw_material_cost_calc = Constraint(expr=m.raw_material_total_cost == (
         sum(m.raw_material_flow[species] * m.raw_material_cost[species] for species in m.species)
         + m.wgs_steam * m.raw_material_cost['H2O'] + m.oxygen_flow * m.raw_material_cost['O2']
-    ))
+    ), doc="total cost of raw materials [$·h-1]")
 
     @m.Disjunct(m.process_options)
     def unit_exists(disj, option):
-        """_summary_
+        """
+        Represents the scenario where a specific process unit (identified by 'option') is operational within the syngas production system.
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         option : str
-            _description_
+            The identifier for the process unit being considered. This could be any unit within the set 'm.process_options'.
         """
         pass
 
     @m.Disjunct(m.process_options)
     def unit_absent(no_unit, option):
-        """_summary_
+        """
+        Represents the scenario where a specific process unit (identified by 'option') is not operational.
 
         Parameters
         ----------
-        no_unit : _type_
-            _description_
+        no_unit : Pyomo.Disjunct
+            The disjunct instance representing the absence of the unit.
         option : str
-            _description_
+            The identifier for the process unit being considered. This could be any unit within the set 'm.process_options'.
 
-        Returns
-        -------
-        _type_
-            _description_
         """
         @no_unit.Constraint(m.species)
         def no_flow_in(disj, species):
-            """_summary_
+            """
+            Ensures zero inflow of the specified species into the non-operational unit.
 
             Parameters
             ----------
-            disj : _type_
+            disj : Pyomo.Disjunct
                 _description_
             species : str
                 The index of chemical species which is the element of the set 'm.species'.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                A constraint that forces the flow into the unit for this species to be zero.
             """
             return m.flow_into[option, species] == 0
 
         @no_unit.Constraint(m.species)
         def no_flow_out(disj, species):
-            """_summary_
+            """
+            Ensures zero inflow of the specified species into the non-operational unit.
 
             Parameters
             ----------
-            disj : _type_
+            disj : Pyomo.Disjunct
                 _description_
             species : str
                 The index of chemical species which is the element of the set 'm.species'.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                A constraint that forces the flow into the unit for this species to be zero.
             """
             return m.flow_out_from[option, species] == 0
 
     @m.Disjunction(m.process_options)
     def unit_exists_or_not(disj, option):
-        """_summary_
+        """
+        Defines a disjunction that determines the operational status of a process unit within the syngas production system.
 
         Parameters
         ----------
-        disj : _type_
-            _description_
+        disj : Pyomo.Disjunct
+            The disjunct instance that encapsulates this logical decision-making process.
         option : str
-            _description_
+            The identifier for the process unit being considered. This could be any unit within the set 'm.process_options'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+             A disjunction object within Pyomo that forces the model to select either the active or inactive state for the specified unit.
         """
         return [m.unit_exists[option], m.unit_absent[option]]
 
@@ -579,19 +586,20 @@ def build_model():
 
         @tech_selected.Constraint(m.syngas_tech_units)
         def base_tech_capital_cost_calc(disj, equip):
-            """_summary_
+            """
+            Calculates the capital cost for each syngas technology and its associated equipment.
 
             Parameters
             ----------
-            disj : _type_
-                _description_
+            disj : Pyomo.Disjunct
+                Represents the scenario where the specified technology is active.
             equip : str
                 Index of the equipment type (e.g., compressor, exchanger, reformer) begin modeled.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Sets the capital cost for the equipment within a technology, considering utilization rates, number of units, and adjustment factors to reflect accurate cost modeling in [$·h-1].
             """
             return m.base_tech_capital_cost[tech, equip] == (
                 (m.p1[equip] * m.variable_utilization[tech, equip]
@@ -601,19 +609,20 @@ def build_model():
 
         @tech_selected.Constraint(m.utilities)
         def base_tech_operating_cost_calc(disj, util):
-            """_summary_
+            """
+            Calculates the operating cost for each utility used by a specific syngas technology based on the methane flow rate, utility usage rates, and cost per utility unit.
 
             Parameters
             ----------
-            disj : _type_
-                _description_
-            util : _type_
-                _description_
+            disj : Pyomo.Disjunct
+                Represents the scenario where the specified technology is active.
+            util : str
+                Index of the utility (e.g., power, cooling water, natural gas) being considered.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Sets the operating cost for each utility in a technology and integrated into the overall syngas production cost model. The unit is in [$·h-1].
             """
             return m.base_tech_operating_cost[tech, util] == (
                 m.syngas_tech_utility_rate[util, tech] * m.flow['in', tech, 'CH4'] * 3600 * m.utility_cost[util]
@@ -622,7 +631,7 @@ def build_model():
     m.syngas_process_cost_calc = Constraint(expr=m.syngas_tech_cost == (
         sum(sum(m.base_tech_capital_cost[tech, equip] for equip in m.syngas_tech_units) * m.annualization_factor
             + sum(m.base_tech_operating_cost[tech, util] for util in m.utilities)
-            for tech in m.syngas_techs) + m.raw_material_total_cost * 3600) / 3600)
+            for tech in m.syngas_techs) + m.raw_material_total_cost * 3600) / 3600, doc="total cost of the syngas production process [$·s-1].")
 
     m.syngas_emissions_calc = Constraint(expr=m.syngas_tech_emissions == (
         # Emissions from utilities
@@ -631,44 +640,47 @@ def build_model():
         # CO2 consumed by syngas processes
         - sum(m.flow['in', tech, 'CO2'] for tech in m.syngas_techs) * 3600 * 44
         # Emissions from raw materials
-        + sum(m.raw_material_flow[species] * m.raw_material_emission[species] * 3600 for species in m.species)) / 3600)
+        + sum(m.raw_material_flow[species] * m.raw_material_emission[species] * 3600 for species in m.species)) / 3600, doc="total syngas process emissions with various factors [kgCO2·s-1].")
 
     # Syngas process pressure adjustment
 
     @m.Disjunct(m.syngas_techs)
     def stage_one_compressor(disj, tech):
-        """_summary_
+        """
+        Defines the operational constraints for the compressor in stage one of the syngas process, calculating the required compressor power based on process pressures and species flow rates.
 
         Parameters
         ----------
-        disj : _type_
-            _description_
+        disj : Pyomo.Disjunct
+            The disjunct instance for the compressor, indicating its active status in the model.
         tech : str
             Index of the syngas process technology (e.g., SMR, POX, ATR).
         """
         disj.compressor_power_calc = Constraint(expr=m.syngas_tech_compressor_power[tech] == (
             (1.5 / (1.5 - 1)) / 0.8 * (40 + 273) * 8.314 * sum(m.flow[tech, 'ms1', species] for species in m.species)
             * ((m.syngas_tech_outlet_pressure[tech] / m.process_tech_pressure[tech]) ** (1.5 - 1 / 1.5) - 1)
-        ))
+        ), doc="compressor power requirement based on the ideal gas law and the pressure ratio needed for the syngas technology [kW]")
         pass
 
     @m.Disjunct(m.syngas_techs)
     def stage_one_bypass(bypass, tech):
-        """_summary_
+        """
+        Represents a bypass scenario where no compressor is used, and the outlet pressure of the syngas is set directly to the process technology pressure without any increase.
 
         Parameters
         ----------
-        bypass : _type_
+        bypass : Pyomo.Disjunct
             _description_
         tech : str
             Index of the syngas process technology (e.g., SMR, POX, ATR).
         """
-        bypass.no_pressure_increase = Constraint(expr=m.syngas_tech_outlet_pressure[tech] == m.process_tech_pressure[tech])
+        bypass.no_pressure_increase = Constraint(expr=m.syngas_tech_outlet_pressure[tech] == m.process_tech_pressure[tech], doc="outlet pressure is the same as the process pressure")
         pass
 
     @m.Disjunction(m.syngas_techs)
     def stage_one_compressor_or_bypass(m, tech):
-        """_summary_
+        """
+        Logical disjunction that decides whether a compressor is used or bypassed in the first stage of the syngas process based on the specified technology.
 
         Parameters
         ----------
@@ -679,18 +691,19 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            A choice between using a compressor (stage_one_compressor) or bypassing it (stage_one_bypass).
         """
         return [m.stage_one_compressor[tech], m.stage_one_bypass[tech]]
 
-    m.Ycomp = BooleanVar(m.syngas_techs)
+    m.Ycomp = BooleanVar(m.syngas_techs, doc="indicates if a compressor is active for each syngas technology")
     for tech in m.syngas_techs:
         m.Ycomp[tech].associate_binary_var(m.stage_one_compressor[tech].binary_indicator_var)
 
     @m.LogicalConstraint(m.syngas_techs)
     def compressor_implies_tech(m, tech):
-        """_summary_
+        """
+        Ensures that if a compressor is active for a given syngas technology 'tech', then the technology must also be active.
 
         Parameters
         ----------
@@ -701,8 +714,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.LogicalConstraint
+            A logical constraint that enforces the operational dependency between a compressor and its syngas technology.
         """
         return m.Ycomp[tech].implies(m.Yunit[tech])
 
@@ -710,11 +723,11 @@ def build_model():
         ((3.553 * 10 ** 5) * sum(m.Ycomp[tech].get_associated_binary() for tech in m.syngas_techs)
          + 586 * sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs))
         * m.annualization_factor / 8000
-    ))
+    ), doc="total cost of compressors across all syngas technologies based on their power usage and operational status [$·h-1]")
 
     for tech in m.syngas_techs:
         tech_selected = m.unit_exists[tech]
-        tech_selected.pressure_balance = Constraint(expr=m.first_stage_outlet_pressure <= m.syngas_tech_outlet_pressure[tech])
+        tech_selected.pressure_balance = Constraint(expr=m.first_stage_outlet_pressure <= m.syngas_tech_outlet_pressure[tech, doc="first stage outlet pressure does not exceed syngas technology 'tech' limits")
 
     # ms1 balances
     @m.Constraint(m.species)
@@ -744,7 +757,7 @@ def build_model():
 
             Parameters
             ----------
-            disj : _type_
+            disj : Pyomo.Disjunct
                 _description_
             species : str
                 The index of chemical species which is the element of the set 'm.species'.
@@ -795,7 +808,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -816,7 +829,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -868,7 +881,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -914,7 +927,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -935,7 +948,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -956,7 +969,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -974,7 +987,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -1004,7 +1017,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -1022,7 +1035,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -1197,7 +1210,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -1218,7 +1231,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -1236,7 +1249,7 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
@@ -1266,7 +1279,7 @@ def build_model():
         m.total_flow_from['flash'] * m.min_flow_division
     ))
 
-    m.compressor_or_bypass = LogicalConstraint(expr=exactly(1, m.Yunit['bypass3'], m.Yunit['compressor']))
+    m.compressor_or_bypass = LogicalConstraint(expr=exactly(1, m.Yunit['bypass3'], m.Yunit['compressor'])) 
 
     # ms3
     @m.Constraint(m.species)
@@ -1282,7 +1295,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_into['ms3', species] == m.flow_out_from['ms3', species]
@@ -1296,14 +1309,14 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_into['bypass4', species] == m.flow_out_from['bypass4', species]
@@ -1317,14 +1330,14 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.flow_out_from['absorber2', species] == (
@@ -1353,7 +1366,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.final_syngas_flow[species] == m.flow_into['m2', species]
