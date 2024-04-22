@@ -670,7 +670,7 @@ def build_model():
         Parameters
         ----------
         bypass : Pyomo.Disjunct
-            _description_
+            The disjunct instance for the bypass of the compressor, indicating its inactive status in the model.
         tech : str
             Index of the syngas process technology (e.g., SMR, POX, ATR).
         """
@@ -732,7 +732,8 @@ def build_model():
     # ms1 balances
     @m.Constraint(m.species)
     def ms1_mass_balance(m, species):
-        """_summary_
+        """
+        Sets mass balance for each chemical species at the mixer (ms1) by equating the total inflow to the total outflow.
 
         Parameters
         ----------
@@ -743,8 +744,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that maintains mass balance at the mixer for each species
         """
         return m.flow_into['ms1', species] == m.flow_out_from['ms1', species]
 
@@ -753,43 +754,44 @@ def build_model():
 
         @unit_exists.Constraint(m.species)
         def unit_inlet_composition_balance(disj, species):
-            """_summary_
+            """
+            Ensures that the proportion of each species entering the unit matches its proportion at the mixer outlet, maintaining compositional consistency across the process.
 
             Parameters
             ----------
             disj : Pyomo.Disjunct
-                _description_
+                The disjunct under which this constraint is active, indicating that the unit is operational.
             species : str
                 The index of chemical species which is the element of the set 'm.species'.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Balances the composition of each species entering the unit relative to its total flow from the mixer.
             """
-            total_flow = sum(m.flow_out_from['ms1', jj] for jj in m.species)
-            total_flow_to_this_unit = sum(m.flow_into[this_unit, jj] for jj in m.species)
-            total_flow_species = m.flow_out_from['ms1', species]
-            return total_flow * m.flow['ms1', this_unit, species] == total_flow_to_this_unit * total_flow_species
+            total_flow = sum(m.flow_out_from['ms1', jj] for jj in m.species) # Total flow of all species from the mixer (ms1)
+            total_flow_to_this_unit = sum(m.flow_into[this_unit, jj] for jj in m.species) # Total incoming flow to this unit 
+            total_flow_species = m.flow_out_from['ms1', species] # Flow of the current species from the mixer
+            return total_flow * m.flow['ms1', this_unit, species] == total_flow_to_this_unit * total_flow_species # Ensure the flow ratios into the unit for each species matches its ratio in the total mixer output
 
     # WGS Reactor  CO + H2O <-> CO2 + H2
     wgs_exists = m.unit_exists['WGS']
-    wgs_exists.CH4_balance = Constraint(expr=m.flow_out_from['WGS', 'CH4'] == m.flow_into['WGS', 'CH4'])
-    wgs_exists.CO_balance = Constraint(expr=m.flow_out_from['WGS', 'CO'] == m.flow_into['WGS', 'CO'] - m.Xw)
-    wgs_exists.CO2_balance = Constraint(expr=m.flow_out_from['WGS', 'CO2'] == m.flow_into['WGS', 'CO2'] + m.Xw)
-    wgs_exists.H2_balance = Constraint(expr=m.flow_out_from['WGS', 'H2'] == m.flow_into['WGS', 'H2'] + m.Xw)
-    wgs_exists.H2O_balance = Constraint(expr=m.flow_out_from['WGS', 'H2O'] == m.flow_into['WGS', 'H2O'] + m.wgs_steam - m.Xw)
-    wgs_exists.max_molar_reaction = Constraint(expr=m.Xw <= m.flow_into['WGS', 'CO'])
+    wgs_exists.CH4_balance = Constraint(expr=m.flow_out_from['WGS', 'CH4'] == m.flow_into['WGS', 'CH4'], doc="methane in equals methane out")
+    wgs_exists.CO_balance = Constraint(expr=m.flow_out_from['WGS', 'CO'] == m.flow_into['WGS', 'CO'] - m.Xw, doc="CO out equals CO in minus reacted CO")
+    wgs_exists.CO2_balance = Constraint(expr=m.flow_out_from['WGS', 'CO2'] == m.flow_into['WGS', 'CO2'] + m.Xw, doc="CO2 out equals CO2 in plus produced CO2")
+    wgs_exists.H2_balance = Constraint(expr=m.flow_out_from['WGS', 'H2'] == m.flow_into['WGS', 'H2'] + m.Xw, doc="H2 out equals H2 in plus produced H2")
+    wgs_exists.H2O_balance = Constraint(expr=m.flow_out_from['WGS', 'H2O'] == m.flow_into['WGS', 'H2O'] + m.wgs_steam - m.Xw, doc="water balance including steam input and water reacted")
+    wgs_exists.max_molar_reaction = Constraint(expr=m.Xw <= m.flow_into['WGS', 'CO'], doc="reaction does not exceed available CO")
 
     wgs_exists.rxn_equilibrium = Constraint(
         expr=m.Keqw * m.flow_out_from['WGS', 'CO'] * m.flow_out_from['WGS', 'H2O'] == (
             m.flow_out_from['WGS', 'CO2'] * m.flow_out_from['WGS', 'H2']
-        ))
+        ), doc="maintenance of chemical equilibrium for WGS reaction")
 
     wgs_exists.capital_cost = Constraint(expr=m.aux_unit_capital_cost['WGS'] == (
         (m.p1['WGS'] * 100 * m.flow_out_from['WGS', 'H2'] + m.p2['WGS'])
         * m.aux_module_factors['WGS'] / 8000 * m.cost_index_ratio
-    ))
+    ), doc="capital cost for the WGS unit based on output and configuration [$·h-1]")
 
     wgs_exists.temperature_balance = Constraint(
         expr=m.wgs_inlet_temperature * m.total_flow_into['WGS'] == (
@@ -797,26 +799,27 @@ def build_model():
             + sum(m.flow['s2', 'ms1', species] for species in m.species) * 40
         ))
     wgs_exists.heater_duty = Constraint(
-        expr=m.wgs_heater == m.total_flow_into['WGS'] * 46 * (250 - m.wgs_inlet_temperature))
+        expr=m.wgs_heater == m.total_flow_into['WGS'] * 46 * (250 - m.wgs_inlet_temperature), doc="heater duty required to reach the target reactor inlet temperature")
 
     # Bypass 1
     bypass1_exists = m.unit_exists['bypass1']
 
     @bypass1_exists.Constraint(m.species)
     def bypass1_mass_balance(disj, species):
-        """_summary_
+        """
+        Sets that the flow of each chemical species into and out of the bypass1 is balanced, indicating no accumulation or loss.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct that absorber and WGS are both inactive, there are no units operational
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that ensures mass conservation for each species through bypass1.
         """
         return m.flow_into['bypass1', species] == m.flow_out_from['bypass1', species]
 
@@ -825,34 +828,35 @@ def build_model():
 
     @absorber_exists.Constraint(m.species)
     def absorber_mass_balance(disj, species):
-        """_summary_
+        """
+        Set mass balance in the absorber by accounting for CO2 absorption.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            Indicates that this constraint is relevant when the absorber is operational.
         species : str
             The index of chemical species which is the element of the set 'm.species'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint ensuring mass conservation within the absorber.
         """
         return m.flow_out_from['absorber1', species] == m.flow_into['absorber1', species] - (
             m.Fabs1 if species == 'CO2' else 0)
 
-    absorber_exists.co2_absorption = Constraint(expr=m.Fabs1 == 0.96 * m.flow_into['absorber1', 'CO2'])
+    absorber_exists.co2_absorption = Constraint(expr=m.Fabs1 == 0.96 * m.flow_into['absorber1', 'CO2'], doc="the CO2 absorption rate as 96% of the incoming CO2 to the absorber")
     absorber_exists.cost = Constraint(expr=m.aux_unit_capital_cost['absorber1'] == (
         (m.p1['absorber1'] * 100 * m.Fabs1 + m.p2['absorber1'])
         * m.aux_module_factors['absorber1'] / 8000 * m.cost_index_ratio
-    ))
+    ), doc="the capital cost for the absorber based on CO2 absorbed [$·h-1]")
 
     m.unit_absent['absorber1'].no_absorption = Constraint(expr=m.Fabs1 == 0)
 
     for this_unit in group1:
         unit_exists = m.unit_exists[this_unit]
-        unit_exists.minimum_flow = Constraint(expr=m.total_flow_into[this_unit] >= m.total_flow_from['ms1'] * m.min_flow_division)
+        unit_exists.minimum_flow = Constraint(expr=m.total_flow_into[this_unit] >= m.total_flow_from['ms1'] * m.min_flow_division, doc="minimum flow into each unit for operational stability")
 
     # Flash
     @m.Constraint(m.species)
