@@ -45,8 +45,8 @@ def build_model():
 
     References
     ----------
-    Ravemark, E. Optimization models for design and operation of chemical batch processes. Ph.D. Thesis, ETH Zurich, 1995.
-    Vecchietti, A., & Grossmann, I. E. (1999). LOGMIP: a disjunctive 0–1 non-linear optimizer for process system models. Computers & chemical engineering, 23(4-5), 555-565.
+    [1] Ravemark, E. Optimization models for design and operation of chemical batch processes. Ph.D. Thesis, ETH Zurich, 1995. https://doi.org/10.3929/ethz-a-001591449
+    [2] Vecchietti, A., & Grossmann, I. E. (1999). LOGMIP: a disjunctive 0–1 non-linear optimizer for process system models. Computers & chemical engineering, 23(4-5), 555-565. https://doi.org/10.1016/S0098-1354(97)87539-4
     """
     model = AbstractModel()
 
