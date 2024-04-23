@@ -40,13 +40,6 @@ def build_model():
     Pyomo.AbstractModel
         Pyomo abstract model for medium-term purchasing contracts problem.
 
-    Raises
-    ------
-    RuntimeError
-        _description_
-    RuntimeError
-        _description_
-
     References
     ----------
     [1] Vecchietti, A., & Grossmann, I. (2004). Computational experience with logmip solving linear and nonlinear disjunctive programming problems. Proc. of FOCAPD, 587–590.
