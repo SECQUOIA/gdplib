@@ -720,7 +720,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Sets the flow of `species` in the mixer (ms1) to the product of incoming methane flow and the species-specific conversion factor.
+            Sets the flow of `species` in the mixer/splitter (ms1) to the product of incoming methane flow and the species-specific conversion factor.
 
         Notes
         -----
@@ -1058,7 +1058,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms1_mass_balance(m, species):
         """
-        Sets mass balance for each chemical species at the mixer (ms1) by equating the total inflow to the total outflow.
+        Sets mass balance for each chemical species at the mixer/splitter (ms1) by equating the total inflow to the total outflow.
 
         Parameters
         ----------
