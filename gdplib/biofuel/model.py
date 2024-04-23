@@ -11,21 +11,43 @@ from pyomo.gdp import Disjunct
 
 
 def build_model():
+    """_summary_
+
+    Returns
+    -------
+    Pyomo.ConcreteModel
+        The Pyomo concrete model which descibes the multiperiod location-allocation optimization model designed to determine the most cost-effective network layout and production allocation to meet market demands.
+    """
     m = ConcreteModel()
     m.bigM = Suffix(direction=Suffix.LOCAL)
     m.time = RangeSet(0, 120, doc="months in 10 years")
-    m.suppliers = RangeSet(10)
-    m.markets = RangeSet(10)
-    m.potential_sites = RangeSet(12)
-    m.discount_rate = Param(initialize=0.08, doc="8%")
+    m.suppliers = RangeSet(10) # 10 suppliers
+    m.markets = RangeSet(10) # 10 markets
+    m.potential_sites = RangeSet(12) # 12 facility sites
+    m.discount_rate = Param(initialize=0.08, doc="discount rate [8%]")
     m.conv_setup_time = Param(initialize=12)
     m.modular_setup_time = Param(initialize=3)
     m.modular_teardown_time = Param(initialize=3)
-    m.teardown_value = Param(initialize=0.30, doc="30%")
-    m.conventional_salvage_value = Param(initialize=0.05, doc="5%")
+    m.teardown_value = Param(initialize=0.30, doc="tear down value [30%]")
+    m.conventional_salvage_value = Param(initialize=0.05, doc="salvage value [5%]")
 
     @m.Param(m.time)
     def discount_factor(m, t):
+        """
+        Calculate the discount factor for a given time period 't', based on a monthly compounding interest rate.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        Pyomo.Parameter
+            The discount factor for month 't', calculated using the formula (1 + r/12)**(-t/12) where 'r' is the annual discount rate.
+        """
         return (1 + m.discount_rate / 12) ** (-t / 12)
 
     xls_data = pd.read_excel(
@@ -35,6 +57,23 @@ def build_model():
 
     @m.Param(m.markets, m.time, doc="Market demand [thousand ton/month]")
     def market_demand(m, mkt, t):
+        """
+        Calculate the market demand for a given market 'mkt' at time 't', based on the demand data provided in the Excel file.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        mkt : int
+            Index of the market from 1 to 10
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        Pyomo.Parameter
+            If the conversion setup time is less than or equal to 't' and 't' is less than the maximum time period minus 3 months, return the market demand in thousand tons per month, otherwise return 0.
+        """
         if m.conv_setup_time <= t <= max(m.time) - 3:
             return float(xls_data["markets"]["demand"][mkt]) / 1000 / 12
         else:
@@ -42,6 +81,23 @@ def build_model():
 
     @m.Param(m.suppliers, m.time, doc="Raw material supply [thousand ton/month]")
     def available_supply(m, sup, t):
+        """
+        Calculate the available supply of raw materials for a given supplier 'sup' at time 't', based on the supply data provided in the Excel file.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : int
+            Index of the supplier from 1 to 10
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        Pyomo.Parameter
+            If 't' is before the growth period or after the decay period, return 0, otherwise return the available supply in thousand tons per month.
+        """
         # If t is before supply available or after supply decayed, then no
         # supply
         if t < float(xls_data["sources"]["growth"][sup]):
@@ -53,35 +109,159 @@ def build_model():
 
     @m.Param(m.suppliers)
     def supplier_x(m, sup):
+        """
+        Get the x-coordinate of the supplier location in miles from the Excel data.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : int
+            Index of the supplier from 1 to 10
+
+        Returns
+        -------
+        Pyomo.Parameter
+            x-coordinate of the supplier location in miles
+        """
         return float(xls_data["sources"]["x"][sup])
 
     @m.Param(m.suppliers)
     def supplier_y(m, sup):
+        """
+        Get the y-coordinate of the supplier location in miles from the Excel data.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : int
+            Index of the supplier from 1 to 10
+
+        Returns
+        -------
+        Pyomo.Parameter
+            y-coordinate of the supplier location in miles
+        """
         return float(xls_data["sources"]["y"][sup])
 
     @m.Param(m.markets)
     def market_x(m, mkt):
+        """
+        Get the x-coordinate of the market location in miles from the Excel data.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        mkt : int
+            Index of the market from 1 to 10
+
+        Returns
+        -------
+        Pyomo.Parameter
+            x-coordinate of the market location in miles
+        """
         return float(xls_data["markets"]["x"][mkt])
 
     @m.Param(m.markets)
     def market_y(m, mkt):
+        """
+        Get the y-coordinate of the market location in miles from the Excel data.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        mkt : int
+            Index of the market from 1 to 10
+
+        Returns
+        -------
+        Pyomo.Parameter
+            y-coordinate of the market location in miles
+        """
         return float(xls_data["markets"]["y"][mkt])
 
     @m.Param(m.potential_sites)
     def site_x(m, site):
+        """
+        Get the x-coordinate of the facility site location in miles from the Excel data.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : int
+            Index of the facility site from 1 to 12
+
+        Returns
+        -------
+        Pyomo.Parameter
+            x-coordinate of the facility site location in miles
+        """
         return float(xls_data["sites"]["x"][site])
 
     @m.Param(m.potential_sites)
     def site_y(m, site):
+        """
+        Get the y-coordinate of the facility site location in miles from the Excel data.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : int
+            Index of the facility site from 1 to 12
+
+        Returns
+        -------
+        Pyomo.Parameter
+            y-coordinate of the facility site location in miles
+        """
         return float(xls_data["sites"]["y"][site])
 
     @m.Param(m.suppliers, m.potential_sites, doc="Miles")
     def dist_supplier_to_site(m, sup, site):
+        """
+        Calculate the distance in miles between a supplier 'sup' and a facility site 'site' using the Euclidean distance formula.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : int
+            Index of the supplier from 1 to 10
+        site : int
+            Index of the facility site from 1 to 12
+
+        Returns
+        -------
+        Pyomo.Parameter
+            The distance in miles between the supplier and the facility site
+        """
         return sqrt((m.supplier_x[sup] - m.site_x[site]) ** 2 +
                     (m.supplier_y[sup] - m.site_y[site]) ** 2)
 
     @m.Param(m.potential_sites, m.markets, doc="Miles")
     def dist_site_to_market(m, site, mkt):
+        """
+        Calculate the distance in miles between a facility site 'site' and a market 'mkt' using the Euclidean distance formula.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : int
+            Index of the facility site from 1 to 12
+        mkt : int
+            Index of the market from 1 to 10
+
+        Returns
+        -------
+        Pyomo.Parameter
+            The distance in miles between the facility site and the market
+        """
         return sqrt((m.site_x[site] - m.market_x[mkt]) ** 2 +
                     (m.site_y[site] - m.market_y[mkt]) ** 2)
 
@@ -109,26 +289,110 @@ def build_model():
 
     @m.Param(m.suppliers, m.time)
     def raw_material_unit_cost(m, sup, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(xls_data["sources"]["cost"][sup]) * m.discount_factor[t]
 
     @m.Param(m.time)
     def module_unit_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.module_base_cost * m.discount_factor[t]
 
     @m.Param(m.time, doc="$/ton")
     def unit_production_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 300 * m.discount_factor[t]
 
     @m.Param(doc="thousand $")
     def transport_fixed_cost(m):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 125
 
     @m.Param(m.time, doc="$/ton-mile")
     def unit_product_transport_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 0.13 * m.discount_factor[t]
 
     @m.Param(m.time, doc="$/ton-mile")
     def unit_raw_material_transport_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 2 * m.discount_factor[t]
 
     m.supply_shipments = Var(
@@ -140,21 +404,85 @@ def build_model():
 
     @m.Constraint(m.suppliers, m.time)
     def supply_limits(m, sup, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.supply_shipments[sup, site, t]
                    for site in m.potential_sites) <= m.available_supply[sup, t]
 
     @m.Constraint(m.markets, m.time)
     def demand_satisfaction(m, mkt, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        mkt : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.product_shipments[site, mkt, t]
                    for site in m.potential_sites) == m.market_demand[mkt, t]
 
     @m.Constraint(m.potential_sites, m.time)
     def product_balance(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.production[site, t] == sum(m.product_shipments[site, mkt, t]
                                             for mkt in m.markets)
 
     @m.Constraint(m.potential_sites, m.time)
     def require_raw_materials(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.production[site, t] <= m.conversion * m.supply[site, t]
 
     m.modular = Disjunct(m.potential_sites, rule=_build_modular_disjunct)
@@ -169,18 +497,80 @@ def build_model():
 
     @m.Disjunction(m.potential_sites)
     def site_type(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.modular[site], m.conventional[site], m.site_inactive[site]]
 
     @m.Disjunction(m.suppliers, m.potential_sites)
     def supply_route_active_or_not(m, sup, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.supply_route_active[sup, site], m.supply_route_inactive[sup, site]]
 
     @m.Disjunction(m.potential_sites, m.markets)
     def product_route_active_or_not(m, site, mkt):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+        mkt : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.product_route_active[site, mkt], m.product_route_inactive[site, mkt]]
 
     @m.Expression(m.suppliers, m.potential_sites, doc="million $")
     def raw_material_transport_cost(m, sup, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        sup : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.supply_shipments[sup, site, t]
             * m.unit_raw_material_transport_cost[t]
@@ -189,6 +579,18 @@ def build_model():
 
     @m.Expression(doc="million $")
     def raw_material_fixed_transport_cost(m):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             sum(m.supply_route_active[sup, site].binary_indicator_var
                 for sup in m.suppliers for site in m.potential_sites)
@@ -196,6 +598,22 @@ def build_model():
 
     @m.Expression(m.potential_sites, m.markets, doc="million $")
     def product_transport_cost(m, site, mkt):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+        mkt : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.product_shipments[site, mkt, t]
             * m.unit_product_transport_cost[t]
@@ -204,6 +622,18 @@ def build_model():
 
     @m.Expression(doc="million $")
     def product_fixed_transport_cost(m):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             sum(m.product_route_active[site, mkt].binary_indicator_var
                 for site in m.potential_sites for mkt in m.markets)
@@ -211,14 +641,60 @@ def build_model():
 
     @m.Expression(m.potential_sites, m.time, doc="Cost of module setups in each month [million $]")
     def module_setup_cost(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+        t : int
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.modules_purchased[site, t] * m.module_unit_cost[t]
 
     @m.Expression(m.potential_sites, m.time, doc="Value of module teardowns in each month [million $]")
     def module_teardown_credit(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.modules_sold[site, t] * m.module_unit_cost[t] * m.teardown_value
 
     @m.Expression(m.potential_sites, doc="Conventional site salvage value")
     def conv_salvage_value(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.conv_build_cost[site] * m.discount_factor[m.time.last()] * m.conventional_salvage_value
 
     m.total_cost = Objective(
@@ -238,22 +714,86 @@ def build_model():
 
 
 def _build_site_inactive_disjunct(disj, site):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    site : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     m = disj.model()
 
     @disj.Constraint()
     def no_modules(disj):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.num_modules[...]) + sum(m.modules_purchased[...]) + sum(m.modules_sold[...]) == 0
 
     @disj.Constraint()
     def no_production(disj):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.production[site, t] for t in m.time) == 0
 
     @disj.Constraint()
     def no_supply(disj):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.supply[site, t] for t in m.time) == 0
 
 
 def _build_conventional_disjunct(disj, site):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    site : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     m = disj.model()
 
     disj.cost_calc = Constraint(
@@ -263,11 +803,39 @@ def _build_conventional_disjunct(disj, site):
 
     @disj.Constraint(m.time)
     def supply_balance(disj, t):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.supply[site, t] == sum(
             m.supply_shipments[sup, site, t] for sup in m.suppliers)
 
     @disj.Constraint(m.time)
     def conv_production_limit(conv_disj, t):
+        """_summary_
+
+        Parameters
+        ----------
+        conv_disj : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if t < m.conv_setup_time:
             return m.production[site, t] == 0
         else:
@@ -275,19 +843,73 @@ def _build_conventional_disjunct(disj, site):
 
     @disj.Constraint()
     def no_modules(disj):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.num_modules[...]) + sum(m.modules_purchased[...]) + sum(m.modules_sold[...]) == 0
 
 
 def _build_modular_disjunct(disj, site):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    site : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     m = disj.model()
 
     @disj.Constraint(m.time)
     def supply_balance(disj, t):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.supply[site, t] == sum(
             m.supply_shipments[sup, site, t] for sup in m.suppliers)
 
     @disj.Constraint(m.time)
     def module_balance(disj, t):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         existing_modules = 0 if t == m.time.first() else m.num_modules[site, t - 1]
         new_modules = 0 if t < m.modular_setup_time else m.modules_purchased[site, t - m.modular_setup_time]
         sold_modules = m.modules_sold[site, t]
@@ -298,34 +920,134 @@ def _build_modular_disjunct(disj, site):
 
     @disj.Constraint(m.time)
     def modular_production_limit(mod_disj, t):
+        """_summary_
+
+        Parameters
+        ----------
+        mod_disj : _type_
+            _description_
+        t : int
+            Index of time in months from 0 to 120 (10 years)
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.production[site, t] <= 10 * m.num_modules[site, t]
 
 
 def _build_supply_route_active(disj, sup, site):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    sup : _type_
+        _description_
+    site : _type_
+        _description_
+    """
     m = disj.model()
 
 
 def _build_supply_route_inactive(disj, sup, site):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    sup : _type_
+        _description_
+    site : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     m = disj.model()
 
     @disj.Constraint()
     def no_supply(disj):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.supply_shipments[sup, site, t] for t in m.time) == 0
 
 
 def _build_product_route_active(disj, site, mkt):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    site : _type_
+        _description_
+    mkt : _type_
+        _description_
+    """
     m = disj.model()
 
 
 def _build_product_route_inactive(disj, site, mkt):
+    """_summary_
+
+    Parameters
+    ----------
+    disj : _type_
+        _description_
+    site : _type_
+        _description_
+    mkt : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     m = disj.model()
 
     @disj.Constraint()
     def no_product(disj):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.product_shipments[site, mkt, t] for t in m.time) == 0
 
 
 def print_nonzeros(var):
+    """
+    Print the nonzero values of a Pyomo variable
+
+    Parameters
+    ----------
+    var : pyomo.Var
+        Pyomo variable of the model
+    """
     for i in var:
         if var[i].value != 0:
             print("%7s : %10f : %10f : %10f" % (i, var[i].lb, var[i].value, var[i].ub))
