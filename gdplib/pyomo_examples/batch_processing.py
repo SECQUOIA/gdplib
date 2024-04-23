@@ -108,14 +108,14 @@ def build_model():
     model.Beta1 = Param(doc='Exponent Parameter of the units')
     model.Beta2 = Param(doc='Exponent Parameter of the intermediate storage tanks')
 
-    model.ProductionAmount = Param(model.PRODUCTS)
-    model.ProductSizeFactor = Param(model.PRODUCTS, model.STAGES)
-    model.ProcessingTime = Param(model.PRODUCTS, model.STAGES)
+    model.ProductionAmount = Param(model.PRODUCTS, doc='Production Amount')
+    model.ProductSizeFactor = Param(model.PRODUCTS, model.STAGES, doc='Product Size Factor')
+    model.ProcessingTime = Param(model.PRODUCTS, model.STAGES, doc='Processing Time')
 
     # These are hard-coded in the GAMS file, hence the defaults
-    model.StorageTankSizeFactor = Param(model.STAGES, default=StorageTankSizeFactor)
+    model.StorageTankSizeFactor = Param(model.STAGES, default=StorageTankSizeFactor, doc='Storage Tank Size Factor')
     model.StorageTankSizeFactorByProd = Param(model.PRODUCTS, model.STAGES,
-                                              default=StorageTankSizeFactorByProd)
+                                              default=StorageTankSizeFactorByProd, doc='Storage Tank Size Factor by Product')
 
     # TODO: bonmin wasn't happy and I think it might have something to do with this?
     # or maybe issues with convexity or a lack thereof... I don't know yet.
