@@ -500,15 +500,15 @@ def build_model():
         """
         return m.production[site, t] <= m.conversion * m.supply[site, t]
 
-    m.modular = Disjunct(m.potential_sites, rule=_build_modular_disjunct)
-    m.conventional = Disjunct(m.potential_sites, rule=_build_conventional_disjunct)
-    m.site_inactive = Disjunct(m.potential_sites, rule=_build_site_inactive_disjunct)
+    m.modular = Disjunct(m.potential_sites, rule=_build_modular_disjunct, doc="Disjunct for modular site")
+    m.conventional = Disjunct(m.potential_sites, rule=_build_conventional_disjunct, doc="Disjunct for conventional site")
+    m.site_inactive = Disjunct(m.potential_sites, rule=_build_site_inactive_disjunct, doc="Disjunct for inactive site")
 
-    m.supply_route_active = Disjunct(m.suppliers, m.potential_sites, rule=_build_supply_route_active)
-    m.supply_route_inactive = Disjunct(m.suppliers, m.potential_sites, rule=_build_supply_route_inactive)
+    m.supply_route_active = Disjunct(m.suppliers, m.potential_sites, rule=_build_supply_route_active, doc="Disjunct for active supply route")
+    m.supply_route_inactive = Disjunct(m.suppliers, m.potential_sites, rule=_build_supply_route_inactive, doc="Disjunct for inactive supply route")
 
-    m.product_route_active = Disjunct(m.potential_sites, m.markets, rule=_build_product_route_active)
-    m.product_route_inactive = Disjunct(m.potential_sites, m.markets, rule=_build_product_route_inactive)
+    m.product_route_active = Disjunct(m.potential_sites, m.markets, rule=_build_product_route_active, doc="Disjunct for active product route")
+    m.product_route_inactive = Disjunct(m.potential_sites, m.markets, rule=_build_product_route_inactive, doc="Disjunct for inactive product route")
 
     @m.Disjunction(m.potential_sites)
     def site_type(m, site):
@@ -518,8 +518,8 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
 
         Returns
         -------
@@ -536,10 +536,10 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        sup : _type_
-            _description_
-        site : _type_
-            _description_
+        sup : int
+            Index of the supplier from 1 to 10
+        site : int
+            Index of the facility site from 1 to 12
 
         Returns
         -------
@@ -556,9 +556,9 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
-        mkt : _type_
+        site : int
+            Index of the facility site from 1 to 12
+        mkt : int
             _description_
 
         Returns
@@ -578,8 +578,8 @@ def build_model():
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
         sup : _type_
             _description_
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
 
         Returns
         -------
@@ -603,7 +603,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Expression
             _description_
         """
         return (
@@ -619,9 +619,9 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
-        mkt : _type_
+        site : int
+            Index of the facility site from 1 to 12
+        mkt : int
             _description_
 
         Returns
@@ -662,10 +662,10 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
         t : int
-            _description_
+            Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
@@ -682,8 +682,8 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
         t : int
             Index of time in months from 0 to 120 (10 years)
 
@@ -702,8 +702,8 @@ def build_model():
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
 
         Returns
         -------
@@ -733,10 +733,10 @@ def _build_site_inactive_disjunct(disj, site):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
-    site : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
 
     Returns
     -------
@@ -751,7 +751,7 @@ def _build_site_inactive_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
 
         Returns
@@ -767,7 +767,7 @@ def _build_site_inactive_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
 
         Returns
@@ -783,7 +783,7 @@ def _build_site_inactive_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
 
         Returns
@@ -799,10 +799,10 @@ def _build_conventional_disjunct(disj, site):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
-    site : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
 
     Returns
     -------
@@ -822,7 +822,7 @@ def _build_conventional_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         t : int
             Index of time in months from 0 to 120 (10 years)
@@ -841,7 +841,7 @@ def _build_conventional_disjunct(disj, site):
 
         Parameters
         ----------
-        conv_disj : _type_
+        conv_disj : Pyomo.Disjunct
             _description_
         t : int
             Index of time in months from 0 to 120 (10 years)
@@ -862,7 +862,7 @@ def _build_conventional_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
 
         Returns
@@ -878,10 +878,10 @@ def _build_modular_disjunct(disj, site):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
-    site : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
 
     Returns
     -------
@@ -896,7 +896,7 @@ def _build_modular_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         t : int
             Index of time in months from 0 to 120 (10 years)
@@ -915,7 +915,7 @@ def _build_modular_disjunct(disj, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
         t : int
             Index of time in months from 0 to 120 (10 years)
@@ -939,7 +939,7 @@ def _build_modular_disjunct(disj, site):
 
         Parameters
         ----------
-        mod_disj : _type_
+        mod_disj : Pyomo.Disjunct
             _description_
         t : int
             Index of time in months from 0 to 120 (10 years)
@@ -957,12 +957,12 @@ def _build_supply_route_active(disj, sup, site):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
     sup : _type_
         _description_
-    site : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
     """
     m = disj.model()
 
@@ -972,12 +972,12 @@ def _build_supply_route_inactive(disj, sup, site):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
     sup : _type_
         _description_
-    site : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
 
     Returns
     -------
@@ -992,7 +992,7 @@ def _build_supply_route_inactive(disj, sup, site):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
 
         Returns
@@ -1008,12 +1008,12 @@ def _build_product_route_active(disj, site, mkt):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
-    site : _type_
-        _description_
-    mkt : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
+    mkt : int
+        Index of the market from 1 to 10
     """
     m = disj.model()
 
@@ -1023,12 +1023,12 @@ def _build_product_route_inactive(disj, site, mkt):
 
     Parameters
     ----------
-    disj : _type_
+    disj : Pyomo.Disjunct
         _description_
-    site : _type_
-        _description_
-    mkt : _type_
-        _description_
+    site : int
+        Index of the facility site from 1 to 12
+    mkt : int
+        Index of the market from 1 to 10
 
     Returns
     -------
@@ -1043,7 +1043,7 @@ def _build_product_route_inactive(disj, site, mkt):
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
 
         Returns
