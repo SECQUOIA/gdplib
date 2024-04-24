@@ -512,7 +512,8 @@ def build_model():
 
     @m.Disjunction(m.potential_sites)
     def site_type(m, site):
-        """_summary_
+        """
+        Define the disjunction for the facility site type, which can be modular, conventional, or inactive.
 
         Parameters
         ----------
@@ -523,14 +524,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            The disjunction for the facility site type, which can be modular, conventional, or inactive.
         """
         return [m.modular[site], m.conventional[site], m.site_inactive[site]]
 
     @m.Disjunction(m.suppliers, m.potential_sites)
     def supply_route_active_or_not(m, sup, site):
-        """_summary_
+        """
+        Define the disjunction for the supply route between a supplier and a facility site, which can be active or inactive.
 
         Parameters
         ----------
@@ -543,14 +545,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            The disjunction for the supply route between a supplier and a facility site, which can be active or inactive.
         """
         return [m.supply_route_active[sup, site], m.supply_route_inactive[sup, site]]
 
     @m.Disjunction(m.potential_sites, m.markets)
     def product_route_active_or_not(m, site, mkt):
-        """_summary_
+        """
+        Define the disjunction for the product route between a facility site and a market, which can be active or inactive.
 
         Parameters
         ----------
@@ -559,42 +562,44 @@ def build_model():
         site : int
             Index of the facility site from 1 to 12
         mkt : int
-            _description_
+            Index of the market from 1 to 10
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Disjunction
+            The disjunction for the product route between a facility site and a market, which can be active or inactive.
         """
         return [m.product_route_active[site, mkt], m.product_route_inactive[site, mkt]]
 
     @m.Expression(m.suppliers, m.potential_sites, doc="million $")
     def raw_material_transport_cost(m, sup, site):
-        """_summary_
+        """
+        Calculate the cost of transporting raw materials from a supplier 'sup' to a facility site 'site' at each time period using the unit raw material transport cost, the supply shipments, and the distance between the supplier and the site.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        sup : _type_
+        sup : int
             _description_
         site : int
             Index of the facility site from 1 to 12
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            Total transportation cost considering the quantity of shipments, unit cost per time period, and distance between suppliers and sites.
         """
         return sum(
-            m.supply_shipments[sup, site, t]
-            * m.unit_raw_material_transport_cost[t]
-            * m.dist_supplier_to_site[sup, site] / 1000
+            m.supply_shipments[sup, site, t] # [1000 ton/month]
+            * m.unit_raw_material_transport_cost[t] # [$/ton-mile]
+            * m.dist_supplier_to_site[sup, site] / 1000 # [mile], [million/1000]
             for t in m.time)
 
     @m.Expression(doc="million $")
     def raw_material_fixed_transport_cost(m):
-        """_summary_
+        """
+        Calculate the fixed cost of transporting raw materials to the facility sites based on the total number of active supply routes and the fixed transportation cost.
 
         Parameters
         ----------
@@ -604,16 +609,17 @@ def build_model():
         Returns
         -------
         Pyomo.Expression
-            _description_
+            Sum of fixed transport costs, accounting for the activation of each route.
         """
         return (
             sum(m.supply_route_active[sup, site].binary_indicator_var
                 for sup in m.suppliers for site in m.potential_sites)
-            * m.transport_fixed_cost / 1000)
+            * m.transport_fixed_cost / 1000) # [thousand $] [million/1000]
 
     @m.Expression(m.potential_sites, m.markets, doc="million $")
     def product_transport_cost(m, site, mkt):
-        """_summary_
+        """
+        Calculate the cost of transporting products from a facility site 'site' to a market 'mkt' at each time period using the unit product transport cost, the product shipments, and the distance between the site and the market.
 
         Parameters
         ----------
@@ -626,18 +632,19 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            Total transportation cost considering the quantity of shipments, unit cost per time period, and distance between sites and markets.
         """
         return sum(
-            m.product_shipments[site, mkt, t]
-            * m.unit_product_transport_cost[t]
-            * m.dist_site_to_market[site, mkt] / 1000
+            m.product_shipments[site, mkt, t] # [1000 ton/month]
+            * m.unit_product_transport_cost[t] # [$/ton-mile]
+            * m.dist_site_to_market[site, mkt] / 1000 # [mile], [million/1000]
             for t in m.time)
 
     @m.Expression(doc="million $")
     def product_fixed_transport_cost(m):
-        """_summary_
+        """
+        Calculate the fixed cost of transporting products to the markets based on the total number of active product routes and the fixed transportation cost.
 
         Parameters
         ----------
@@ -646,17 +653,18 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            Sum of fixed transport costs, accounting for the activation of each route.
         """
         return (
             sum(m.product_route_active[site, mkt].binary_indicator_var
                 for site in m.potential_sites for mkt in m.markets)
-            * m.transport_fixed_cost / 1000)
+            * m.transport_fixed_cost / 1000) # [thousand $] [million/1000]
 
     @m.Expression(m.potential_sites, m.time, doc="Cost of module setups in each month [million $]")
     def module_setup_cost(m, site, t):
-        """_summary_
+        """
+        Calculate the cost of setting up modules at a facility site 'site' at each time period using the unit module cost and the number of modules purchased.
 
         Parameters
         ----------
@@ -669,14 +677,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            Total setup cost considering the quantity of modules purchased and the unit cost per time period.
         """
         return m.modules_purchased[site, t] * m.module_unit_cost[t]
 
     @m.Expression(m.potential_sites, m.time, doc="Value of module teardowns in each month [million $]")
     def module_teardown_credit(m, site, t):
-        """_summary_
+        """
+        Calculate the value of tearing down modules at a facility site 'site' at each time period using the unit module cost and the number of modules sold.
 
         Parameters
         ----------
@@ -689,14 +698,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            Total teardown value considering the quantity of modules sold and the unit cost per time period.
         """
         return m.modules_sold[site, t] * m.module_unit_cost[t] * m.teardown_value
 
     @m.Expression(m.potential_sites, doc="Conventional site salvage value")
     def conv_salvage_value(m, site):
-        """_summary_
+        """
+        Calculate the salvage value of a conventional facility site 'site' using the build cost, the discount factor for the last time period, and the conventional salvage value.
 
         Parameters
         ----------
@@ -707,8 +717,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            Salvage value of the conventional facility site 'site' considering the build cost, discount factor, and salvage value.
         """
         return m.conv_build_cost[site] * m.discount_factor[m.time.last()] * m.conventional_salvage_value
 
@@ -723,133 +733,140 @@ def build_model():
         + summation(m.product_transport_cost)
         + summation(m.product_fixed_transport_cost)
         + 0,
-        sense=minimize)
+        sense=minimize, doc="Total cost [million $]")
 
     return m
 
 
 def _build_site_inactive_disjunct(disj, site):
-    """_summary_
+    """
+    Configure the disjunct for a facility site marked as inactive.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
+        Pyomo disjunct for inactive site
     site : int
         Index of the facility site from 1 to 12
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints to the disjunct
     """
     m = disj.model()
 
     @disj.Constraint()
     def no_modules(disj):
-        """_summary_
+        """
+        Ensure that there are no modules at the inactive site.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object defining constraints for the inactive site
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint that there are no modules at the inactive site
         """
         return sum(m.num_modules[...]) + sum(m.modules_purchased[...]) + sum(m.modules_sold[...]) == 0
 
     @disj.Constraint()
     def no_production(disj):
-        """_summary_
+        """
+        Ensure that there is no production at the inactive site.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object defining constraints for the inactive site
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint that there is no production at the inactive site.
         """
         return sum(m.production[site, t] for t in m.time) == 0
 
     @disj.Constraint()
     def no_supply(disj):
-        """_summary_
+        """
+        Ensure that there is no supply at the inactive site.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object defining constraints for the inactive site
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint that there is no supply at the inactive site.
         """
         return sum(m.supply[site, t] for t in m.time) == 0
 
 
 def _build_conventional_disjunct(disj, site):
-    """_summary_
+    """
+    Configure the disjunct for a conventional facility site.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
+        The disjunct object associated with a conventional site.
     site : int
         Index of the facility site from 1 to 12
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints to the disjunct
     """
     m = disj.model()
 
     disj.cost_calc = Constraint(
         expr=m.conv_build_cost[site] == (
-            m.conv_base_cost * (m.conv_site_size[site] / 10) ** m.conv_exponent))
+            m.conv_base_cost * (m.conv_site_size[site] / 10) ** m.conv_exponent), doc="the build cost for the conventional facility")
     # m.bigM[disj.cost_calc] = 7000
 
     @disj.Constraint(m.time)
     def supply_balance(disj, t):
-        """_summary_
+        """
+        Ensure that the supply at the conventional site meets the supply shipments from the suppliers.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for a conventional site.
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that the total supply at the site during each time period equals the total shipments received.
         """
         return m.supply[site, t] == sum(
             m.supply_shipments[sup, site, t] for sup in m.suppliers)
 
     @disj.Constraint(m.time)
     def conv_production_limit(conv_disj, t):
-        """_summary_
+        """
+        Limit the production at the site based on its capacity. No production is allowed before the setup time.
 
         Parameters
         ----------
         conv_disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for a conventional site.
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that limits production to the site's capacity after setup and prohibits production before setup.
         """
         if t < m.conv_setup_time:
             return m.production[site, t] == 0
@@ -858,109 +875,116 @@ def _build_conventional_disjunct(disj, site):
 
     @disj.Constraint()
     def no_modules(disj):
-        """_summary_
+        """
+        Ensure no modular units are present, purchased, or sold at the conventional site.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for a conventional site.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that the number of modules (present, purchased, sold) at the site is zero.
         """
         return sum(m.num_modules[...]) + sum(m.modules_purchased[...]) + sum(m.modules_sold[...]) == 0
 
 
 def _build_modular_disjunct(disj, site):
-    """_summary_
+    """
+    Configure the disjunct for a modular facility site.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
+        The disjunct object associated with a modular site.
     site : int
         Index of the facility site from 1 to 12
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints to the disjunct
     """
     m = disj.model()
 
     @disj.Constraint(m.time)
     def supply_balance(disj, t):
-        """_summary_
+        """
+        Ensure that the supply at the modular site meets the supply shipments from the suppliers.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for a modular site.
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that the total supply at the site during each time period equals the total shipments received.
         """
         return m.supply[site, t] == sum(
             m.supply_shipments[sup, site, t] for sup in m.suppliers)
 
     @disj.Constraint(m.time)
     def module_balance(disj, t):
-        """_summary_
+        """
+        Ensure that the number of modules at the site is consistent with the number of modules purchased and sold.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for a modular site.
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that maintains the number of modules based on previous balances, new purchases, and modules sold.
         """
         existing_modules = 0 if t == m.time.first() else m.num_modules[site, t - 1]
         new_modules = 0 if t < m.modular_setup_time else m.modules_purchased[site, t - m.modular_setup_time]
         sold_modules = m.modules_sold[site, t]
         return m.num_modules[site, t] == existing_modules + new_modules - sold_modules
 
+    # Fix the number of modules to zero during the setup time
     for t in range(value(m.modular_setup_time)):
         m.num_modules[site, t].fix(0)
 
     @disj.Constraint(m.time)
     def modular_production_limit(mod_disj, t):
-        """_summary_
+        """
+        Limit the production at the site based on the number of modules present. No production is allowed before the setup time.
 
         Parameters
         ----------
         mod_disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for a modular site.
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that limits production to the site's capacity after setup and prohibits production before setup.
         """
         return m.production[site, t] <= 10 * m.num_modules[site, t]
 
 
 def _build_supply_route_active(disj, sup, site):
-    """_summary_
+    """
+    Build the disjunct for an active supply route from a supplier to a facility site.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
-    sup : _type_
-        _description_
+        The disjunct object for an active supply route
+    sup : int
+        Index of the supplier from 1 to 10
     site : int
         Index of the facility site from 1 to 12
     """
@@ -968,48 +992,51 @@ def _build_supply_route_active(disj, sup, site):
 
 
 def _build_supply_route_inactive(disj, sup, site):
-    """_summary_
+    """
+    Build the disjunct for an inactive supply route from a supplier to a facility site.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
-    sup : _type_
-        _description_
+        The disjunct object for an inactive supply route
+    sup : int
+        Index of the supplier from 1 to 10
     site : int
         Index of the facility site from 1 to 12
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints to the disjunct
     """
     m = disj.model()
 
     @disj.Constraint()
     def no_supply(disj):
-        """_summary_
+        """
+        Ensure that there are no supply shipments from the supplier to the site.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            The disjunct object for an inactive supply route
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that there are no supply shipments from the supplier to the site.
         """
         return sum(m.supply_shipments[sup, site, t] for t in m.time) == 0
 
 
 def _build_product_route_active(disj, site, mkt):
-    """_summary_
+    """
+    Build the disjunct for an active product route from a facility site to a market.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
+        The disjunct object for an active product route
     site : int
         Index of the facility site from 1 to 12
     mkt : int
@@ -1019,12 +1046,13 @@ def _build_product_route_active(disj, site, mkt):
 
 
 def _build_product_route_inactive(disj, site, mkt):
-    """_summary_
+    """
+    Build the disjunct for an inactive product route from a facility site to a market.
 
     Parameters
     ----------
     disj : Pyomo.Disjunct
-        _description_
+        The disjunct object for an inactive product route
     site : int
         Index of the facility site from 1 to 12
     mkt : int
@@ -1032,14 +1060,15 @@ def _build_product_route_inactive(disj, site, mkt):
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints to the disjunct
     """
     m = disj.model()
 
     @disj.Constraint()
     def no_product(disj):
-        """_summary_
+        """
+        Ensure that there are no product shipments from the site to the market.
 
         Parameters
         ----------
@@ -1048,8 +1077,8 @@ def _build_product_route_inactive(disj, site, mkt):
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that there are no product shipments from the site to the market.
         """
         return sum(m.product_shipments[site, mkt, t] for t in m.time) == 0
 
