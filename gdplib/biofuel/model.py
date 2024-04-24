@@ -5,8 +5,22 @@ from math import fabs
 
 import pandas as pd
 from pyomo.environ import (
-    ConcreteModel, Constraint, Integers, minimize, NonNegativeReals, Objective, Param, RangeSet, SolverFactory, sqrt,
-    Suffix, summation, TransformationFactory, value, Var, )
+    ConcreteModel,
+    Constraint,
+    Integers,
+    minimize,
+    NonNegativeReals,
+    Objective,
+    Param,
+    RangeSet,
+    SolverFactory,
+    sqrt,
+    Suffix,
+    summation,
+    TransformationFactory,
+    value,
+    Var,
+)
 from pyomo.gdp import Disjunct
 
 
@@ -26,9 +40,9 @@ def build_model():
     m = ConcreteModel()
     m.bigM = Suffix(direction=Suffix.LOCAL)
     m.time = RangeSet(0, 120, doc="months in 10 years")
-    m.suppliers = RangeSet(10) # 10 suppliers
-    m.markets = RangeSet(10) # 10 markets
-    m.potential_sites = RangeSet(12) # 12 facility sites
+    m.suppliers = RangeSet(10)  # 10 suppliers
+    m.markets = RangeSet(10)  # 10 markets
+    m.potential_sites = RangeSet(12)  # 12 facility sites
     m.discount_rate = Param(initialize=0.08, doc="discount rate [8%]")
     m.conv_setup_time = Param(initialize=12)
     m.modular_setup_time = Param(initialize=3)
@@ -58,7 +72,8 @@ def build_model():
     xls_data = pd.read_excel(
         os.path.join(os.path.dirname(__file__), "problem_data.xlsx"),
         sheet_name=["sources", "markets", "sites", "growth", "decay"],
-        index_col=0)
+        index_col=0,
+    )
 
     @m.Param(m.markets, m.time, doc="Market demand [thousand ton/month]")
     def market_demand(m, mkt, t):
@@ -245,8 +260,10 @@ def build_model():
         Pyomo.Parameter
             The distance in miles between the supplier and the facility site
         """
-        return sqrt((m.supplier_x[sup] - m.site_x[site]) ** 2 +
-                    (m.supplier_y[sup] - m.site_y[site]) ** 2)
+        return sqrt(
+            (m.supplier_x[sup] - m.site_x[site]) ** 2
+            + (m.supplier_y[sup] - m.site_y[site]) ** 2
+        )
 
     @m.Param(m.potential_sites, m.markets, doc="Miles")
     def dist_site_to_market(m, site, mkt):
@@ -267,30 +284,61 @@ def build_model():
         Pyomo.Parameter
             The distance in miles between the facility site and the market
         """
-        return sqrt((m.site_x[site] - m.market_x[mkt]) ** 2 +
-                    (m.site_y[site] - m.market_y[mkt]) ** 2)
+        return sqrt(
+            (m.site_x[site] - m.market_x[mkt]) ** 2
+            + (m.site_y[site] - m.market_y[mkt]) ** 2
+        )
 
     m.conversion = Param(initialize=0.26, doc="overall conversion to product")
 
     m.conv_site_size = Var(
         m.potential_sites,
-        bounds=(120 / 12 / 10, 120 / 12), initialize=1,
-        doc="Product capacity of site [thousand ton/mo]")
+        bounds=(120 / 12 / 10, 120 / 12),
+        initialize=1,
+        doc="Product capacity of site [thousand ton/mo]",
+    )
 
-    m.conv_base_cost = Param(initialize=268.4, doc="Cost for size 120k per year [million $]")
-    m.module_base_cost = Param(initialize=268.4, doc="Cost for size 120k per year [million $]")
+    m.conv_base_cost = Param(
+        initialize=268.4, doc="Cost for size 120k per year [million $]"
+    )
+    m.module_base_cost = Param(
+        initialize=268.4, doc="Cost for size 120k per year [million $]"
+    )
     m.conv_exponent = Param(initialize=0.7)
 
-    m.supply = Var(m.potential_sites, m.time, bounds=(0, 120 / 12 / 0.26 * 10), doc="thousand ton/mo")
-    m.production = Var(m.potential_sites, m.time, bounds=(0, 120 / 12 * 10), doc="thousand ton/mo")
-    m.num_modules = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Number of modules")
-    m.modules_purchased = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Modules purchased")
-    m.modules_sold = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Modules sold")
+    m.supply = Var(
+        m.potential_sites,
+        m.time,
+        bounds=(0, 120 / 12 / 0.26 * 10),
+        doc="thousand ton/mo",
+    )
+    m.production = Var(
+        m.potential_sites, m.time, bounds=(0, 120 / 12 * 10), doc="thousand ton/mo"
+    )
+    m.num_modules = Var(
+        m.potential_sites,
+        m.time,
+        domain=Integers,
+        bounds=(0, 10),
+        doc="Number of modules",
+    )
+    m.modules_purchased = Var(
+        m.potential_sites,
+        m.time,
+        domain=Integers,
+        bounds=(0, 10),
+        doc="Modules purchased",
+    )
+    m.modules_sold = Var(
+        m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Modules sold"
+    )
 
     m.conv_build_cost = Var(
         m.potential_sites,
         doc="Cost of building conventional facility [milllion $]",
-        bounds=(0, 1350 * 10), initialize=0)
+        bounds=(0, 1350 * 10),
+        initialize=0,
+    )
 
     @m.Param(m.suppliers, m.time)
     def raw_material_unit_cost(m, sup, t):
@@ -407,11 +455,21 @@ def build_model():
         return 2 * m.discount_factor[t]
 
     m.supply_shipments = Var(
-        m.suppliers, m.potential_sites, m.time, domain=NonNegativeReals,
-        bounds=(0, 120 / 12 / 0.26), doc="thousand ton/mo")
+        m.suppliers,
+        m.potential_sites,
+        m.time,
+        domain=NonNegativeReals,
+        bounds=(0, 120 / 12 / 0.26),
+        doc="thousand ton/mo",
+    )
     m.product_shipments = Var(
-        m.potential_sites, m.markets, m.time, domain=NonNegativeReals,
-        bounds=(0, 120 / 12), doc="thousand ton/mo")
+        m.potential_sites,
+        m.markets,
+        m.time,
+        domain=NonNegativeReals,
+        bounds=(0, 120 / 12),
+        doc="thousand ton/mo",
+    )
 
     @m.Constraint(m.suppliers, m.time)
     def supply_limits(m, sup, t):
@@ -432,8 +490,10 @@ def build_model():
         Pyomo.Constraint
             The total supply from the supplier 'sup' at time 't' should not exceed the available supply from the supplier.
         """
-        return sum(m.supply_shipments[sup, site, t]
-                   for site in m.potential_sites) <= m.available_supply[sup, t]
+        return (
+            sum(m.supply_shipments[sup, site, t] for site in m.potential_sites)
+            <= m.available_supply[sup, t]
+        )
 
     @m.Constraint(m.markets, m.time)
     def demand_satisfaction(m, mkt, t):
@@ -454,8 +514,10 @@ def build_model():
         Pyomo.Constraint
             The total product shipments to the market 'mkt' at time 't' should meet the market demand for the product.
         """
-        return sum(m.product_shipments[site, mkt, t]
-                   for site in m.potential_sites) == m.market_demand[mkt, t]
+        return (
+            sum(m.product_shipments[site, mkt, t] for site in m.potential_sites)
+            == m.market_demand[mkt, t]
+        )
 
     @m.Constraint(m.potential_sites, m.time)
     def product_balance(m, site, t):
@@ -476,8 +538,9 @@ def build_model():
         Pyomo.Constraint
             The total product shipments from the facility site 'site' at time 't' should meet the production from the site.
         """
-        return m.production[site, t] == sum(m.product_shipments[site, mkt, t]
-                                            for mkt in m.markets)
+        return m.production[site, t] == sum(
+            m.product_shipments[site, mkt, t] for mkt in m.markets
+        )
 
     @m.Constraint(m.potential_sites, m.time)
     def require_raw_materials(m, site, t):
@@ -500,15 +563,45 @@ def build_model():
         """
         return m.production[site, t] <= m.conversion * m.supply[site, t]
 
-    m.modular = Disjunct(m.potential_sites, rule=_build_modular_disjunct, doc="Disjunct for modular site")
-    m.conventional = Disjunct(m.potential_sites, rule=_build_conventional_disjunct, doc="Disjunct for conventional site")
-    m.site_inactive = Disjunct(m.potential_sites, rule=_build_site_inactive_disjunct, doc="Disjunct for inactive site")
+    m.modular = Disjunct(
+        m.potential_sites, rule=_build_modular_disjunct, doc="Disjunct for modular site"
+    )
+    m.conventional = Disjunct(
+        m.potential_sites,
+        rule=_build_conventional_disjunct,
+        doc="Disjunct for conventional site",
+    )
+    m.site_inactive = Disjunct(
+        m.potential_sites,
+        rule=_build_site_inactive_disjunct,
+        doc="Disjunct for inactive site",
+    )
 
-    m.supply_route_active = Disjunct(m.suppliers, m.potential_sites, rule=_build_supply_route_active, doc="Disjunct for active supply route")
-    m.supply_route_inactive = Disjunct(m.suppliers, m.potential_sites, rule=_build_supply_route_inactive, doc="Disjunct for inactive supply route")
+    m.supply_route_active = Disjunct(
+        m.suppliers,
+        m.potential_sites,
+        rule=_build_supply_route_active,
+        doc="Disjunct for active supply route",
+    )
+    m.supply_route_inactive = Disjunct(
+        m.suppliers,
+        m.potential_sites,
+        rule=_build_supply_route_inactive,
+        doc="Disjunct for inactive supply route",
+    )
 
-    m.product_route_active = Disjunct(m.potential_sites, m.markets, rule=_build_product_route_active, doc="Disjunct for active product route")
-    m.product_route_inactive = Disjunct(m.potential_sites, m.markets, rule=_build_product_route_inactive, doc="Disjunct for inactive product route")
+    m.product_route_active = Disjunct(
+        m.potential_sites,
+        m.markets,
+        rule=_build_product_route_active,
+        doc="Disjunct for active product route",
+    )
+    m.product_route_inactive = Disjunct(
+        m.potential_sites,
+        m.markets,
+        rule=_build_product_route_inactive,
+        doc="Disjunct for inactive product route",
+    )
 
     @m.Disjunction(m.potential_sites)
     def site_type(m, site):
@@ -591,10 +684,12 @@ def build_model():
             Total transportation cost considering the quantity of shipments, unit cost per time period, and distance between suppliers and sites.
         """
         return sum(
-            m.supply_shipments[sup, site, t] # [1000 ton/month]
-            * m.unit_raw_material_transport_cost[t] # [$/ton-mile]
-            * m.dist_supplier_to_site[sup, site] / 1000 # [mile], [million/1000]
-            for t in m.time)
+            m.supply_shipments[sup, site, t]  # [1000 ton/month]
+            * m.unit_raw_material_transport_cost[t]  # [$/ton-mile]
+            * m.dist_supplier_to_site[sup, site]
+            / 1000  # [mile], [million/1000]
+            for t in m.time
+        )
 
     @m.Expression(doc="million $")
     def raw_material_fixed_transport_cost(m):
@@ -612,9 +707,14 @@ def build_model():
             Sum of fixed transport costs, accounting for the activation of each route.
         """
         return (
-            sum(m.supply_route_active[sup, site].binary_indicator_var
-                for sup in m.suppliers for site in m.potential_sites)
-            * m.transport_fixed_cost / 1000) # [thousand $] [million/1000]
+            sum(
+                m.supply_route_active[sup, site].binary_indicator_var
+                for sup in m.suppliers
+                for site in m.potential_sites
+            )
+            * m.transport_fixed_cost
+            / 1000
+        )  # [thousand $] [million/1000]
 
     @m.Expression(m.potential_sites, m.markets, doc="million $")
     def product_transport_cost(m, site, mkt):
@@ -636,10 +736,12 @@ def build_model():
             Total transportation cost considering the quantity of shipments, unit cost per time period, and distance between sites and markets.
         """
         return sum(
-            m.product_shipments[site, mkt, t] # [1000 ton/month]
-            * m.unit_product_transport_cost[t] # [$/ton-mile]
-            * m.dist_site_to_market[site, mkt] / 1000 # [mile], [million/1000]
-            for t in m.time)
+            m.product_shipments[site, mkt, t]  # [1000 ton/month]
+            * m.unit_product_transport_cost[t]  # [$/ton-mile]
+            * m.dist_site_to_market[site, mkt]
+            / 1000  # [mile], [million/1000]
+            for t in m.time
+        )
 
     @m.Expression(doc="million $")
     def product_fixed_transport_cost(m):
@@ -657,11 +759,18 @@ def build_model():
             Sum of fixed transport costs, accounting for the activation of each route.
         """
         return (
-            sum(m.product_route_active[site, mkt].binary_indicator_var
-                for site in m.potential_sites for mkt in m.markets)
-            * m.transport_fixed_cost / 1000) # [thousand $] [million/1000]
+            sum(
+                m.product_route_active[site, mkt].binary_indicator_var
+                for site in m.potential_sites
+                for mkt in m.markets
+            )
+            * m.transport_fixed_cost
+            / 1000
+        )  # [thousand $] [million/1000]
 
-    @m.Expression(m.potential_sites, m.time, doc="Cost of module setups in each month [million $]")
+    @m.Expression(
+        m.potential_sites, m.time, doc="Cost of module setups in each month [million $]"
+    )
     def module_setup_cost(m, site, t):
         """
         Calculate the cost of setting up modules at a facility site 'site' at each time period using the unit module cost and the number of modules purchased.
@@ -682,7 +791,11 @@ def build_model():
         """
         return m.modules_purchased[site, t] * m.module_unit_cost[t]
 
-    @m.Expression(m.potential_sites, m.time, doc="Value of module teardowns in each month [million $]")
+    @m.Expression(
+        m.potential_sites,
+        m.time,
+        doc="Value of module teardowns in each month [million $]",
+    )
     def module_teardown_credit(m, site, t):
         """
         Calculate the value of tearing down modules at a facility site 'site' at each time period using the unit module cost and the number of modules sold.
@@ -720,7 +833,11 @@ def build_model():
         Pyomo.Expression
             Salvage value of the conventional facility site 'site' considering the build cost, discount factor, and salvage value.
         """
-        return m.conv_build_cost[site] * m.discount_factor[m.time.last()] * m.conventional_salvage_value
+        return (
+            m.conv_build_cost[site]
+            * m.discount_factor[m.time.last()]
+            * m.conventional_salvage_value
+        )
 
     m.total_cost = Objective(
         expr=0
@@ -733,7 +850,9 @@ def build_model():
         + summation(m.product_transport_cost)
         + summation(m.product_fixed_transport_cost)
         + 0,
-        sense=minimize, doc="Total cost [million $]")
+        sense=minimize,
+        doc="Total cost [million $]",
+    )
 
     return m
 
@@ -771,7 +890,12 @@ def _build_site_inactive_disjunct(disj, site):
         Pyomo.Constraint
             The constraint that there are no modules at the inactive site
         """
-        return sum(m.num_modules[...]) + sum(m.modules_purchased[...]) + sum(m.modules_sold[...]) == 0
+        return (
+            sum(m.num_modules[...])
+            + sum(m.modules_purchased[...])
+            + sum(m.modules_sold[...])
+            == 0
+        )
 
     @disj.Constraint()
     def no_production(disj):
@@ -827,8 +951,10 @@ def _build_conventional_disjunct(disj, site):
     m = disj.model()
 
     disj.cost_calc = Constraint(
-        expr=m.conv_build_cost[site] == (
-            m.conv_base_cost * (m.conv_site_size[site] / 10) ** m.conv_exponent), doc="the build cost for the conventional facility")
+        expr=m.conv_build_cost[site]
+        == (m.conv_base_cost * (m.conv_site_size[site] / 10) ** m.conv_exponent),
+        doc="the build cost for the conventional facility",
+    )
     # m.bigM[disj.cost_calc] = 7000
 
     @disj.Constraint(m.time)
@@ -849,7 +975,8 @@ def _build_conventional_disjunct(disj, site):
             A constraint that the total supply at the site during each time period equals the total shipments received.
         """
         return m.supply[site, t] == sum(
-            m.supply_shipments[sup, site, t] for sup in m.suppliers)
+            m.supply_shipments[sup, site, t] for sup in m.suppliers
+        )
 
     @disj.Constraint(m.time)
     def conv_production_limit(conv_disj, t):
@@ -888,7 +1015,12 @@ def _build_conventional_disjunct(disj, site):
         Pyomo.Constraint
             A constraint that the number of modules (present, purchased, sold) at the site is zero.
         """
-        return sum(m.num_modules[...]) + sum(m.modules_purchased[...]) + sum(m.modules_sold[...]) == 0
+        return (
+            sum(m.num_modules[...])
+            + sum(m.modules_purchased[...])
+            + sum(m.modules_sold[...])
+            == 0
+        )
 
 
 def _build_modular_disjunct(disj, site):
@@ -927,7 +1059,8 @@ def _build_modular_disjunct(disj, site):
             A constraint that the total supply at the site during each time period equals the total shipments received.
         """
         return m.supply[site, t] == sum(
-            m.supply_shipments[sup, site, t] for sup in m.suppliers)
+            m.supply_shipments[sup, site, t] for sup in m.suppliers
+        )
 
     @disj.Constraint(m.time)
     def module_balance(disj, t):
@@ -947,7 +1080,11 @@ def _build_modular_disjunct(disj, site):
             A constraint that maintains the number of modules based on previous balances, new purchases, and modules sold.
         """
         existing_modules = 0 if t == m.time.first() else m.num_modules[site, t - 1]
-        new_modules = 0 if t < m.modular_setup_time else m.modules_purchased[site, t - m.modular_setup_time]
+        new_modules = (
+            0
+            if t < m.modular_setup_time
+            else m.modules_purchased[site, t - m.modular_setup_time]
+        )
         sold_modules = m.modules_sold[site, t]
         return m.num_modules[site, t] == existing_modules + new_modules - sold_modules
 
@@ -1107,45 +1244,72 @@ if __name__ == "__main__":
     TransformationFactory('gdp.bigm').apply_to(m, bigM=7000)
     # res = SolverFactory('gurobi').solve(m, tee=True)
     res = SolverFactory('gams').solve(
-        m, tee=True,
+        m,
+        tee=True,
         solver='scip',
         # solver='gurobi',
         # add_options=['option reslim = 1200;', 'option optcr=0.0001;'],
-        add_options=[
-            'option reslim = 1200;',
-            'OPTION threads=4;',
-            'option optcr=0.01',
-            ],
-        )
+        add_options=['option reslim = 1200;', 'OPTION threads=4;', 'option optcr=0.01'],
+    )
     # res = SolverFactory('gdpopt').solve(
     #     m, tee=True,
     #     iterlim=2,
     #     mip_solver='gams',
     #     mip_solver_args=dict(add_options=['option reslim = 30;']))
-    results = pd.DataFrame([
-        ['Total Cost', value(m.total_cost)],
-        ['Conv Build Cost', value(summation(m.conv_build_cost))],
-        ['Conv Salvage Value', value(summation(m.conv_salvage_value))],
-        ['Module Build Cost', value(summation(m.module_setup_cost))],
-        ['Module Salvage Value', value(summation(m.module_teardown_credit))],
-        ['Raw Material Transport', value(summation(m.raw_material_transport_cost) + summation(m.raw_material_fixed_transport_cost))],
-        ['Product Transport', value(summation(m.product_transport_cost) + summation(m.product_fixed_transport_cost))]
-    ], columns=['Quantity', 'Value [million $]']).set_index('Quantity').round(0)
+    results = (
+        pd.DataFrame(
+            [
+                ['Total Cost', value(m.total_cost)],
+                ['Conv Build Cost', value(summation(m.conv_build_cost))],
+                ['Conv Salvage Value', value(summation(m.conv_salvage_value))],
+                ['Module Build Cost', value(summation(m.module_setup_cost))],
+                ['Module Salvage Value', value(summation(m.module_teardown_credit))],
+                [
+                    'Raw Material Transport',
+                    value(
+                        summation(m.raw_material_transport_cost)
+                        + summation(m.raw_material_fixed_transport_cost)
+                    ),
+                ],
+                [
+                    'Product Transport',
+                    value(
+                        summation(m.product_transport_cost)
+                        + summation(m.product_fixed_transport_cost)
+                    ),
+                ],
+            ],
+            columns=['Quantity', 'Value [million $]'],
+        )
+        .set_index('Quantity')
+        .round(0)
+    )
     print(results)
 
-    df = pd.DataFrame([
+    df = pd.DataFrame(
         [
-            site, t,
-            value(m.num_modules[site, t]),
-            value(m.modules_purchased[site, t]),
-            value(m.modules_sold[site, t]),
-            value(m.module_setup_cost[site, t]),
-            value(m.module_teardown_credit[site, t]),
-            value(m.production[site, t])] for site, t in m.potential_sites * m.time
+            [
+                site,
+                t,
+                value(m.num_modules[site, t]),
+                value(m.modules_purchased[site, t]),
+                value(m.modules_sold[site, t]),
+                value(m.module_setup_cost[site, t]),
+                value(m.module_teardown_credit[site, t]),
+                value(m.production[site, t]),
+            ]
+            for site, t in m.potential_sites * m.time
         ],
-        columns=("Site", "Month", "Num Modules", "Buy Modules",
-                 "Sell Modules",
-                 "Setup Cost", "Teardown Credit", "Production")
+        columns=(
+            "Site",
+            "Month",
+            "Num Modules",
+            "Buy Modules",
+            "Sell Modules",
+            "Setup Cost",
+            "Teardown Credit",
+            "Production",
+        ),
     )
     df.to_excel("facility_config.xlsx")
 
@@ -1153,42 +1317,79 @@ if __name__ == "__main__":
     #     exit()
     import matplotlib.pyplot as plt
 
-    plt.plot([x for x in m.site_x.values()],
-             [y for y in m.site_y.values()], 'k.', markersize=12)
-    plt.plot([x for x in m.market_x.values()],
-             [y for y in m.market_y.values()], 'b.', markersize=12)
-    plt.plot([x for x in m.supplier_x.values()],
-             [y for y in m.supplier_y.values()], 'r.', markersize=12)
+    plt.plot(
+        [x for x in m.site_x.values()],
+        [y for y in m.site_y.values()],
+        'k.',
+        markersize=12,
+    )
+    plt.plot(
+        [x for x in m.market_x.values()],
+        [y for y in m.market_y.values()],
+        'b.',
+        markersize=12,
+    )
+    plt.plot(
+        [x for x in m.supplier_x.values()],
+        [y for y in m.supplier_y.values()],
+        'r.',
+        markersize=12,
+    )
     for mkt in m.markets:
-        plt.annotate('m%s' % mkt, (m.market_x[mkt], m.market_y[mkt]),
-                     (m.market_x[mkt] + 2, m.market_y[mkt] + 2),
-                     fontsize='x-small')
+        plt.annotate(
+            'm%s' % mkt,
+            (m.market_x[mkt], m.market_y[mkt]),
+            (m.market_x[mkt] + 2, m.market_y[mkt] + 2),
+            fontsize='x-small',
+        )
     for site in m.potential_sites:
         if m.site_inactive[site].binary_indicator_var.value == 0:
             plt.annotate(
-                'p%s' % site, (m.site_x[site], m.site_y[site]),
+                'p%s' % site,
+                (m.site_x[site], m.site_y[site]),
                 (m.site_x[site] + 2, m.site_y[site] + 2),
-                fontsize='x-small')
+                fontsize='x-small',
+            )
         else:
             plt.annotate(
-                'x%s' % site, (m.site_x[site], m.site_y[site]),
+                'x%s' % site,
+                (m.site_x[site], m.site_y[site]),
                 (m.site_x[site] + 2, m.site_y[site] + 2),
-                fontsize='x-small')
+                fontsize='x-small',
+            )
     for sup in m.suppliers:
         plt.annotate(
-            's%s' % sup, (m.supplier_x[sup], m.supplier_y[sup]),
+            's%s' % sup,
+            (m.supplier_x[sup], m.supplier_y[sup]),
             (m.supplier_x[sup] + 2, m.supplier_y[sup] + 2),
-            fontsize='x-small')
+            fontsize='x-small',
+        )
     for sup, site in m.suppliers * m.potential_sites:
-        if fabs(m.supply_route_active[sup, site].binary_indicator_var.value - 1) <= 1E-3:
-            plt.arrow(m.supplier_x[sup], m.supplier_y[sup],
-                      m.site_x[site] - m.supplier_x[sup],
-                      m.site_y[site] - m.supplier_y[sup],
-                      width=0.8, length_includes_head=True, color='b')
+        if (
+            fabs(m.supply_route_active[sup, site].binary_indicator_var.value - 1)
+            <= 1e-3
+        ):
+            plt.arrow(
+                m.supplier_x[sup],
+                m.supplier_y[sup],
+                m.site_x[site] - m.supplier_x[sup],
+                m.site_y[site] - m.supplier_y[sup],
+                width=0.8,
+                length_includes_head=True,
+                color='b',
+            )
     for site, mkt in m.potential_sites * m.markets:
-        if fabs(m.product_route_active[site, mkt].binary_indicator_var.value - 1) <= 1E-3:
-            plt.arrow(m.site_x[site], m.site_y[site],
-                      m.market_x[mkt] - m.site_x[site],
-                      m.market_y[mkt] - m.site_y[site],
-                      width=0.8, length_includes_head=True, color='r')
+        if (
+            fabs(m.product_route_active[site, mkt].binary_indicator_var.value - 1)
+            <= 1e-3
+        ):
+            plt.arrow(
+                m.site_x[site],
+                m.site_y[site],
+                m.market_x[mkt] - m.site_x[site],
+                m.market_y[mkt] - m.site_y[site],
+                width=0.8,
+                length_includes_head=True,
+                color='r',
+            )
     plt.show()
