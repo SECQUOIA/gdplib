@@ -17,6 +17,11 @@ def build_model():
     -------
     Pyomo.ConcreteModel
         The Pyomo concrete model which descibes the multiperiod location-allocation optimization model designed to determine the most cost-effective network layout and production allocation to meet market demands.
+
+    References
+    ----------
+    [1] Lara, C. L., Trespalacios, F., & Grossmann, I. E. (2018). Global optimization algorithm for capacitated multi-facility continuous location-allocation problems. Journal of Global Optimization, 71(4), 871-889. https://doi.org/10.1007/s10898-018-0621-6
+    [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
     """
     m = ConcreteModel()
     m.bigM = Suffix(direction=Suffix.LOCAL)
@@ -278,9 +283,9 @@ def build_model():
 
     m.supply = Var(m.potential_sites, m.time, bounds=(0, 120 / 12 / 0.26 * 10), doc="thousand ton/mo")
     m.production = Var(m.potential_sites, m.time, bounds=(0, 120 / 12 * 10), doc="thousand ton/mo")
-    m.num_modules = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10))
-    m.modules_purchased = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10))
-    m.modules_sold = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10))
+    m.num_modules = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Number of modules")
+    m.modules_purchased = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Modules purchased")
+    m.modules_sold = Var(m.potential_sites, m.time, domain=Integers, bounds=(0, 10), doc="Modules sold")
 
     m.conv_build_cost = Var(
         m.potential_sites,
@@ -289,27 +294,29 @@ def build_model():
 
     @m.Param(m.suppliers, m.time)
     def raw_material_unit_cost(m, sup, t):
-        """_summary_
+        """
+        Calculate the unit cost of raw materials for a given supplier 'sup' at time 't', based on the cost data provided in the Excel file.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        sup : _type_
-            _description_
+        sup : int
+            Index of the supplier from 1 to 10
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            The unit cost of raw materials for the supplier at time 't', calculated as the cost from the Excel data multiplied by the discount factor for time 't'.
         """
         return float(xls_data["sources"]["cost"][sup]) * m.discount_factor[t]
 
     @m.Param(m.time)
     def module_unit_cost(m, t):
-        """_summary_
+        """
+        Calculate the unit cost of modules at time 't', based on the cost data provided in the Excel file.
 
         Parameters
         ----------
@@ -320,32 +327,34 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            The unit cost of modules at time 't', calculated as the cost from the Excel data multiplied by the discount factor for time 't'.
         """
         return m.module_base_cost * m.discount_factor[t]
 
     @m.Param(m.time, doc="$/ton")
     def unit_production_cost(m, t):
-        """_summary_
+        """
+        Calculate the unit production cost at time 't', the production cost is 300 $/ton multiplied by the discount factor for time 't'.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            _description_
+            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            The unit production cost at time 't', calculated as 300 $/ton multiplied by the discount factor for time 't'.
         """
         return 300 * m.discount_factor[t]
 
     @m.Param(doc="thousand $")
     def transport_fixed_cost(m):
-        """_summary_
+        """
+        Fixed cost of transportation in thousand dollars.
 
         Parameters
         ----------
@@ -354,14 +363,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            The fixed cost of transportation in thousand dollars, the cost is 125 thousand dollars.
         """
         return 125
 
     @m.Param(m.time, doc="$/ton-mile")
     def unit_product_transport_cost(m, t):
-        """_summary_
+        """
+        Calculate the unit product transport cost at time 't', the cost is 0.13 $/ton-mile multiplied by the discount factor for time 't'.
 
         Parameters
         ----------
@@ -372,14 +382,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            The unit product transport cost at time 't', calculated as 0.13 $/ton-mile multiplied by the discount factor for time 't'.
         """
         return 0.13 * m.discount_factor[t]
 
     @m.Param(m.time, doc="$/ton-mile")
     def unit_raw_material_transport_cost(m, t):
-        """_summary_
+        """
+        Calculate the unit raw material transport cost at time 't', the cost is 2 $/ton-mile multiplied by the discount factor for time 't'.
 
         Parameters
         ----------
@@ -390,8 +401,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            The unit raw material transport cost at time 't', calculated as 2 $/ton-mile multiplied by the discount factor for time 't'.
         """
         return 2 * m.discount_factor[t]
 
