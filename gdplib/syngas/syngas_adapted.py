@@ -14,14 +14,19 @@ syngas_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def build_model():
-    """_summary_
+    """
+    Constructs a Pyomo ConcreteModel for the multi-objective optimization of combined synthesis gas reforming technologies. This model considers various syngas production technologies and auxiliary processes, integrating various sets, parameters, variables, and constraints to facilitate the selection and evaluation of different technology configurations based on capital and operational costs.
 
     Returns
     -------
     Pyomo.ConcreteModel
-        Build the ConcreteModel of combined synthesis gas reforming technologies
+        A Pyomo ConcreteModel instance configured with the necessary elements (sets, parameters, variables, constraints, expressions) to perform the optimization of syngas production technologies.
+    
     Notes
     -----
+    - The model includes economic evaluations such as capital cost and operating cost calculations and environmental impact assessments are also integrated, considering CO2 emissions from utilities and raw materials.
+    - The model features superstructures between different process units, described by mixer/splitter configurations and stream flows.
+    - Logical constraints are used to manage the operational status of process units, supporting the modeling of operational flexibilities and process configurations.
 
     References
     ----------
@@ -706,7 +711,7 @@ def build_model():
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_conversion_calc(m, tech, species):
         """
-        Defines the conversion rates for each species within a specified syngas technology at the mixer stage 'ms1'.
+        Defines the conversion rates for each species within a specified syngas technology at the mixer/splitter stage 'ms1'.
 
         Parameters
         ----------
@@ -864,7 +869,7 @@ def build_model():
                     * m.module_factors[tech, equip]
                 )
                 * m.cost_index_ratio
-                / 8000
+                / 8000 # [8000 hr/yr]
             )
 
         @tech_selected.Constraint(m.utilities)
@@ -1042,7 +1047,7 @@ def build_model():
                 * sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs)
             )
             * m.annualization_factor
-            / 8000
+            / 8000 # [8000 hr/yr]
         ),
         doc="total cost of compressors across all syngas technologies based on their power usage and operational status [$·h-1]",
     )
@@ -1096,7 +1101,7 @@ def build_model():
             """
             total_flow = sum(
                 m.flow_out_from['ms1', jj] for jj in m.species
-            )  # Total flow of all species from the mixer (ms1)
+            )  # Total flow of all species from the mixer/splitter (ms1)
             total_flow_to_this_unit = sum(
                 m.flow_into[this_unit, jj] for jj in m.species
             )  # Total incoming flow to this unit
@@ -1147,7 +1152,7 @@ def build_model():
         == (
             (m.p1['WGS'] * 100 * m.flow_out_from['WGS', 'H2'] + m.p2['WGS'])
             * m.aux_module_factors['WGS']
-            / 8000
+            / 8000 # [8000 hr/yr]
             * m.cost_index_ratio
         ),
         doc="capital cost for the WGS unit based on output and configuration [$·h-1]",
@@ -1226,7 +1231,7 @@ def build_model():
         == (
             (m.p1['absorber1'] * 100 * m.Fabs1 + m.p2['absorber1'])
             * m.aux_module_factors['absorber1']
-            / 8000
+            / 8000 # [8000 hr/yr]
             * m.cost_index_ratio
         ),
         doc="the capital cost for the absorber based on CO2 absorbed [$·h-1]",
@@ -1293,7 +1298,7 @@ def build_model():
     @m.Constraint(m.species)
     def post_flash_split_outlet(m, species):
         """
-        Balances the distribution of each species from the flash unit to the PSA and mixer(ms2), ensuring flow continuity.
+        Balances the distribution of each species from the flash unit to the PSA and mixer/splitter (ms2), ensuring flow continuity.
 
         Parameters
         ----------
@@ -1305,7 +1310,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Ensures that the sum of species flows to PSA and mixer2(ms2) equals the output from the flash unit.
+            Ensures that the sum of species flows to PSA and mixer/splitter (ms2) equals the output from the flash unit.
         """
         return (
             m.flow_out_from['flash', species]
@@ -1317,13 +1322,13 @@ def build_model():
         == (
             (m.p1['flash'] * 100 * m.flash_water + m.p2['flash'])
             * m.aux_module_factors['flash']
-            / 8000
+            / 8000 # [8000 hr/yr]
             * m.cost_index_ratio
         ),
         doc="the capital cost for the flash unit based on the amount of water separated [$·h-1]",
     )
 
-    # PSA(pressure swing adsorption)
+    # PSA (pressure swing adsorption)
     psa_exists = m.unit_exists['PSA']
 
     @psa_exists.Constraint(m.species)
@@ -1354,7 +1359,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms2_inlet_composition_balance(disj, species):
         """
-        Ensures the compositional ratios at the mixer 'ms2's inlet align with those from the splitter 's1', for consistent mixture preparation.
+        Ensures the compositional ratios at the mixer/splitter 'ms2' inlet align with those from the splitter 's1', for consistent mixture preparation.
 
         Parameters
         ----------
@@ -1366,7 +1371,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Maintains consistent inlet compositions to the mixer 'ms2' from the splitter 's1'.
+            Maintains consistent inlet compositions to the mixer/splitter 'ms2' from the splitter 's1'.
         """
         total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow_into['ms2', jj] for jj in m.species)
@@ -1428,7 +1433,7 @@ def build_model():
         == (
             (m.p1['PSA'] * m.flow_into['PSA', 'H2'] + m.p2['PSA'])
             * m.aux_module_factors['PSA']
-            / 8000
+            / 8000 # [8000 hr/yr]
         ),
         doc="PSA's capital cost based on hydrogen flow and cost parameters [$·h-1]",
     )
@@ -1492,7 +1497,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms4_inlet_mass_balance(m, species):
         """
-        Ensures all species' flow from PSA is equal to their inflow to the mixer (ms4), maintaining continuity.
+        Ensures all species' flow from PSA is equal to their inflow to the mixer/splitter (ms4), maintaining continuity.
 
         Parameters
         ----------
@@ -1511,7 +1516,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms4_outlet_mass_balance(m, species):
         """
-        Balances the total outflow from mixer(ms4), including any purge flows, with its inflow, ensuring mass conservation.
+        Balances the total outflow from mixer/splitter (ms4), including any purge flows, with its inflow, ensuring mass conservation.
 
         Parameters
         ----------
@@ -1523,7 +1528,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Ensures the sum of outflow and purge equals the inflow for the mixer(ms4) across all species.
+            Ensures the sum of outflow and purge equals the inflow for the mixer/splitter (ms4) across all species.
         """
         return (
             m.flow_out_from['ms4', species] + m.purge_flow[species]
@@ -1533,7 +1538,7 @@ def build_model():
     @m.Constraint(m.species)
     def purge_flow_limit(m, species):
         """
-        Limits the purge flow of each species to no more than 1% of its inflow to the mixer(ms4).
+        Limits the purge flow of each species to no more than 1% of its inflow to the mixer\splitter (ms4).
 
         Parameters
         ----------
@@ -1545,14 +1550,14 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Constrains the purge flow to a maximum of 1% of the respective species' inflow to the MS4, aiding in maintaining environmental and process control standards.
+            Constrains the purge flow to a maximum of 1% of the respective species' inflow to the mixer/splitter (ms4), aiding in maintaining environmental and process control standards.
         """
         return m.purge_flow[species] <= m.flow_into['ms4', species] * 0.01
 
     @m.Constraint(m.species)
     def s2_inlet_composition(m, species):
         """
-        Ensures flow composition into splitter (s2) from mixer(ms4) is proportional to overall flow into splitter.
+        Ensures flow composition into splitter (s2) from mixer/splitter (ms4) is proportional to overall flow into splitter.
 
         Parameters
         ----------
@@ -1577,7 +1582,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms4_to_ms3_composition(m, species):
         """
-        Balances species flow from mixer(ms4) to splitter(s2) to match total flow ratios.
+        Balances species flow from mixer/splitter (ms4) to splitter (s2) to match total flow ratios.
 
         Parameters
         ----------
@@ -1589,7 +1594,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            A constraint that maintains proportional species distribution between mixer(ms4) and splitter(s2).
+            A constraint that maintains proportional species distribution between mixer/splitter (ms4) and splitter (s2).
         """
         total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
         total_flow_to_this_unit = sum(m.flow['ms4', 's2', jj] for jj in m.species)
@@ -1603,7 +1608,7 @@ def build_model():
     @m.Constraint(m.species)
     def s2_mass_balance(m, species):
         """
-        Ensures mass conservation at splitter S2 by equating the total inflow of each species to its outflow.
+        Ensures mass conservation at splitter (s2) by equating the total inflow of each species to its outflow.
 
         Parameters
         ----------
@@ -1615,7 +1620,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Enforces that the inflow of each species into splitter(s2) equals the outflow from splitter(s2) to the mixer(ms1).
+            Enforces that the inflow of each species into splitter (s2) equals the outflow from splitter (s2) to the mixer\splitter (ms1).
         """
         return m.flow_into['s2', species] == m.flow['s2', 'ms1', species]
 
@@ -1634,7 +1639,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Ensures that no species inadvertently flows back from splitter(s2) to mixer(m1), maintaining intended flow paths.
+            Ensures that no species inadvertently flows back from splitter (s2) to mixer (m1), maintaining intended flow paths.
         """
         return m.flow['s2', 'm1', species] == 0
 
@@ -1642,7 +1647,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms2_mass_balance(m, species):
         """
-        Balances the mass of each species at the MS2 unit by accounting for additional CO2 injection where applicable.
+        Balances the mass of each species at the mixer/splitter unit (ms2) by accounting for additional CO2 injection where applicable.
 
         Parameters
         ----------
@@ -1654,7 +1659,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Enforces that the output from MS2 equals the input plus any CO2 injected, maintaining mass conservation with external inputs considered.
+            Enforces that the output from mixer/splitter (ms2) equals the input plus any CO2 injected, maintaining mass conservation with external inputs considered.
         """
         return m.flow_out_from['ms2', species] == (
             m.flow_into['ms2', species] + (m.co2_inject if species == 'CO2' else 0)
@@ -1688,7 +1693,7 @@ def build_model():
     @compressor_exists.Constraint(m.species)
     def compressor_inlet_mass_balance(disj, species):
         """
-        Ensures mass balance for each species entering the compressor, indicating the flow into the compressor is equal to the outlet of mixer(ms2).
+        Ensures mass balance for each species entering the compressor, indicating the flow into the compressor is equal to the outlet of mixer/spitter (ms2).
 
         Parameters
         ----------
@@ -1727,7 +1732,7 @@ def build_model():
 
     compressor_exists.cost = Constraint(
         expr=m.aux_unit_capital_cost['compressor']
-        == (((3.553 * 10**5) + 586 * m.syngas_power) / 8000 * m.cost_index_ratio),
+        == (((3.553 * 10**5) + 586 * m.syngas_power) / 8000 * m.cost_index_ratio), # [8000 hr/yr]
         doc="capital cost for the compressor based on power usage and cost parameters [$·h-1]",
     )
 
@@ -1773,7 +1778,7 @@ def build_model():
     @m.Constraint(m.species)
     def ms3_mass_balance(m, species):
         """
-        Ensures that the total mass flow into and out of mixer/splitter(ms3) is conserved for each species.
+        Ensures that the total mass flow into and out of mixer/splitter (ms3) is conserved for each species.
 
         Parameters
         ----------
@@ -1785,7 +1790,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            The pyomo constraint that maintains mass conservation at the mixer/splitter(ms3) for each species.
+            The pyomo constraint that maintains mass conservation at the mixer/splitter (ms3) for each species.
         """
         return m.flow_into['ms3', species] == m.flow_out_from['ms3', species]
 
@@ -1844,7 +1849,7 @@ def build_model():
         == (
             (m.p1['absorber2'] * 100 * m.Fabs2 + m.p2['absorber2'])
             * m.aux_module_factors['absorber2']
-            / 8000
+            / 8000 # [8000 hr/yr]
             * m.cost_index_ratio
         ),
         doc="capital cost for the absorber2 based on CO2 absorbed [$·h-1]",
