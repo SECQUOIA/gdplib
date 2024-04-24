@@ -415,84 +415,88 @@ def build_model():
 
     @m.Constraint(m.suppliers, m.time)
     def supply_limits(m, sup, t):
-        """_summary_
+        """
+        Ensure that the total supply from a supplier 'sup' at time 't' does not exceed the available supply from the supplier.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        sup : _type_
-            _description_
+        sup : int
+            Index of the supplier from 1 to 10
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The total supply from the supplier 'sup' at time 't' should not exceed the available supply from the supplier.
         """
         return sum(m.supply_shipments[sup, site, t]
                    for site in m.potential_sites) <= m.available_supply[sup, t]
 
     @m.Constraint(m.markets, m.time)
     def demand_satisfaction(m, mkt, t):
-        """_summary_
+        """
+        Ensure that the total product shipments to a market 'mkt' at time 't' meets the market demand for the product.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        mkt : _type_
-            _description_
+        mkt : int
+            Index of the market from 1 to 10
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The total product shipments to the market 'mkt' at time 't' should meet the market demand for the product.
         """
         return sum(m.product_shipments[site, mkt, t]
                    for site in m.potential_sites) == m.market_demand[mkt, t]
 
     @m.Constraint(m.potential_sites, m.time)
     def product_balance(m, site, t):
-        """_summary_
+        """
+        Ensure that the total product shipments from a facility site 'site' at time 't' meets the production from the site.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The total product shipments from the facility site 'site' at time 't' should meet the production from the site.
         """
         return m.production[site, t] == sum(m.product_shipments[site, mkt, t]
                                             for mkt in m.markets)
 
     @m.Constraint(m.potential_sites, m.time)
     def require_raw_materials(m, site, t):
-        """_summary_
+        """
+        Ensure that the raw materials required for production at a facility site 'site' at time 't' are available from the suppliers.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             Pyomo concrete model which descibes the multiperiod location-allocation optimization model
-        site : _type_
-            _description_
+        site : int
+            Index of the facility site from 1 to 12
         t : int
             Index of time in months from 0 to 120 (10 years)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The production at the facility site 'site' at time 't' should not exceed the raw materials available from the suppliers which is the supply multiplied by the conversion factor.
         """
         return m.production[site, t] <= m.conversion * m.supply[site, t]
 
