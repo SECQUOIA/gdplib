@@ -17,21 +17,36 @@ from .cafaro_approx import calculate_cafaro_coefficients
 
 
 def build_model(use_cafaro_approximation, num_stages):
-    """Build the model."""
+    """
+    Constructs a Pyomo concrete model for heat integration optimization. This model incorporates various components including process and utility streams, heat exchangers, and stages of heat exchange, with optional application of the Cafaro approximation for certain calculations.
+
+    Parameters
+    ----------
+    use_cafaro_approximation : bool
+        A Boolean flag indicating whether the Cafaro approximation method should be used
+        to calculate certain coefficients in the model
+    num_stages : int
+        The number of stages in the heat exchange model.
+
+    Returns
+    -------
+    Pyomo.ConcreteModel
+        A Pyomo concrete model representing the heat exchange model based on the specified number of stages and the use of Cafaro approximation, if applicable. The model is ready to be solved using an optimization solver to determine optimal heat integration strategies.
+    """
     m = ConcreteModel()
-    m.hot_process_streams = Set(initialize=['H1', 'H2'])
-    m.cold_process_streams = Set(initialize=['C1', 'C2'])
-    m.process_streams = m.hot_process_streams | m.cold_process_streams
-    m.hot_utility_streams = Set(initialize=['steam'])
-    m.cold_utility_streams = Set(initialize=['water'])
+    m.hot_process_streams = Set(initialize=['H1', 'H2'], doc="Hot process streams")
+    m.cold_process_streams = Set(initialize=['C1', 'C2'], doc="Cold process streams")
+    m.process_streams = m.hot_process_streams | m.cold_process_streams # All process streams
+    m.hot_utility_streams = Set(initialize=['steam'], doc="Hot utility streams")
+    m.cold_utility_streams = Set(initialize=['water'], doc="Cold utility streams")
     m.hot_streams = Set(
-        initialize=m.hot_process_streams | m.hot_utility_streams)
+        initialize=m.hot_process_streams | m.hot_utility_streams, doc="Hot streams")
     m.cold_streams = Set(
-        initialize=m.cold_process_streams | m.cold_utility_streams)
+        initialize=m.cold_process_streams | m.cold_utility_streams, doc="Cold streams")
     m.utility_streams = Set(
-        initialize=m.hot_utility_streams | m.cold_utility_streams)
+        initialize=m.hot_utility_streams | m.cold_utility_streams, doc="Utility streams")
     m.streams = Set(
-        initialize=m.process_streams | m.utility_streams)
+        initialize=m.process_streams | m.utility_streams, doc="All streams")
     m.valid_matches = Set(
         initialize=(m.hot_process_streams * m.cold_streams) |
         (m.hot_utility_streams * m.cold_process_streams),
@@ -42,7 +57,7 @@ def build_model(use_cafaro_approximation, num_stages):
     # Unused right now, but could be used for variable bound tightening
     # in the LMTD calculation.
 
-    m.stages = RangeSet(num_stages)
+    m.stages = RangeSet(num_stages, doc="Number of stages")
 
     m.T_in = Param(
         m.streams, doc="Inlet temperature of stream [K]",
@@ -80,13 +95,13 @@ def build_model(use_cafaro_approximation, num_stages):
         domain=NonNegativeReals, initialize=1, bounds=(0, 5000))
     m.stage_entry_T = Var(
         m.streams, m.stages,
-        doc="Temperature of stream at stage entry.",
+        doc="Temperature of stream at stage entry [K].",
         initialize=350,
         bounds=(293, 450)  # TODO set to be equal to min and max temps
     )
     m.stage_exit_T = Var(
         m.streams, m.stages,
-        doc="Temperature of stream at stage exit.",
+        doc="Temperature of stream at stage exit [K].",
         initialize=350,
         bounds=(293, 450)  # TODO set to be equal to min and max temps
     )
@@ -117,7 +132,7 @@ def build_model(use_cafaro_approximation, num_stages):
         doc="Annual unit cost of utilities [$/kW]",
         initialize={'steam': 80, 'water': 20})
 
-    m.module_sizes = Set(initialize=[10, 50, 100])
+    m.module_sizes = Set(initialize=[10, 50, 100], doc="Available module sizes.")
     m.max_num_modules = Param(m.module_sizes, initialize={
         # 5: 100,
         10: 50,
@@ -127,14 +142,14 @@ def build_model(use_cafaro_approximation, num_stages):
     }, doc="maximum number of each module size available.")
 
     m.exchanger_fixed_unit_cost = Param(
-        m.valid_matches, default=2000)
+        m.valid_matches, default=2000, doc="exchanger fixed cost [$/kW]",)
     m.exchanger_area_cost_factor = Param(
         m.valid_matches, default=1000,
         initialize={
             ('steam', cold): 1200
             for cold in m.cold_process_streams},
         doc="1200 for heaters. 1000 for all other exchangers.")
-    m.area_cost_exponent = Param(default=0.6)
+    m.area_cost_exponent = Param(default=0.6, doc="Area cost exponent.")
 
     if use_cafaro_approximation:
         k, b = calculate_cafaro_coefficients(10, 500, m.area_cost_exponent)
@@ -144,6 +159,24 @@ def build_model(use_cafaro_approximation, num_stages):
     @m.Param(m.valid_matches, m.module_sizes,
              doc="Area cost factor for modular exchangers.")
     def module_area_cost_factor(m, hot, cold, area):
+        """_summary_
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            
+        hot : _type_
+            _description_
+        cold : _type_
+            _description_
+        area : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if hot == 'steam':
             return 1300
         else:
@@ -397,6 +430,16 @@ def build_model(use_cafaro_approximation, num_stages):
 
 
 def _fix_and_bound(var, val):
+    """
+    Fix a Pyomo variable to a value and set bounds to that value.
+
+    Parameters
+    ----------
+    var : Pyomo.Var
+        The Pyomo variable to be fixed.
+    val : float
+        The value to fix the variable to. This value will also be used to set both the lower and upper bounds of the variable.
+    """
     var.fix(val)
     var.setlb(val)
     var.setub(val)

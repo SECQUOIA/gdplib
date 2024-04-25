@@ -15,6 +15,20 @@ from . import common
 
 
 def build_conventional(cafaro_approx, num_stages):
+    """_summary_
+
+    Parameters
+    ----------
+    cafaro_approx : _type_
+        _description_
+    num_stages : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     return build_model(cafaro_approx, num_stages)
 
 
