@@ -34,18 +34,18 @@ from os.path import join
 
 def build_model():
     """
-        Build a Pyomo abstract model for the medium-term purchasing contracts problem.
+    Build a Pyomo abstract model for the medium-term purchasing contracts problem.
 
-        Returns
-        -------
-        Pyomo.AbstractModel
-            Pyomo abstract model for medium-term purchasing contracts problem.
+    Returns
+    -------
+    Pyomo.AbstractModel
+        Pyomo abstract model for medium-term purchasing contracts problem.
 
-        References
-        ----------
-        [1] Vecchietti, Aldo, and I. Grossmann. "Computational experience with logmip solving linear and nonlinear disjunctive programming problems." In Proc. of FOCAPD, pp. 587-590. 2004.
-        [2] Vecchietti, A., S. Lee and I.E. Grossmann, “Modeling of Discrete/Continuous Optimization Problems: Characterization and Formulation of Disjunctions and their Relaxations,” Computers and Chemical Engineering 27, 433-448 (2003). https://doi.org/10.1016/S0098-1354(02)00220-X
-        [3] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial and Engineering Chemistry Research, 45(14), 5013–5026. https://doi.org/10.1021/ie0513144
+    References
+    ----------
+    [1] Vecchietti, A., & Grossmann, I. (2004). Computational experience with logmip solving linear and nonlinear disjunctive programming problems. Proc. of FOCAPD, 587–590.
+    [2] Vecchietti, A., Lee, S., & Grossmann, I. E. (2003). Modeling of discrete/continuous optimization problems: characterization and formulation of disjunctions and their relaxations. Computers & Chemical Engineering, 27(3), 433–448. DOI: 10.1016/S0098-1354(02)00220-X
+    [3] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial and Engineering Chemistry Research, 45(14), 5013–5026. DOI: 10.1021/ie0513144
     """
     model = AbstractModel()
 
