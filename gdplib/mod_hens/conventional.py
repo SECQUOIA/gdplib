@@ -34,7 +34,8 @@ def build_conventional(cafaro_approx, num_stages):
 
 
 def build_model(use_cafaro_approximation, num_stages):
-    """_summary_
+    """
+    Builds and configures a heat integration model using either standard calculations or the Cafaro approximation for specific costs and heat exchange calculations, supplemented by constraints specific to the conventional scenario.
 
     Parameters
     ----------
