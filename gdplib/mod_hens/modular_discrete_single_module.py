@@ -45,7 +45,7 @@ def build_model(use_cafaro_approximation, num_stages):
 
     Parameters
     ----------
-    cafaro_approx : bool
+    use_cafaro_approximation : bool
         Specifies whether to use the Cafaro approximation in the model.
     num_stages : int
         The number of stages in the heat integration model.
