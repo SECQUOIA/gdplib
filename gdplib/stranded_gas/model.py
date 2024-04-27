@@ -14,6 +14,17 @@ from pyomo.environ import TerminationCondition as tc
 
 
 def build_model():
+    """_summary_
+
+    Returns
+    -------
+    _type_
+        _description_
+
+    References
+    ----------
+    [1] Chen, Q., & Grossmann, I. E. (2019). Economies of numbers for a modular stranded gas processing network: Modeling and optimization. In Computer Aided Chemical Engineering (Vol. 47, pp. 257-262). Elsevier. DOI: 10.1016/B978-0-444-64241-7.50100-3
+    """
     m = ConcreteModel()
     m.BigM = Suffix(direction=Suffix.LOCAL)
 
@@ -29,6 +40,20 @@ def build_model():
 
     @m.Param(m.time)
     def discount_factor(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (1 + m.discount_rate / m.periods_per_year) ** (-t / m.periods_per_year)
 
     xlsx_data = pd.read_excel(os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None)
@@ -37,18 +62,74 @@ def build_model():
 
     @m.Param(m.module_types)
     def module_base_cost(m, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mtype : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(module_sheet[mtype]['Capital Cost [MM$]'])
 
     @m.Param(m.module_types, doc="Natural gas consumption per module of this type [MMSCF/d]")
     def unit_gas_consumption(m, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mtype : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(module_sheet[mtype]['Nat Gas [MMSCF/d]'])
 
     @m.Param(m.module_types, doc="Gasoline production per module of this type [kBD]")
     def gasoline_production(m, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mtype : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(module_sheet[mtype]['Gasoline [kBD]'])
 
     @m.Param(m.module_types, doc="Overall conversion of natural gas into gasoline per module of this type [kB/MMSCF]")
     def module_conversion(m, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mtype : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(module_sheet[mtype]['Conversion [kB/MMSCF]'])
 
     site_sheet = xlsx_data['sites'].set_index('Potential site')
@@ -60,10 +141,38 @@ def build_model():
 
     @m.Param(m.potential_sites)
     def site_x(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(site_sheet['x'][site])
 
     @m.Param(m.potential_sites)
     def site_y(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(site_sheet['y'][site])
 
     well_sheet = xlsx_data['wells'].set_index('Well')
@@ -71,10 +180,38 @@ def build_model():
 
     @m.Param(m.well_clusters)
     def well_x(m, well):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        well : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(well_sheet['x'][well])
 
     @m.Param(m.well_clusters)
     def well_y(m, well):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        well : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(well_sheet['y'][well])
 
     sched_sheet = xlsx_data['well-schedule']
@@ -89,6 +226,22 @@ def build_model():
 
     @m.Param(m.well_clusters, m.time, doc="Supply of gas from well cluster [MMSCF/day]")
     def gas_supply(m, well, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        well : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(well_profiles[well][t * 3:t * 3 + 2]) / 3
 
     mkt_sheet = xlsx_data['markets'].set_index('Market')
@@ -96,10 +249,38 @@ def build_model():
 
     @m.Param(m.markets)
     def mkt_x(m, mkt):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mkt : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(mkt_sheet['x'][mkt])
 
     @m.Param(m.markets)
     def mkt_y(m, mkt):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mkt : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return float(mkt_sheet['y'][mkt])
 
     @m.Param(m.markets, doc="Gasoline demand [kBD]")
@@ -111,6 +292,22 @@ def build_model():
 
     @m.Param(m.sources, m.destinations, doc="Distance [mi]")
     def distance(m, src, dest):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        src : _type_
+            _description_
+        dest : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if src in m.well_clusters:
             src_x = m.well_x[src]
             src_y = m.well_y[src]
@@ -142,22 +339,92 @@ def build_model():
 
     @m.Param(m.time, doc="Module transport cost per mile [M$/100 miles]")
     def module_transport_distance_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 50 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Module transport cost per unit [MM$/module]")
     def module_transport_unit_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 3 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Stranded gas price [$/MSCF]")
     def nat_gas_price(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 5 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Gasoline price [$/gal]")
     def gasoline_price(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 2.5 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Gasoline transport cost [$/gal/100 miles]")
     def gasoline_tranport_cost(m, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return 0.045 * m.discount_factor[t]
 
     m.gal_per_bbl = Param(initialize=42, doc="Gallons per barrel")
@@ -170,6 +437,15 @@ def build_model():
 
     @m.Disjunct(m.module_types)
     def mtype_exists(disj, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        mtype : _type_
+            _description_
+        """
         disj.learning_factor_calc = Constraint(
             expr=m.learning_factor[mtype] == (1 - m.learning_rate) ** (
                 log(sum(m.modules_purchased[mtype, :, :])) / log(2)))
@@ -179,15 +455,54 @@ def build_model():
 
     @m.Disjunct(m.module_types)
     def mtype_absent(disj, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        mtype : _type_
+            _description_
+        """
         disj.constant_learning_factor = Constraint(
             expr=m.learning_factor[mtype] == 1)
 
     @m.Disjunction(m.module_types)
     def mtype_existence(m, mtype):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mtype : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.mtype_exists[mtype], m.mtype_absent[mtype]]
 
     @m.Expression(m.module_types, m.time, doc="Module unit cost [MM$/module]")
     def module_unit_cost(m, mtype, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        mtype : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.module_base_cost[mtype] * m.learning_factor[mtype] * m.discount_factor[t]
 
     m.production = Var(
@@ -210,37 +525,153 @@ def build_model():
 
     @m.Constraint(m.potential_sites, m.module_types, m.time)
     def consumption_capacity(m, site, mtype, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        mtype : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.gas_consumption[site, mtype, t] <= (
             m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype])
 
     @m.Constraint(m.potential_sites, m.time)
     def production_limit(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.production[site, t] <= sum(
             m.gas_consumption[site, mtype, t] * m.module_conversion[mtype]
             for mtype in m.module_types)
 
     @m.Expression(m.potential_sites, m.time)
     def capacity(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype]
             * m.module_conversion[mtype] for mtype in m.module_types)
 
     @m.Constraint(m.potential_sites, m.time)
     def gas_supply_meets_consumption(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.gas_consumption[site, :, t]) == sum(m.gas_flows[:, site, t])
 
     @m.Constraint(m.well_clusters, m.time)
     def gas_supply_limit(m, well, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        well : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.gas_flows[well, site, t]
                    for site in m.potential_sites) <= m.gas_supply[well, t]
 
     @m.Constraint(m.potential_sites, m.time)
     def gasoline_production_requirement(m, site, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.product_flows[site, mkt, t]
                    for mkt in m.markets) == m.production[site, t]
 
     @m.Constraint(m.potential_sites, m.module_types, m.time)
     def module_balance(m, site, mtype, t):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        mtype : _type_
+            _description_
+        t : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         if t >= m.module_setup_time:
             modules_added = m.modules_purchased[
                 mtype, site, t - m.module_setup_time]
@@ -265,10 +696,28 @@ def build_model():
 
     @m.Disjunct(m.potential_sites)
     def site_active(disj, site):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        site : _type_
+            _description_
+        """
         pass
 
     @m.Disjunct(m.potential_sites)
     def site_inactive(disj, site):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        site : _type_
+            _description_
+        """
         disj.no_production = Constraint(
             expr=sum(m.production[site, :]) == 0)
         disj.no_gas_consumption = Constraint(
@@ -293,24 +742,90 @@ def build_model():
 
     @m.Disjunction(m.potential_sites)
     def site_active_or_not(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.site_active[site], m.site_inactive[site]]
 
     @m.Disjunct(m.well_clusters, m.potential_sites)
     def pipeline_exists(disj, well, site):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        well : _type_
+            _description_
+        site : _type_
+            _description_
+        """
         pass
 
     @m.Disjunct(m.well_clusters, m.potential_sites)
     def pipeline_absent(disj, well, site):
+        """_summary_
+
+        Parameters
+        ----------
+        disj : _type_
+            _description_
+        well : _type_
+            _description_
+        site : _type_
+            _description_
+        """
         disj.no_natural_gas_flow = Constraint(
             expr=sum(m.gas_flows[well, site, t] for t in m.time) == 0)
 
     @m.Disjunction(m.well_clusters, m.potential_sites)
     def pipeline_existence(m, well, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        well : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return [m.pipeline_exists[well, site], m.pipeline_absent[well, site]]
 
     # Objective Function Construnction
     @m.Expression(m.potential_sites, doc="MM$")
     def product_revenue(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.product_flows[site, mkt, t]  # kBD
             * 1000  # bbl/kB
@@ -322,6 +837,20 @@ def build_model():
 
     @m.Expression(m.potential_sites, doc="MM$")
     def raw_material_cost(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.gas_consumption[site, mtype, t] * m.days_per_period
             / 1E6  # $ to MM$
@@ -333,6 +862,22 @@ def build_model():
         m.potential_sites, m.markets,
         doc="Aggregate cost to transport gasoline from a site to market [MM$]")
     def product_transport_cost(m, site, mkt):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+        mkt : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.product_flows[site, mkt, t] * m.gal_per_bbl
             * 1000  # bbl/kB
@@ -342,12 +887,44 @@ def build_model():
 
     @m.Expression(m.well_clusters, m.potential_sites, doc="MM$")
     def pipeline_construction_cost(m, well, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        well : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (m.pipeline_unit_cost * m.distance[well, site]
                 * m.pipeline_exists[well, site].binary_indicator_var)
 
     # Module transport cost
     @m.Expression(m.site_pairs, doc="MM$")
     def module_relocation_cost(m, from_site, to_site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        from_site : _type_
+            _description_
+        to_site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.modules_transferred[mtype, from_site, to_site, t]
             * m.distance[from_site, to_site] / 100
@@ -360,6 +937,20 @@ def build_model():
 
     @m.Expression(m.potential_sites, doc="MM$")
     def module_purchase_cost(m, site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.module_unit_cost[mtype, t] * m.modules_purchased[mtype, site, t]
             for mtype in m.module_types
@@ -367,6 +958,18 @@ def build_model():
 
     @m.Expression(doc="MM$")
     def profit(m):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             summation(m.product_revenue)
             - summation(m.raw_material_cost)
@@ -381,10 +984,38 @@ def build_model():
     # Tightening constraints
     @m.Constraint(doc="Limit total module purchases over project span.")
     def restrict_module_purchases(m):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.modules_purchased[...]) <= 5
 
     @m.Constraint(m.site_pairs, doc="Limit transfers between any two sites")
     def restrict_module_transfers(m, from_site, to_site):
+        """_summary_
+
+        Parameters
+        ----------
+        m : _type_
+            _description_
+        from_site : _type_
+            _description_
+        to_site : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(m.modules_transferred[:, from_site, to_site, :]) <= 5
 
     return m
