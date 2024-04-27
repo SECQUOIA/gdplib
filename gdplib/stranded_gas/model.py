@@ -474,39 +474,49 @@ def build_model():
 
     @m.Disjunct(m.module_types)
     def mtype_exists(disj, mtype):
-        """_summary_
+        """
+        Represents the scenario where a specific module type exists within the GTL network.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo Disjunct that represents the existence of a module type.
         mtype : str
             Index of the module type.
+
+        Constraints
+        ------------
+        learning_factor_calc : Pyomo Constraint
+            Captures the learning curve effect by adjusting the learning factor based on the total quantity of modules purchased.
+        require_module_purchases : Pyomo Constraint
+            Ensures that at least one module of this type is purchased, activating this disjunct.
         """
         disj.learning_factor_calc = Constraint(
             expr=m.learning_factor[mtype] == (1 - m.learning_rate) ** (
-                log(sum(m.modules_purchased[mtype, :, :])) / log(2)))
+                log(sum(m.modules_purchased[mtype, :, :])) / log(2)), doc="Learning factor calculation")
         m.BigM[disj.learning_factor_calc] = 1
         disj.require_module_purchases = Constraint(
-            expr=sum(m.modules_purchased[mtype, :, :]) >= 1)
+            expr=sum(m.modules_purchased[mtype, :, :]) >= 1, doc="At least one module purchase")
 
     @m.Disjunct(m.module_types)
     def mtype_absent(disj, mtype):
-        """_summary_
+        """
+        Represents the scenario where a specific module type does not exist within the GTL network.
 
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo Disjunct that represents the absence of a module type.
         mtype : str
             Index of the module type.
         """
         disj.constant_learning_factor = Constraint(
-            expr=m.learning_factor[mtype] == 1)
+            expr=m.learning_factor[mtype] == 1, doc="Constant learning factor")
 
     @m.Disjunction(m.module_types)
     def mtype_existence(m, mtype):
-        """_summary_
+        """
+        A disjunction that determines whether a module type exists or is absent within the GTL network.
 
         Parameters
         ----------
@@ -517,14 +527,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        list of Pyomo.Disjunct
+            A list containing two disjuncts, one for the scenario where the module type exists and one for where it is absent.
         """
         return [m.mtype_exists[mtype], m.mtype_absent[mtype]]
 
     @m.Expression(m.module_types, m.time, doc="Module unit cost [MM$/module]")
     def module_unit_cost(m, mtype, t):
-        """_summary_
+        """
+        Computes the unit cost of a module type at a specific time period, considering the base cost, the learning factor due to economies of numbers, and the time-based discount factor.
 
         Parameters
         ----------
@@ -537,8 +548,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            A Pyomo Expression that calculates the total unit cost of a module for a given type and time period.
         """
         return m.module_base_cost[mtype] * m.learning_factor[mtype] * m.discount_factor[t]
 
@@ -577,7 +588,7 @@ def build_model():
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.gas_consumption[site, mtype, t] <= (
@@ -738,7 +749,7 @@ def build_model():
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo Disjunct that represents the active state of a potential site.
         site : str
             The index for the potential site.
         """
@@ -751,7 +762,7 @@ def build_model():
         Parameters
         ----------
         disj : Pyomo.Disjunct
-            _description_
+            A Pyomo Disjunct that represents the inactive state of a potential site.
         site : str
             The index for the potential site.
         """
