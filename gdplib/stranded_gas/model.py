@@ -14,12 +14,13 @@ from pyomo.environ import TerminationCondition as tc
 
 
 def build_model():
-    """_summary_
+    """
+    Constructs a Pyomo ConcreteModel for optimizing a modular stranded gas processing network. The model is designed to convert stranded gas into gasoline using a modular and intensified GTL process. It incorporates the economic dynamics of module investments, gas processing, and product transportation.
 
     Returns
     -------
-    _type_
-        _description_
+    Pyomo.ConcreteModel
+        A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL (Gas To Liquid) network. The model includes variables for the number of modules, their type and placement, as well as for production and transportation of gasoline. It aims to maximize the net present value (NPV) of the processing network.
 
     References
     ----------
@@ -40,100 +41,105 @@ def build_model():
 
     @m.Param(m.time)
     def discount_factor(m, t):
-        """_summary_
+        """
+        Calculates the discount factor for a given time period in the model.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the discount factor for the given time period.
         """
         return (1 + m.discount_rate / m.periods_per_year) ** (-t / m.periods_per_year)
 
     xlsx_data = pd.read_excel(os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None)
     module_sheet = xlsx_data['modules'].set_index('Type')
-    m.module_types = Set(initialize=module_sheet.columns.tolist(),)
+    m.module_types = Set(initialize=module_sheet.columns.tolist(), doc="Module types")
 
     @m.Param(m.module_types)
     def module_base_cost(m, mtype):
-        """_summary_
+        """
+        Calculates the base cost of a module of a given type.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mtype : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mtype : str
+            Index of the module type (A500, R500, S500, U500, A1000, R1000, S1000, U1000, A2000, R2000, S2000, U2000, A5000, R5000).
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the base cost of a module of the given type.
         """
         return float(module_sheet[mtype]['Capital Cost [MM$]'])
 
     @m.Param(m.module_types, doc="Natural gas consumption per module of this type [MMSCF/d]")
     def unit_gas_consumption(m, mtype):
-        """_summary_
+        """
+        Calculates the natural gas consumption per module of a given type.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mtype : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mtype : str
+             Index of the module type.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the natural gas consumption per module of the given type.
         """
         return float(module_sheet[mtype]['Nat Gas [MMSCF/d]'])
 
     @m.Param(m.module_types, doc="Gasoline production per module of this type [kBD]")
     def gasoline_production(m, mtype):
-        """_summary_
+        """
+        Calculates the gasoline production per module of a given type.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mtype : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mtype : str
+            Index of the module type.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the gasoline production per module of the given type.
         """
         return float(module_sheet[mtype]['Gasoline [kBD]'])
 
     @m.Param(m.module_types, doc="Overall conversion of natural gas into gasoline per module of this type [kB/MMSCF]")
     def module_conversion(m, mtype):
-        """_summary_
+        """
+        Calculates the overall conversion of natural gas into gasoline per module of a given type.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mtype : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mtype : str
+            Index of the module type.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the overall conversion of natural gas into gasoline per module of the given type.
         """
         return float(module_sheet[mtype]['Conversion [kB/MMSCF]'])
 
     site_sheet = xlsx_data['sites'].set_index('Potential site')
-    m.potential_sites = Set(initialize=site_sheet.index.tolist())
+    m.potential_sites = Set(initialize=site_sheet.index.tolist(), doc="Potential sites")
     m.site_pairs = Set(
         doc="Pairs of potential sites",
         initialize=m.potential_sites * m.potential_sites,
@@ -141,76 +147,80 @@ def build_model():
 
     @m.Param(m.potential_sites)
     def site_x(m, site):
-        """_summary_
+        """
+        Calculates the x-coordinate of a potential site.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            An integer representing the x-coordinate of the potential site.
         """
         return float(site_sheet['x'][site])
 
     @m.Param(m.potential_sites)
     def site_y(m, site):
-        """_summary_
+        """
+        Calculates the y-coordinate of a potential site.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            An integer representing the y-coordinate of the potential site.
         """
         return float(site_sheet['y'][site])
 
     well_sheet = xlsx_data['wells'].set_index('Well')
-    m.well_clusters = Set(initialize=well_sheet.index.tolist())
+    m.well_clusters = Set(initialize=well_sheet.index.tolist(), doc="Well clusters")
 
     @m.Param(m.well_clusters)
     def well_x(m, well):
-        """_summary_
+        """
+        Calculates the x-coordinate of a well cluster.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        well : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        well : str
+            The index for the well cluster. It starts from w1 and goes up to w12.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            An integer representing the x-coordinate of the well cluster.
         """
         return float(well_sheet['x'][well])
 
     @m.Param(m.well_clusters)
     def well_y(m, well):
-        """_summary_
+        """
+        Calculates the y-coordinate of a well cluster.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        well : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        well : str
+            The index for the well cluster.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            An integer representing the y-coordinate of the well cluster.
         """
         return float(well_sheet['y'][well])
 
@@ -226,87 +236,109 @@ def build_model():
 
     @m.Param(m.well_clusters, m.time, doc="Supply of gas from well cluster [MMSCF/day]")
     def gas_supply(m, well, t):
-        """_summary_
+        """
+        Calculates the supply of gas from a well cluster in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        well : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        well : str
+            The index for the well cluster.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the supply of gas from the well cluster in the given time period.
         """
         return sum(well_profiles[well][t * 3:t * 3 + 2]) / 3
 
     mkt_sheet = xlsx_data['markets'].set_index('Market')
-    m.markets = Set(initialize=mkt_sheet.index.tolist())
+    m.markets = Set(initialize=mkt_sheet.index.tolist(), doc="Markets")
 
     @m.Param(m.markets)
     def mkt_x(m, mkt):
-        """_summary_
+        """
+        Calculates the x-coordinate of a market.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mkt : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mkt : str
+            The index for the market. (m1, m2, m3)
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            An integer representing the x-coordinate of the market.
         """
         return float(mkt_sheet['x'][mkt])
 
     @m.Param(m.markets)
     def mkt_y(m, mkt):
-        """_summary_
+        """
+        Calculates the y-coordinate of a market.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mkt : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mkt : str
+            The index for the market.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            An integer representing the y-coordinate of the market.
         """
         return float(mkt_sheet['y'][mkt])
 
     @m.Param(m.markets, doc="Gasoline demand [kBD]")
     def mkt_demand(m, mkt):
-        return float(mkt_sheet['demand [kBD]'][mkt])
-
-    m.sources = Set(initialize=m.well_clusters | m.potential_sites)
-    m.destinations = Set(initialize=m.potential_sites | m.markets)
-
-    @m.Param(m.sources, m.destinations, doc="Distance [mi]")
-    def distance(m, src, dest):
-        """_summary_
+        """
+        Calculates the demand for gasoline in a market in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        src : _type_
-            _description_
-        dest : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mkt : str
+            The index for the market.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the demand for gasoline in the market in the given time period.
+        """
+        return float(mkt_sheet['demand [kBD]'][mkt])
+
+    m.sources = Set(initialize=m.well_clusters | m.potential_sites, doc="Sources")
+    m.destinations = Set(initialize=m.potential_sites | m.markets, doc="Destinations")
+
+    @m.Param(m.sources, m.destinations, doc="Distance [mi]")
+    def distance(m, src, dest):
+        """
+        Calculates the Euclidean distance between a source and a destination within the gas processing network.
+        Assuming `src_x`, `src_y` for a source and `dest_x`, `dest_y` for a destination are defined within the model, the distance is calculated as follows:
+    
+        distance = sqrt((src_x - dest_x) ** 2 + (src_y - dest_y) ** 2)
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        src : str
+            The identifier for the source, which could be a well cluster or a potential site.
+        dest : str
+            The identifier for the destination, which could be a potential site or a market.
+
+        Returns
+        -------
+        Pyomo.Parameter
+            A parameter representing the Euclidean distance between the source and destination.
         """
         if src in m.well_clusters:
             src_x = m.well_x[src]
@@ -339,91 +371,96 @@ def build_model():
 
     @m.Param(m.time, doc="Module transport cost per mile [M$/100 miles]")
     def module_transport_distance_cost(m, t):
-        """_summary_
+        """
+        Calculates the module transport cost per mile in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the module transport cost per mile in the given time period.
         """
         return 50 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Module transport cost per unit [MM$/module]")
     def module_transport_unit_cost(m, t):
-        """_summary_
+        """
+        Calculates the module transport cost per unit in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the module transport cost per unit in the given time period.
         """
         return 3 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Stranded gas price [$/MSCF]")
     def nat_gas_price(m, t):
-        """_summary_
+        """
+        Calculates the price of stranded gas in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the price of stranded gas in the given time period.
         """
         return 5 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Gasoline price [$/gal]")
     def gasoline_price(m, t):
-        """_summary_
+        """
+        Calculates the price of gasoline in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the price of gasoline in the given time period.
         """
         return 2.5 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Gasoline transport cost [$/gal/100 miles]")
     def gasoline_tranport_cost(m, t):
-        """_summary_
+        """
+        Calculates the gasoline transport cost in a given time period.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Parameter
+            A float representing the gasoline transport cost in the given time period.
         """
         return 0.045 * m.discount_factor[t]
 
@@ -441,10 +478,10 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
-        mtype : _type_
-            _description_
+        mtype : str
+            Index of the module type.
         """
         disj.learning_factor_calc = Constraint(
             expr=m.learning_factor[mtype] == (1 - m.learning_rate) ** (
@@ -459,10 +496,10 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
-        mtype : _type_
-            _description_
+        mtype : str
+            Index of the module type.
         """
         disj.constant_learning_factor = Constraint(
             expr=m.learning_factor[mtype] == 1)
@@ -473,10 +510,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mtype : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mtype : str
+            Index of the module type.
 
         Returns
         -------
@@ -491,12 +528,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        mtype : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        mtype : str
+            Index of the module type.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -529,14 +566,14 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        mtype : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        mtype : str
+            Index of the module type.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -552,12 +589,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -574,12 +611,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -596,12 +633,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -616,12 +653,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        well : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        well : str
+            The index for the well cluster.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -637,12 +674,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -658,14 +695,14 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        mtype : _type_
-            _description_
-        t : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        mtype : str
+            Index of the module type.
+        t : int
+            Set of time periods quarterly period within the 15 year project life.
 
         Returns
         -------
@@ -700,10 +737,10 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
-        site : _type_
-            _description_
+        site : str
+            The index for the potential site.
         """
         pass
 
@@ -713,10 +750,10 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
-        site : _type_
-            _description_
+        site : str
+            The index for the potential site.
         """
         disj.no_production = Constraint(
             expr=sum(m.production[site, :]) == 0)
@@ -746,10 +783,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
@@ -764,12 +801,12 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
-        well : _type_
-            _description_
-        site : _type_
-            _description_
+        well : str
+            The index for the well cluster.
+        site : str
+            The index for the potential site.
         """
         pass
 
@@ -779,12 +816,12 @@ def build_model():
 
         Parameters
         ----------
-        disj : _type_
+        disj : Pyomo.Disjunct
             _description_
-        well : _type_
-            _description_
-        site : _type_
-            _description_
+        well : str
+            The index for the well cluster.
+        site : str
+            The index for the potential site.
         """
         disj.no_natural_gas_flow = Constraint(
             expr=sum(m.gas_flows[well, site, t] for t in m.time) == 0)
@@ -795,12 +832,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        well : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        well : str
+            The index for the well cluster.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
@@ -816,10 +853,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
@@ -841,10 +878,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
@@ -866,12 +903,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
-        mkt : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
+        mkt : str
+            The index for the market.
 
         Returns
         -------
@@ -891,12 +928,12 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        well : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        well : str
+            The index for the well cluster.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
@@ -913,8 +950,8 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
         from_site : _type_
             _description_
         to_site : _type_
@@ -941,10 +978,10 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        site : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
+        site : str
+            The index for the potential site.
 
         Returns
         -------
@@ -962,8 +999,8 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
 
         Returns
         -------
@@ -988,8 +1025,8 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
 
         Returns
         -------
@@ -1004,8 +1041,8 @@ def build_model():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
         from_site : _type_
             _description_
         to_site : _type_
