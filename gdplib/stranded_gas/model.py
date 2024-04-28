@@ -573,7 +573,8 @@ def build_model():
 
     @m.Constraint(m.potential_sites, m.module_types, m.time)
     def consumption_capacity(m, site, mtype, t):
-        """_summary_
+        """
+        Ensures that the natural gas consumption at any site for any module type does not exceed the production capacity of the modules present.
 
         Parameters
         ----------
@@ -589,14 +590,15 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            _description_
+            A constraint that limits the gas consumption per module type at each site, ensuring it does not exceed the capacity provided by the number of active modules of that type at the site during the time period.
         """
         return m.gas_consumption[site, mtype, t] <= (
             m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype])
 
     @m.Constraint(m.potential_sites, m.time)
     def production_limit(m, site, t):
-        """_summary_
+        """
+        Limits the production of gasoline at each site to the maximum possible based on the gas consumed and the conversion efficiency of the modules.
 
         Parameters
         ----------
@@ -609,8 +611,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that ensures the production of gasoline at each site does not exceed the sum of the product of gas consumption and conversion rates for all module types at that site.
         """
         return m.production[site, t] <= sum(
             m.gas_consumption[site, mtype, t] * m.module_conversion[mtype]
@@ -618,7 +620,8 @@ def build_model():
 
     @m.Expression(m.potential_sites, m.time)
     def capacity(m, site, t):
-        """_summary_
+        """
+        Calculates the total potential gasoline production capacity at each site for a given time period, based on the number of active modules, their gas consumption, and conversion efficiency.
 
         Parameters
         ----------
@@ -631,8 +634,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            An expression that sums up the potential production capacity at a site, calculated as the product of the number of modules, their individual gas consumption rates, and their conversion efficiency.
         """
         return sum(
             m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype]
@@ -640,7 +643,8 @@ def build_model():
 
     @m.Constraint(m.potential_sites, m.time)
     def gas_supply_meets_consumption(m, site, t):
-        """_summary_
+        """
+        Ensures that the total gas consumed at a site is exactly matched by the gas supplied to it, reflecting a balance between supply and demand at any given time period.
 
         Parameters
         ----------
@@ -653,14 +657,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that balances the gas supply with the gas consumption at each site, ensuring that the total gas flow to the site equals the total consumption.
         """
         return sum(m.gas_consumption[site, :, t]) == sum(m.gas_flows[:, site, t])
 
     @m.Constraint(m.well_clusters, m.time)
     def gas_supply_limit(m, well, t):
-        """_summary_
+        """
+        Ensures that the total gas supplied from a well cluster does not exceed the available gas supply for that cluster during any given time period.
 
         Parameters
         ----------
@@ -673,15 +678,16 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that limits the total gas flow from a well cluster to various sites to not exceed the gas supply available at that well cluster for the given time period.
         """
         return sum(m.gas_flows[well, site, t]
                    for site in m.potential_sites) <= m.gas_supply[well, t]
 
     @m.Constraint(m.potential_sites, m.time)
     def gasoline_production_requirement(m, site, t):
-        """_summary_
+        """
+        Ensures that the total amount of gasoline shipped from a site matches the production at that site for each time period.
 
         Parameters
         ----------
@@ -694,15 +700,16 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that the sum of product flows (gasoline) from a site to various markets equals the total production at that site for the given period.
         """
         return sum(m.product_flows[site, mkt, t]
                    for mkt in m.markets) == m.production[site, t]
 
     @m.Constraint(m.potential_sites, m.module_types, m.time)
     def module_balance(m, site, mtype, t):
-        """_summary_
+        """
+        Balances the number of modules at a site across time periods by accounting for modules added, transferred, and previously existing. This ensures a consistent and accurate count of modules that reflects all transactions and changes over time.
 
         Parameters
         ----------
@@ -717,8 +724,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint that maintains an accurate balance of module counts at each site, considering new purchases, transfers in, existing inventory, and transfers out.
         """
         if t >= m.module_setup_time:
             modules_added = m.modules_purchased[
@@ -744,7 +751,8 @@ def build_model():
 
     @m.Disjunct(m.potential_sites)
     def site_active(disj, site):
-        """_summary_
+        """
+        Represents the active state of a potential site within the GTL network.
 
         Parameters
         ----------
@@ -757,7 +765,8 @@ def build_model():
 
     @m.Disjunct(m.potential_sites)
     def site_inactive(disj, site):
-        """_summary_
+        """
+        Represents the inactive state of a potential site within the GTL network.
 
         Parameters
         ----------
@@ -782,15 +791,16 @@ def build_model():
                 for mtypes in m.module_types
                 for from_site, to_site in m.site_pairs
                 for t in m.time
-                if from_site == site or to_site == site) == 0)
+                if from_site == site or to_site == site) == 0, doc="No modules transferred")
         disj.no_modules_purchased = Constraint(
             expr=sum(
                 m.modules_purchased[mtype, site, t]
-                for mtype in m.module_types for t in m.time) == 0)
+                for mtype in m.module_types for t in m.time) == 0, doc="No modules purchased")
 
     @m.Disjunction(m.potential_sites)
     def site_active_or_not(m, site):
-        """_summary_
+        """
+        A disjunction that determines whether a potential site is active or inactive within the GTL network.
 
         Parameters
         ----------
@@ -801,14 +811,15 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        list of Pyomo.Disjunct
+            A list containing two disjuncts, one for the scenario where the site is active and one for where it is inactive.
         """
         return [m.site_active[site], m.site_inactive[site]]
 
     @m.Disjunct(m.well_clusters, m.potential_sites)
     def pipeline_exists(disj, well, site):
-        """_summary_
+        """
+        Represents the scenario where a pipeline exists between a well cluster and a potential site.
 
         Parameters
         ----------
@@ -823,7 +834,8 @@ def build_model():
 
     @m.Disjunct(m.well_clusters, m.potential_sites)
     def pipeline_absent(disj, well, site):
-        """_summary_
+        """
+        Represents the scenario where a pipeline does not exist between a well cluster and a potential site.
 
         Parameters
         ----------
@@ -835,11 +847,12 @@ def build_model():
             The index for the potential site.
         """
         disj.no_natural_gas_flow = Constraint(
-            expr=sum(m.gas_flows[well, site, t] for t in m.time) == 0)
+            expr=sum(m.gas_flows[well, site, t] for t in m.time) == 0, doc="No natural gas flow")
 
     @m.Disjunction(m.well_clusters, m.potential_sites)
     def pipeline_existence(m, well, site):
-        """_summary_
+        """
+        A disjunction that determines whether a pipeline exists or is absent between a well cluster and a potential site.
 
         Parameters
         ----------
@@ -852,15 +865,16 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        list of Pyomo.Disjunct
+            A list containing two disjuncts, one for the scenario where a pipeline exists and one for where it is absent.
         """
         return [m.pipeline_exists[well, site], m.pipeline_absent[well, site]]
 
     # Objective Function Construnction
     @m.Expression(m.potential_sites, doc="MM$")
     def product_revenue(m, site):
-        """_summary_
+        """
+        Calculates the total revenue generated from the sale of gasoline produced at each site. This expression multiplies the volume of gasoline sold by the price per gallon, adjusted to millions of dollars for the entire production period.
 
         Parameters
         ----------
@@ -871,8 +885,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            An expression representing the total revenue in million dollars from selling the gasoline produced at the site.
         """
         return sum(
             m.product_flows[site, mkt, t]  # kBD
@@ -885,7 +899,8 @@ def build_model():
 
     @m.Expression(m.potential_sites, doc="MM$")
     def raw_material_cost(m, site):
-        """_summary_
+        """
+        Calculates the total cost of natural gas consumed as a raw material at each site, converted to millions of dollars.
 
         Parameters
         ----------
@@ -896,8 +911,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            An expression calculating the total cost of natural gas used, taking into account the gas price and the conversion factor from MSCF to MMSCF.
         """
         return sum(
             m.gas_consumption[site, mtype, t] * m.days_per_period
@@ -910,7 +925,8 @@ def build_model():
         m.potential_sites, m.markets,
         doc="Aggregate cost to transport gasoline from a site to market [MM$]")
     def product_transport_cost(m, site, mkt):
-        """_summary_
+        """
+        Computes the cost of transporting gasoline from each production site to different markets, expressed in million dollars.
 
         Parameters
         ----------
@@ -923,8 +939,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            The total transportation cost for shipping gasoline from a site to a market, adjusted for the distance and transportation rate.
         """
         return sum(
             m.product_flows[site, mkt, t] * m.gal_per_bbl
@@ -935,7 +951,8 @@ def build_model():
 
     @m.Expression(m.well_clusters, m.potential_sites, doc="MM$")
     def pipeline_construction_cost(m, well, site):
-        """_summary_
+        """
+        Calculates the cost of constructing pipelines from well clusters to potential sites, with costs dependent on the existence of a pipeline, distance, and unit cost per mile.
 
         Parameters
         ----------
@@ -948,8 +965,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            The cost of pipeline construction, in million dollars, if a pipeline is established between the well cluster and the site.
         """
         return (m.pipeline_unit_cost * m.distance[well, site]
                 * m.pipeline_exists[well, site].binary_indicator_var)
@@ -957,21 +974,22 @@ def build_model():
     # Module transport cost
     @m.Expression(m.site_pairs, doc="MM$")
     def module_relocation_cost(m, from_site, to_site):
-        """_summary_
+        """
+        Calculates the cost of relocating modules from one site to another, considering the distance, transport cost per mile, and unit cost per module. This cost includes the transportation costs based on distance and per-unit transport costs, accounting for all modules transferred between specified sites over the entire project duration.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
-        from_site : _type_
-            _description_
-        to_site : _type_
-            _description_
+        from_site : str
+            Index for the originating site of the module transfer.
+        to_site : str
+            Index for the destination site of the module transfer.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            An expression calculating the total relocation cost for modules moved between the two sites, factoring in the distance and both per-mile and per-unit costs, scaled to million dollars.
         """
         return sum(
             m.modules_transferred[mtype, from_site, to_site, t]
@@ -985,7 +1003,8 @@ def build_model():
 
     @m.Expression(m.potential_sites, doc="MM$")
     def module_purchase_cost(m, site):
-        """_summary_
+        """
+        Computes the total cost of purchasing new modules for a specific site, considering the unit costs of modules, which may vary over time due to discounts and other factors. This expression aggregates the costs for all modules purchased across the project's timeframe.
 
         Parameters
         ----------
@@ -996,8 +1015,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            An expression representing the total cost of module purchases at the specified site, converted to million dollars.
         """
         return sum(
             m.module_unit_cost[mtype, t] * m.modules_purchased[mtype, site, t]
@@ -1006,7 +1025,8 @@ def build_model():
 
     @m.Expression(doc="MM$")
     def profit(m):
-        """_summary_
+        """
+        Calculates the overall profit for the GTL network by subtracting all relevant costs from the total revenue. This is used as the objective function to be maximized (or minimize the negative profit).
 
         Parameters
         ----------
@@ -1015,8 +1035,8 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Expression
+            The net profit expression, computed as the difference between total revenue and all accumulated costs across the network.
         """
         return (
             summation(m.product_revenue)
@@ -1027,12 +1047,13 @@ def build_model():
             - summation(m.module_purchase_cost)
         )
 
-    m.neg_profit = Objective(expr=-m.profit)
+    m.neg_profit = Objective(expr=-m.profit, doc="Objective Function: Minimize Negative Profit")
 
     # Tightening constraints
     @m.Constraint(doc="Limit total module purchases over project span.")
     def restrict_module_purchases(m):
-        """_summary_
+        """
+        Enforces a limit on the total number of module purchases across all sites and module types throughout the entire project span. This constraint is crucial for controlling capital expenditure and ensuring that the module acquisition does not exceed a specified threshold, helping to maintain budget constraints.
 
         Parameters
         ----------
@@ -1041,28 +1062,29 @@ def build_model():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A global constraint that limits the aggregate number of modules purchased across all sites to 5, ensuring that the total investment in module purchases remains within predefined limits.
         """
         return sum(m.modules_purchased[...]) <= 5
 
     @m.Constraint(m.site_pairs, doc="Limit transfers between any two sites")
     def restrict_module_transfers(m, from_site, to_site):
-        """_summary_
+        """
+        Imposes a limit on the number of modules that can be transferred between any two sites during the entire project timeline. This constraint helps manage logistics and ensures that module reallocation does not become overly frequent or excessive, which could lead to operational inefficiencies and increased costs.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
             A Pyomo ConcreteModel that represents the multi-period optimization problem of a GTL network.
-        from_site : _type_
-            _description_
-        to_site : _type_
-            _description_
+        from_site : str
+            Index for the origin site from which modules are being transferred.
+        to_site : str
+            Index for the destination site to which modules are being transferred.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            A constraint limiting the total number of modules transferred from one site to another to 5, providing a control mechanism on the frequency and volume of inter-site module movements.
         """
         return sum(m.modules_transferred[:, from_site, to_site, :]) <= 5
 
