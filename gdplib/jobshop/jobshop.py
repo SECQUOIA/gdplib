@@ -228,29 +228,12 @@ def build_model():
     model.makespan = Objective(
         expr=model.ms, doc='Objective Function: Minimize the makespan'
     )
+    model.create_instance(join(this_file_dir(), 'jobshop-small.dat'))
     return model
 
 
-def build_small_concrete():
-    """
-    Build a small jobshop scheduling model for testing purposes.
-    The AbstractModel is instantiated with the data from 'jobshop-small.dat' turning it into a ConcreteModel.
-
-    Parameters
-    ----------
-    None
-        However the data file jobshop-small.dat must be in the same directory as this file.
-
-    Returns
-    -------
-    ConcreteModel : Pyomo.ConcreteModel
-        A concrete instance of the jobshop scheduling model populated with data from 'jobshop-small.dat', ready for optimization.
-    """
-    return build_model().create_instance(join(this_file_dir(), 'jobshop-small.dat'))
-
-
 if __name__ == "__main__":
-    m = build_small_concrete()
+    m = build_model()
     TransformationFactory('gdp.bigm').apply_to(m)
     SolverFactory('gams').solve(
         m, solver='baron', tee=True, add_options=['option optcr=1e-6;']

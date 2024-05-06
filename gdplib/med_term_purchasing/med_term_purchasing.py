@@ -1960,26 +1960,12 @@ def build_model():
         rule=FD_contract,
         doc='Fixed duration contract scenarios',
     )
-
+    model.create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
     return model
 
 
-def build_concrete():
-    """
-    Build a concrete model applying the data of the medium-term purchasing contracts problem on build_model().
-
-    Returns
-    -------
-    Pyomo.ConcreteModel
-        A concrete model for the medium-term purchasing contracts problem.
-    """
-    return build_model().create_instance(
-        join(this_file_dir(), 'med_term_purchasing.dat')
-    )
-
-
 if __name__ == "__main__":
-    m = build_concrete()
+    m = build_model()
     TransformationFactory('gdp.bigm').apply_to(m)
     SolverFactory('gams').solve(
         m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
