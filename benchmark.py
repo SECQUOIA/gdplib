@@ -100,17 +100,6 @@ if __name__ == "__main__":
         os.makedirs(result_dir, exist_ok=True)
 
         model = import_module("gdplib." + instance).build_model()
-        report = build_model_size_report(model)
-        report_df = pd.DataFrame(report.overall, index=[0]).T
-        report_df.index.name = "Component"
-        report_df.columns = ["Number"]
-        # Generate the model size report (Markdown)
-        report_df.to_markdown("gdplib/" + instance + "/" + "model_size_report.md")
-
-        # Generate the model size report (JSON)
-        # TODO: check if we need the json file.
-        with open("gdplib/" + instance + "/" + "model_size_report.json", "w") as f:
-            json.dump(report, f)
 
         for strategy in strategy_list:
             benchmark(model, strategy, timelimit, result_dir)
