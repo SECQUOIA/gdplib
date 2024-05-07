@@ -228,7 +228,7 @@ def build_model():
     model.makespan = Objective(
         expr=model.ms, doc='Objective Function: Minimize the makespan'
     )
-    model.create_instance(join(this_file_dir(), 'jobshop-small.dat'))
+    model = model.create_instance(join(this_file_dir(), 'jobshop-small.dat'))
     return model
 
 

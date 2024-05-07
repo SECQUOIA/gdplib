@@ -1960,7 +1960,7 @@ def build_model():
         rule=FD_contract,
         doc='Fixed duration contract scenarios',
     )
-    model.create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
+    model = model.create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
     return model
 
 
