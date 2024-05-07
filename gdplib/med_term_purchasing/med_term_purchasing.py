@@ -46,7 +46,7 @@ def build_model():
     [1] Vecchietti, A., & Grossmann, I. (2004). Computational experience with logmip solving linear and nonlinear disjunctive programming problems. Proc. of FOCAPD, 587-590.
     [2] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial and Engineering Chemistry Research, 45(14), 5013-5026. DOI: 10.1021/ie0513144
     """
-    model = AbstractModel()
+    model = AbstractModel("Medium-term Purchasing Contracts Problem")
 
     # Constants (data that was hard-coded in GAMS model)
     AMOUNT_UB = 1000

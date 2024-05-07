@@ -56,7 +56,7 @@ def build_model():
     Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
     Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
     """
-    model = AbstractModel()
+    model = AbstractModel('Jobshop Scheduling Model')
 
     model.JOBS = Set(ordered=True, doc='Set of jobs')
     model.STAGES = Set(ordered=True, doc='Set of stages')
