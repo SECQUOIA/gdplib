@@ -1,19 +1,16 @@
-from pyomo.environ import *
 import os
 import json
 import time
 import sys
 from datetime import datetime
-from gdplib.jobshop.jobshop import build_model
 from importlib import import_module
-from pyomo.util.model_size import build_model_size_report
-import pandas as pd
-
-subsolver = "scip"
+from pyomo.environ import *
 
 
-def benchmark(model, strategy, timelimit, result_dir):
+def benchmark(model, strategy, timelimit, result_dir, subsolver="scip"):
     """Benchmark the model using the given strategy and subsolver.
+
+    The result files include the solver output and the JSON representation of the results.
 
     Parameters
     ----------
@@ -25,6 +22,10 @@ def benchmark(model, strategy, timelimit, result_dir):
         the time limit for the solver
     result_dir : string
         the directory to store the benchmark results
+
+    Returns
+    -------
+    None
     """
     model = model.clone()
     stdout = sys.stdout
@@ -35,7 +36,9 @@ def benchmark(model, strategy, timelimit, result_dir):
         with open(
             result_dir + "/" + strategy + "_" + subsolver + ".log", "w"
         ) as sys.stdout:
-            results = SolverFactory("scip").solve(model, tee=True, timelimit=timelimit)
+            results = SolverFactory(subsolver).solve(
+                model, tee=True, timelimit=timelimit
+            )
             results.solver.transformation_time = (
                 transformation_end_time - transformation_start_time
             )
@@ -53,10 +56,10 @@ def benchmark(model, strategy, timelimit, result_dir):
             results = SolverFactory(strategy).solve(
                 model,
                 tee=True,
-                nlp_solver="scip",
-                mip_solver="scip",
-                minlp_solver="scip",
-                local_minlp_solver="scip",
+                nlp_solver=subsolver,
+                mip_solver=subsolver,
+                minlp_solver=subsolver,
+                local_minlp_solver=subsolver,
                 time_limit=timelimit,
             )
             print(results)
@@ -64,6 +67,7 @@ def benchmark(model, strategy, timelimit, result_dir):
     sys.stdout = stdout
     with open(result_dir + "/" + strategy + "_" + subsolver + ".json", "w") as f:
         json.dump(results.json_repn(), f)
+    return None
 
 
 if __name__ == "__main__":
