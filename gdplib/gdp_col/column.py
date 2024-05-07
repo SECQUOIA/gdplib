@@ -235,7 +235,7 @@ def build_column(min_trays, max_trays, xD, xB):
 
         Parameters
         ----------
-        _ : Pyomo.core.base.constraint.IndexedConstraint
+        _ : Pyomo.ConcreteModel
             An unused placeholder parameter required by Pyomo's constraint interface, representing each potential tray in the distillation column where the temperature constraint is applied.
         t : int
             Index of tray in the distillation column model.
@@ -418,7 +418,8 @@ def build_column(min_trays, max_trays, xD, xB):
 
 
 def _build_conditional_tray_mass_balance(m, t, tray, no_tray):
-    """_summary_
+    """
+    Builds the constraints for mass balance, liquid and vapor composition for a given tray (t) in the distillation column.
 
     Parameters
     ----------
@@ -434,23 +435,24 @@ def _build_conditional_tray_mass_balance(m, t, tray, no_tray):
     Returns
     -------
     None
-        _description_
+        None, but the mass balance constraints for the conditional tray are added to the Pyomo model.
     """
     @tray.Constraint(m.comps)
     def mass_balance(_, c):
-        """_summary_
+        """
+        Mass balance on each component on a tray.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder, typically used to represent the model instance when defining constraints within a method, but not utilized in this specific constraint function. This placeholder denotes the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the mass balance on each component on a tray is equal to the sum of the feed in, vapor from the tray, liquid from the tray above, liquid to the tray below, and vapor from the tray below.
         """
         return (
             # Feed in if feed tray
@@ -470,109 +472,115 @@ def _build_conditional_tray_mass_balance(m, t, tray, no_tray):
 
     @tray.Constraint(m.comps)
     def tray_liquid_composition(_, c):
-        """_summary_
+        """
+        Liquid composition constraint for the tray.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder denoting the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the liquid flow rate for each component is equal to the liquid flow rate on the tray times the liquid composition on the tray.
         """
         return m.L[c, t] == m.liq[t] * m.x[c, t]
 
     @tray.Constraint(m.comps)
     def tray_vapor_compositions(_, c):
-        """_summary_
+        """
+        Vapor composition constraint for the tray.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder denoting the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the vapor flow rate for each component is equal to the vapor flow rate on the tray times the vapor composition on the tray.
         """
         return m.V[c, t] == m.vap[t] * m.y[c, t]
 
     @no_tray.Constraint(m.comps)
     def liq_comp_pass_through(_, c):
-        """_summary_
+        """
+        Liquid composition constraint for the case when the tray does not exist.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder denoting the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the liquid composition is equal to the liquid composition on the tray above, when the tray is not present.
         """
         return m.x[c, t] == m.x[c, t + 1]
 
     @no_tray.Constraint(m.comps)
     def liq_flow_pass_through(_, c):
-        """_summary_
+        """
+        Liquid flow rate constraint for the case when the tray does not exist.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder denoting the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the liquid flow rate is equal to the liquid flow rate on the tray above, when the tray is not present.
         """
         return m.L[c, t] == m.L[c, t + 1]
 
     @no_tray.Constraint(m.comps)
     def vap_comp_pass_through(_, c):
-        """_summary_
+        """
+        Vapor composition constraint for the case when the tray does not exist.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder denoting the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the vapor composition is equal to the vapor composition on the tray below, when the tray is not present.
         """
         return m.y[c, t] == m.y[c, t - 1]
 
     @no_tray.Constraint(m.comps)
     def vap_flow_pass_through(_, c):
-        """_summary_
+        """
+        Vapor flow rate constraint for the case when the tray does not exist.
 
         Parameters
         ----------
-        _ : _type_
-            _description_
+        _ : Pyomo.ConcreteModel
+            An unused placeholder denoting the conditional trays in the distillation column model.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            Constraint that the vapor flow rate is equal to the vapor flow rate on the tray below, when the tray is not present.
         """
         return m.V[c, t] == m.V[c, t - 1]
 
@@ -1128,7 +1136,8 @@ def _build_conditional_tray_energy_balance(m, t, tray, no_tray):
 
 
 def _build_feed_tray_energy_balance(m):
-    """_summary_
+    """
+    Energy balance for the feed tray.
 
     Parameters
     ----------
@@ -1137,8 +1146,8 @@ def _build_feed_tray_energy_balance(m):
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints, which are energy balances for the feed tray, to the Pyomo model of the distillation column
     """
     t = m.feed_tray
 
@@ -1153,7 +1162,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return (
@@ -1185,7 +1194,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.H_L[c, t] == m.liq_enthalpy_expr[t, c]
@@ -1203,7 +1212,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.H_V[c, t] == m.vap_enthalpy_expr[t, c]
@@ -1221,7 +1230,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Expression
             _description_
         """
         k = m.liq_Cp_const[c]
@@ -1245,7 +1254,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.H_L_spec_feed[c] == m.feed_liq_enthalpy_expr[c]
@@ -1263,7 +1272,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Expression
             _description_
         """
         k = m.vap_Cp_const[c]
@@ -1288,7 +1297,7 @@ def _build_feed_tray_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.H_V_spec_feed[c] == m.feed_vap_enthalpy_expr[c]
@@ -1397,8 +1406,8 @@ def _build_reboiler_energy_balance(m):
 
     Returns
     -------
-    _type_
-        _description_
+    None
+        None, but adds constraints, which are energy balances for the reboiler, to the Pyomo model of the distillation column
     """
     t = m.reboil_tray
 
@@ -1413,7 +1422,7 @@ def _build_reboiler_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.Qb + sum(
@@ -1435,7 +1444,7 @@ def _build_reboiler_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.H_L[c, t] == m.liq_enthalpy_expr[t, c]
@@ -1453,7 +1462,7 @@ def _build_reboiler_energy_balance(m):
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint
             _description_
         """
         return m.H_V[c, t] == m.vap_enthalpy_expr[t, c]
