@@ -8,10 +8,28 @@ from pyomo.gdp import Disjunct, Disjunction
 
 
 def build_column(min_trays, max_trays, xD, xB):
-    """Builds the column model."""
+    """
+    Build a Pyomo model of a distillation column for separation of benzene and toluene.
+
+    Parameters
+    ----------
+    min_trays : int
+        Minimum number of trays in the column
+    max_trays : int
+        Maximum number of trays in the column
+    xD : float
+        Distillate(benzene) purity
+    xB : float
+        Bottoms(toluene) purity
+
+    Returns
+    -------
+    Pyomo.ConcreteModel
+        A Pyomo model of the distillation column. for separation of benzene and toluene
+    """
     m = ConcreteModel('benzene-toluene column')
-    m.comps = Set(initialize=['benzene', 'toluene'])
-    min_T, max_T = 300, 400
+    m.comps = Set(initialize=['benzene', 'toluene'], doc='Set of components')
+    min_T, max_T = 300, 400 # Define temperature bounds [K]
     max_flow = 500
     m.T_feed = Var(
         doc='Feed temperature [K]', domain=NonNegativeReals,
@@ -37,11 +55,25 @@ def build_column(min_trays, max_trays, xD, xB):
 
     @m.Disjunction(m.conditional_trays, doc='Tray exists or does not')
     def tray_no_tray(b, t):
+        """_summary_
+
+        Parameters
+        ----------
+        b : _type_
+            _description_
+        t : int
+            Index of tray in the distillation column model. Tray numbering ascends from the reboiler at the bottom (tray 1) to the condenser at the top (tray max_trays)
+
+        Returns
+        -------
+        List of Disjuncts
+            _description_
+        """
         return [b.tray[t], b.no_tray[t]]
     m.minimum_num_trays = Constraint(
         expr=sum(m.tray[t].binary_indicator_var
                  for t in m.conditional_trays) + 1  # for feed tray
-        >= min_trays)
+        >= min_trays, doc='Minimum number of trays')
 
     m.x = Var(m.comps, m.trays, doc='Liquid mole fraction',
               bounds=(0, 1), domain=NonNegativeReals, initialize=0.5)
@@ -93,29 +125,100 @@ def build_column(min_trays, max_trays, xD, xB):
     @m.Constraint(m.comps,
                   doc="Bottoms flow is equal to liquid leaving reboiler.")
     def bottoms_mass_balance(m, c):
+        """
+        Constraint that the bottoms flow is equal to the liquid leaving the reboiler.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the bottoms flow is equal to the liquid leaving the reboiler.
+        """
         return m.B[c] == m.L[c, m.reboil_tray]
 
     @m.Constraint()
     def boilup_frac_defn(m):
+        """
+        Boilup fraction is the ratio between the bottoms flow and the liquid leaving the reboiler.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the boilup fraction is the ratio between the bottoms flow and the liquid leaving the reboiler.
+        """
         return m.bot == (1 - m.boilup_frac) * m.liq[m.reboil_tray + 1]
 
     @m.Constraint()
     def reflux_frac_defn(m):
+        """
+        Reflux fraction is the ratio between the distillate flow and the difference in vapor flow in the condenser tray.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the reflux fraction is the ratio between the distillate flow and the difference in vapor flow in the condenser tray.
+        """
         return m.dis == (1 - m.reflux_frac) * (
             m.vap[m.condens_tray - 1] - m.vap[m.condens_tray])
 
     @m.Constraint(m.trays)
     def liquid_sum(m, t):
+        """
+        Total liquid flow on each tray is the sum of all component liquid flows on the tray.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+        t : int
+            Index of tray in the distillation column model.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the total liquid flow on each tray is the sum of all component liquid flows on the tray.
+        """
         return sum(m.L[c, t] for c in m.comps) == m.liq[t]
 
     @m.Constraint(m.trays)
     def vapor_sum(m, t):
+        """
+        Total vapor flow on each tray is the sum of all component vapor flows on the tray.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+        t : int
+            Index of tray in the distillation column model.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the total vapor flow on each tray is the sum of all component vapor flows on the tray.
+        """
         return sum(m.V[c, t] for c in m.comps) == m.vap[t]
 
     m.bottoms_sum = Constraint(
-        expr=sum(m.B[c] for c in m.comps) == m.bot)
+        expr=sum(m.B[c] for c in m.comps) == m.bot, doc="Total bottoms flow is the sum of all component flows at the bottom.")
     m.distil_sum = Constraint(
-        expr=sum(m.D[c] for c in m.comps) == m.dis)
+        expr=sum(m.D[c] for c in m.comps) == m.dis, doc="Total distillate flow is the sum of all component flows at the top.")
 
     """Phase Equilibrium relations"""
     m.Kc = Var(
@@ -127,6 +230,21 @@ def build_column(min_trays, max_trays, xD, xB):
 
     @m.Constraint(m.trays)
     def monotonoic_temperature(_, t):
+        """
+        Temperature of tray t is greater than or equal to temperature of tray t+1. The temperature decreases as the trays ascend.
+
+        Parameters
+        ----------
+        _ : Pyomo.core.base.constraint.IndexedConstraint
+            An unused placeholder parameter required by Pyomo's constraint interface, representing each potential tray in the distillation column where the temperature constraint is applied.
+        t : int
+            Index of tray in the distillation column model.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the temperature of tray t is greater than or equal to temperature of tray t+1. If t is the condenser tray, the constraint is skipped.
+        """
         return m.T[t] >= m.T[t + 1] if t < max_trays else Constraint.Skip
 
     m.P = Var(doc='Pressure [bar]',
@@ -194,12 +312,41 @@ def build_column(min_trays, max_trays, xD, xB):
 
     @m.Constraint()
     def distillate_req(m):
+        """
+        Flow of benzene in the distillate meets the specified purity requirement.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the flow of benzene in the distillate meets the specified purity requirement. The flow of benzene in the distillate is greater than or equal to the distillate purity times the total distillate flow.
+        """
         return m.D['benzene'] >= m.distillate_purity * m.dis
 
     @m.Constraint()
     def bottoms_req(m):
+        """
+        Flow of toluene in the bottoms meets the specified purity requirement.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the flow of toluene in the bottoms meets the specified purity requirement. The flow of toluene in the bottoms is greater than or equal to the bottoms purity times the total bottoms flow.
+        """
         return m.B['toluene'] >= m.bottoms_purity * m.bot
 
+    # Define the objective function as the sum of reboiler and condenser duty plus an indicator for tray activation
+    # The objective is to minimize the sum of condenser and reboiler duties, Qc and Qb, multiplied by 1E3 to convert units,
+    # and also the number of activated trays, which is obtained by summing up the indicator variables for the trays by 1E3 [$/No. of Trays].
     # m.obj = Objective(expr=(m.Qc + m.Qb) * 1E-3, sense=minimize)
     m.obj = Objective( expr=(m.Qc + m.Qb) * 1E3 + 1E3 * (
         sum(m.tray[t].binary_indicator_var for t in m.conditional_trays) + 1),
@@ -209,15 +356,55 @@ def build_column(min_trays, max_trays, xD, xB):
 
     @m.Constraint()
     def reflux_ratio_calc(m):
+        """
+        Reflux ratio is the ratio between the distillate flow and the difference in vapor flow in the condenser tray.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column..
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the reflux ratio is the ratio between the distillate flow and the difference in vapor flow in the condenser tray.
+        """
         return m.reflux_frac * (m.reflux_ratio + 1) == m.reflux_ratio
 
     @m.Constraint()
     def reboil_ratio_calc(m):
+        """
+        Reboil ratio is the ratio between the bottoms flow and the liquid leaving the reboiler.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that the reboil ratio is the ratio between the bottoms flow and the liquid leaving the reboiler.
+        """
         return m.boilup_frac * (m.reboil_ratio + 1) == m.reboil_ratio
 
     @m.Constraint(m.conditional_trays)
     def tray_ordering(m, t):
-        """Trays close to the feed should be activated first."""
+        """
+        Trays close to the feed should be activated first.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo model of the distillation column.
+        t : int
+            Index of tray in the distillation column model.
+
+        Returns
+        -------
+        Pyomo.Constraint
+            Constraint that trays close to the feed should be activated first.
+        """
         if t + 1 < m.condens_tray and t > m.feed_tray:
             return m.tray[t].binary_indicator_var >= \
                 m.tray[t + 1].binary_indicator_var
@@ -231,13 +418,40 @@ def build_column(min_trays, max_trays, xD, xB):
 
 
 def _build_conditional_tray_mass_balance(m, t, tray, no_tray):
-    """
-    t = tray number
-    tray = tray exists disjunct
-    no_tray = tray absent disjunct
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column.
+    t : int
+        Index of tray in the distillation column model.
+    tray : Pyomo.gdp.Disjunct
+        Disjunct representing the existence of the tray.
+    no_tray : Pyomo.gdp.Disjunct
+        Disjunct representing the absence of the tray.
+
+    Returns
+    -------
+    None
+        _description_
     """
     @tray.Constraint(m.comps)
     def mass_balance(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             # Feed in if feed tray
             (m.feed[c] if t == m.feed_tray else 0)
@@ -256,34 +470,144 @@ def _build_conditional_tray_mass_balance(m, t, tray, no_tray):
 
     @tray.Constraint(m.comps)
     def tray_liquid_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.L[c, t] == m.liq[t] * m.x[c, t]
 
     @tray.Constraint(m.comps)
     def tray_vapor_compositions(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.V[c, t] == m.vap[t] * m.y[c, t]
 
     @no_tray.Constraint(m.comps)
     def liq_comp_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.x[c, t] == m.x[c, t + 1]
 
     @no_tray.Constraint(m.comps)
     def liq_flow_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.L[c, t] == m.L[c, t + 1]
 
     @no_tray.Constraint(m.comps)
     def vap_comp_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.y[c, t] == m.y[c, t - 1]
 
     @no_tray.Constraint(m.comps)
     def vap_flow_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.V[c, t] == m.V[c, t - 1]
 
 
 def _build_feed_tray_mass_balance(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     t = m.feed_tray
 
     @m.Constraint(m.comps)
     def feed_mass_balance(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             m.feed[c]        # Feed in
             - m.V[c, t]      # Vapor from tray t
@@ -294,18 +618,72 @@ def _build_feed_tray_mass_balance(m):
 
     @m.Constraint(m.comps)
     def feed_tray_liquid_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.L[c, t] == m.liq[t] * m.x[c, t]
 
     @m.Constraint(m.comps)
     def feed_tray_vapor_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.V[c, t] == m.vap[t] * m.y[c, t]
 
 
 def _build_condenser_mass_balance(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column..
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     t = m.condens_tray
 
     @m.Constraint(m.comps)
     def condenser_mass_balance(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             - m.V[c, t]      # Vapor from tray t
             - m.D[c]         # Loss to distillate
@@ -315,30 +693,124 @@ def _build_condenser_mass_balance(m):
 
     @m.partial_cond.Constraint(m.comps)
     def condenser_liquid_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.L[c, t] == m.liq[t] * m.x[c, t]
 
     @m.partial_cond.Constraint(m.comps)
     def condenser_vapor_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.V[c, t] == m.vap[t] * m.y[c, t]
 
     @m.total_cond.Constraint(m.comps)
     def no_vapor_flow(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.V[c, t] == 0
 
     @m.total_cond.Constraint()
     def no_total_vapor_flow(_):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.vap[t] == 0
 
     @m.total_cond.Constraint(m.comps)
     def liquid_fraction_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.x[c, t] == m.y[c, t - 1]
 
     @m.Constraint(m.comps)
     def condenser_distillate_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.D[c] == m.dis * m.x[c, t]
 
 
 def _build_reboiler_mass_balance(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column..
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     t = m.reboil_tray
 
     @m.Constraint(m.comps)
@@ -352,25 +824,95 @@ def _build_reboiler_mass_balance(m):
 
     @m.Constraint(m.comps)
     def reboiler_liquid_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.L[c, t] == m.liq[t] * m.x[c, t]
 
     @m.Constraint(m.comps)
     def reboiler_vapor_composition(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.V[c, t] == m.vap[t] * m.y[c, t]
 
 
 def _build_tray_phase_equilibrium(m, t, tray):
     @tray.Constraint(m.comps)
     def raoults_law(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.y[c, t] == m.x[c, t] * m.Kc[c, t]
 
     @tray.Constraint(m.comps)
     def phase_equil_const(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.Kc[c, t] * m.P == (
             m.gamma[c, t] * m.Pvap[c, t])
 
     @tray.Constraint(m.comps)
     def Pvap_relation(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         k = m.pvap_const[c]
         x = m.Pvap_X[c, t]
         return (log(m.Pvap[c, t]) - log(k['Pc'])) * (1 - x) == (
@@ -381,17 +923,73 @@ def _build_tray_phase_equilibrium(m, t, tray):
 
     @tray.Constraint(m.comps)
     def Pvap_X_defn(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         k = m.pvap_const[c]
         return m.Pvap_X[c, t] == 1 - m.T[t] / k['Tc']
 
     @tray.Constraint(m.comps)
     def gamma_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.gamma[c, t] == 1
 
 
 def _build_column_heat_relations(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column..
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     @m.Expression(m.trays, m.comps)
     def liq_enthalpy_expr(_, t, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        t : int
+            Index of tray in the distillation column model.
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         k = m.liq_Cp_const[c]
         return (
             k['A'] * (m.T[t] - m.T_ref) +
@@ -402,6 +1000,22 @@ def _build_column_heat_relations(m):
 
     @m.Expression(m.trays, m.comps)
     def vap_enthalpy_expr(_, t, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        t : int
+            Index of tray in the distillation column model.
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         k = m.vap_Cp_const[c]
         return (
             m.dH_vap[c] +
@@ -421,6 +1035,18 @@ def _build_column_heat_relations(m):
 def _build_conditional_tray_energy_balance(m, t, tray, no_tray):
     @tray.Constraint()
     def energy_balance(_):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return sum(
             m.L[c, t + 1] * m.H_L[c, t + 1]  # heat of liquid from tray above
             - m.L[c, t] * m.H_L[c, t]  # heat of liquid to tray below
@@ -430,26 +1056,106 @@ def _build_conditional_tray_energy_balance(m, t, tray, no_tray):
 
     @tray.Constraint(m.comps)
     def liq_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+        """
         return m.H_L[c, t] == m.liq_enthalpy_expr[t, c]
 
     @tray.Constraint(m.comps)
     def vap_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_V[c, t] == m.vap_enthalpy_expr[t, c]
 
     @no_tray.Constraint(m.comps)
     def liq_enthalpy_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_L[c, t] == m.H_L[c, t + 1]
 
     @no_tray.Constraint(m.comps)
     def vap_enthalpy_pass_through(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_V[c, t] == m.H_V[c, t - 1]
 
 
 def _build_feed_tray_energy_balance(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column..
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     t = m.feed_tray
 
     @m.Constraint()
     def feed_tray_energy_balance(_):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return (
             sum(m.feed[c] * (
                 m.H_L_spec_feed[c] * (1 - m.feed_vap_frac) +
@@ -468,14 +1174,56 @@ def _build_feed_tray_energy_balance(m):
 
     @m.Constraint(m.comps)
     def feed_tray_liq_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_L[c, t] == m.liq_enthalpy_expr[t, c]
 
     @m.Constraint(m.comps)
     def feed_tray_vap_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_V[c, t] == m.vap_enthalpy_expr[t, c]
 
     @m.Expression(m.comps)
     def feed_liq_enthalpy_expr(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         k = m.liq_Cp_const[c]
         return (
             k['A'] * (m.T_feed - m.T_ref) +
@@ -486,10 +1234,38 @@ def _build_feed_tray_energy_balance(m):
 
     @m.Constraint(m.comps)
     def feed_liq_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_L_spec_feed[c] == m.feed_liq_enthalpy_expr[c]
 
     @m.Expression(m.comps)
     def feed_vap_enthalpy_expr(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         k = m.vap_Cp_const[c]
         return (
             m.dH_vap[c] +
@@ -501,14 +1277,52 @@ def _build_feed_tray_energy_balance(m):
 
     @m.Constraint(m.comps)
     def feed_vap_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_V_spec_feed[c] == m.feed_vap_enthalpy_expr[c]
 
 
 def _build_condenser_energy_balance(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column.
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     t = m.condens_tray
 
     @m.partial_cond.Constraint()
     def partial_condenser_energy_balance(_):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return -m.Qc + sum(
             - m.D[c] * m.H_L[c, t]  # heat of liquid distillate
             - m.L[c, t] * m.H_L[c, t]  # heat of liquid to tray below
@@ -518,6 +1332,18 @@ def _build_condenser_energy_balance(m):
 
     @m.total_cond.Constraint()
     def total_condenser_energy_balance(_):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return -m.Qc + sum(
             - m.D[c] * m.H_L[c, t]  # heat of liquid distillate
             - m.L[c, t] * m.H_L[c, t]  # heat of liquid to tray below
@@ -526,18 +1352,70 @@ def _build_condenser_energy_balance(m):
 
     @m.Constraint(m.comps)
     def condenser_liq_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_L[c, t] == m.liq_enthalpy_expr[t, c]
 
     @m.partial_cond.Constraint(m.comps)
     def vap_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_V[c, t] == m.vap_enthalpy_expr[t, c]
 
 
 def _build_reboiler_energy_balance(m):
+    """_summary_
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        Pyomo model of the distillation column.
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     t = m.reboil_tray
 
     @m.Constraint()
     def reboiler_energy_balance(_):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.Qb + sum(
             m.L[c, t + 1] * m.H_L[c, t + 1]  # Heat of liquid from tray above
             - m.B[c] * m.H_L[c, t]  # heat of liquid bottoms if reboiler
@@ -546,8 +1424,36 @@ def _build_reboiler_energy_balance(m):
 
     @m.Constraint(m.comps)
     def reboiler_liq_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_L[c, t] == m.liq_enthalpy_expr[t, c]
 
     @m.Constraint(m.comps)
     def reboiler_vap_enthalpy_calc(_, c):
+        """_summary_
+
+        Parameters
+        ----------
+        _ : _type_
+            _description_
+        c : str
+            Index of component in the distillation column model. 'benzene' or 'toluene'.
+
+        Returns
+        -------
+        _type_
+            _description_
+        """
         return m.H_V[c, t] == m.vap_enthalpy_expr[t, c]
