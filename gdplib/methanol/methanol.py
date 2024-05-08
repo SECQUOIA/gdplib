@@ -8,12 +8,30 @@ import pyomo.gdp as gdp
 assert sys.version_info.major == 3
 assert sys.version_info.minor >= 6
 
+# Methanol production example from https://doi.org/10.1016/0098-1354(95)00219-7 
+
+# This model solves a methanol production process with minimum purity of 90% and amount of 1000 tons/day requirements. The structure contains 19 units; two feedstocks, two compressor types (single stage, double stage) in the reactor feed stream and the recycle streams, two reactors, four coolers, three heaters and a flash separator. 
+# There are two alternative feedstocks (cheap or expensive), two alternative compressor types (single stage or double stage) in the reactor feed stream and the recycle stream, and two alternative reactors (lower or higher conversion and cost--denoted as cheap or expensive respectively). The objective is to maximize profit by minimizing costs and maximizing revenue.
+
+# References:
+
+# Example 3 from source paper: Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. Computers and Chemical Engineering, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
 
 class InfeasibleError(Exception):
     pass
 
 
 def fix_vars_with_equal_bounds(m, tol=1e-8):
+    """
+    Fix variables with equal bounds to the average of the bounds.
+
+    Args:
+        m (Pyomo.ConcreteModel): The main model.
+        tol (float): Tolerance. Defaults to 1e-8.
+
+    Raises:
+        InfeasibleError: If the lower bound is larger than the upper bound.
+    """
     for v in m.component_data_objects(pe.Var, descend_into=True):
         if v.is_fixed():
             continue
@@ -29,6 +47,93 @@ def fix_vars_with_equal_bounds(m, tol=1e-8):
 
 class MethanolModel(object):
     def __init__(self):
+        """
+        Build a class for a methanol production model. Initialize the model and set the parameters.
+
+        Attributes
+        ----------
+        model : Pyomo.ConcreteModel
+            The main model for the methanol production process.
+        alpha : float
+            Compressor coefficient.
+        eta : float
+            Compressor efficiency.
+        gamma : float
+            Ratio of constant pressure heat capacity to constant volume heat capacity.
+        cp : float
+            Heat capacity.
+        heat_of_reaction : float
+            Heat of reaction.
+        volume_conversion : dict
+            Conversion factors for different reactor volumes.
+        reactor_volume : float
+            Volume of the reactor.
+        electricity_cost : float
+            Cost of electricity.
+        cooling_cost : float    
+            Cost of cooling.
+        heating_cost : float
+            Cost of heating.
+        purity_demand : float
+            Purity demand in product stream.
+        demand : float
+            Flowrate restriction on product flow.
+        flow_feed_lb : float
+            Lower bound on feed flowrate.
+        flow_feed_ub : float
+            Upper bound on feed flowrate.
+        flow_feed_temp : float
+            Feed temperature.
+        flow_feed_pressure : float
+            Feed pressure.
+        cost_flow_1 : float
+            Cost of feed 1.
+        cost_flow_2 : float
+            Cost of feed 2.
+        price_of_product : float
+            Price of product ($/kg-mol)
+        price_of_byproduct : float
+            Price of byproduct (purge stream) ($/kg-mol)
+        cheap_reactor_fixed_cost : float
+            Fixed cost of the cheap reactor.
+        cheap_reactor_variable_cost : float
+            Variable cost of the cheap reactor.
+        expensive_reactor_fixed_cost : float
+            Fixed cost of the expensive reactor.
+        expensive_reactor_variable_cost : float 
+            Variable cost of the expensive reactor.
+        heat_unit_match : float
+            Heat unit match.
+        capacity_redundancy : float 
+            Capacity redundancy.
+        antoine_unit_trans: float
+            Antoine unit transformation.
+        K : float
+            K value. ?? 
+        delta_H : float
+            Heat of reaction value. 
+        reactor_relation : float
+            Reactor relation.
+        purity_demand : float
+            Purity demand. (90%) 
+        fix_electricity_cost : float
+            Fixed cost of electricity.
+        two_stage_fix_cost : float
+            Fixed cost of two stage compressor.
+        inlet_streams : dict
+            Inlet streams.
+        outlet_streams : dict
+            Outlet streams.
+        vapor_outlets : dict
+            Vapor outlets.
+        liquid_outlets : dict
+            Liquid outlets.
+
+
+        Returns
+        -------
+        None
+        """
 
         self.model = m = pe.ConcreteModel()  # main model
 
@@ -68,24 +173,25 @@ class MethanolModel(object):
         self.fix_electricity_cost = 175
         self.two_stage_fix_cost = 50 
 
-        m.streams = pe.Set(initialize=list(range(1, 34)), ordered=True)
-        m.components = pe.Set(initialize=['H2', 'CO', 'CH3OH', 'CH4'], ordered=True)
-        m.flows = pe.Var(m.streams, bounds=(0, 20))
-        m.temps = pe.Var(m.streams, bounds=(3, 9))
-        m.pressures = pe.Var(m.streams, bounds=(0.1, 15))
-        m.component_flows = pe.Var(m.streams, m.components, bounds=(0, 20))
+        m.streams = pe.Set(initialize=list(range(1, 34)), ordered=True, doc='Set of streams')
+        m.components = pe.Set(initialize=['H2', 'CO', 'CH3OH', 'CH4'], ordered=True, doc='Set of components')
+        m.flows = pe.Var(m.streams, bounds=(0, 20), doc='Flowrates (kg-mol/hr)')
+        m.temps = pe.Var(m.streams, bounds=(3, 9), doc='Temperature')
+        m.pressures = pe.Var(m.streams, bounds=(0.1, 15), doc='Pressures (MPa)')
+        m.component_flows = pe.Var(m.streams, m.components, bounds=(0, 20), doc='Component flowrates (kg-mol/hr)')
 
-        flow_1 = dict()
-        flow_1['H2'] = 0.6
+        flow_1 = dict() # Feed 1 (cheap feedstock; component percentages)
+        flow_1['H2'] = 0.6 
         flow_1['CO'] = 0.25
         flow_1['CH4'] = 0.15
-        m.flow_1_composition = pe.Param(m.components,initialize = flow_1,default = 0)
-        flow_2 = dict()
+        m.flow_1_composition = pe.Param(m.components,initialize = flow_1,default = 0, doc='Composition of feed 1')
+        flow_2 = dict() # Feed 2 (expensive feedstock; component percentages)
         flow_2['H2'] = 0.65
         flow_2['CO'] = 0.30
         flow_2['CH4'] = 0.05
-        m.flow_2_composition = pe.Param(m.components,initialize = flow_2,default = 0)
+        m.flow_2_composition = pe.Param(m.components,initialize = flow_2,default = 0, doc='Composition of feed 2')
 
+        # Setting operating conditions (bounds) for specific streams in the process
         m.pressures[13].setlb(2.5)
         m.temps[13].setlb(4.23)
         m.temps[13].setub(8.73)
@@ -158,10 +264,25 @@ class MethanolModel(object):
         self.liquid_outlets[13] = 22
 
         def _total_flow(_m, _s):
-            return _m.flows[_s] == sum(_m.component_flows[_s, _c] for _c in _m.components)
-        m.total_flow_con = pe.Constraint(m.streams, rule=_total_flow)
+            """
+            This function calculates the total flowrate of a stream.
 
-        m.purity_con = pe.Constraint(expr=m.component_flows[23, 'CH3OH'] >= self.purity_demand * m.flows[23])
+            Parameters
+            ----------
+            _m : Pyomo.ConcreteModel
+                model 
+            _s : int
+                stream index
+
+            Returns
+            -------
+            Pyomo.Constraint.Expression
+                The total flowrate of the stream.
+            """
+            return _m.flows[_s] == sum(_m.component_flows[_s, _c] for _c in _m.components)
+        m.total_flow_con = pe.Constraint(m.streams, rule=_total_flow, doc='Total flowrate of a stream')
+
+        m.purity_con = pe.Constraint(expr=m.component_flows[23, 'CH3OH'] >= self.purity_demand * m.flows[23], doc='Purity constraint')
         
 
         # ************************************
@@ -313,7 +434,7 @@ class MethanolModel(object):
         e -= self.cooling_cost * m.cooler_12.heat_duty
         e -= self.heating_cost * m.heater_14.heat_duty
         e -= self.heating_cost * m.heater_15.heat_duty
-        m.objective = pe.Objective(expr=-e)
+        m.objective = pe.Objective(expr=-e) # USD per year
 
     def build_compressor(self, block, unit_number):
         u = unit_number
