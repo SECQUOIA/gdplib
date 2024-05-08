@@ -25,12 +25,17 @@ def fix_vars_with_equal_bounds(m, tol=1e-8):
     """
     Fix variables with equal bounds to the average of the bounds.
 
-    Args:
-        m (Pyomo.ConcreteModel): The main model.
-        tol (float): Tolerance. Defaults to 1e-8.
-
-    Raises:
-        InfeasibleError: If the lower bound is larger than the upper bound.
+    Parameters
+    ----------
+    model : Pyomo.ConcreteModel
+        The main model.
+    tol : float
+        Tolerance. Defaults to 1e-8.
+        
+    Raises
+    ------
+    InfeasibleError
+        If the lower bound is larger than the upper bound.
     """
     for v in m.component_data_objects(pe.Var, descend_into=True):
         if v.is_fixed():
@@ -289,6 +294,7 @@ class MethanolModel(object):
         # Feed
         # ************************************
         m.cheap_feed_disjunct = gdp.Disjunct()
+        # cheap feed constraints 
         self.build_equal_streams(m.cheap_feed_disjunct, 1, 3)
         self.build_stream_doesnt_exist_con(m.cheap_feed_disjunct, 2)
         m.cheap_feed_disjunct.feed_cons = c = pe.ConstraintList()
@@ -301,6 +307,7 @@ class MethanolModel(object):
         c.add(m.pressures[1] == self.flow_feed_pressure)
 
         m.expensive_feed_disjunct = gdp.Disjunct()
+        # expensive feed constraints
         self.build_equal_streams(m.expensive_feed_disjunct, 2, 3)
         self.build_stream_doesnt_exist_con(m.expensive_feed_disjunct, 1)
         m.expensive_feed_disjunct.feed_cons = c = pe.ConstraintList()
