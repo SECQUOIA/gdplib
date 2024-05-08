@@ -100,7 +100,7 @@ if __name__ == "__main__":
 
     for instance in instance_list:
         print("Benchmarking instance: " + instance)
-        result_dir = "gdplib/" + instance + "/benchmark_result/" + current_time
+        result_dir = "gdplib/" + instance + "/benchmark_result/"
         os.makedirs(result_dir, exist_ok=True)
 
         model = import_module("gdplib." + instance).build_model()
