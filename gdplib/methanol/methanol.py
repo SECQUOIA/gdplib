@@ -1,3 +1,15 @@
+"""
+methanol.py 
+Example 3 from Reference [1]. This model describes a profit maximization for a methanol production process with 90 [%] minimum purity and 1000 [tons/day] production requirements. The structure contains 19 units; two feedstocks, two compressor types (single stage, double stage) in the reactor feed stream and the recycle streams, two reactors, four coolers, three heaters and a flash separator. 
+The model enforces constraints to ensure that the product purity meets the minimum requirement, the production flowrate is within the specified range, and the temperature and pressure conditions in the process units are maintained within the operational limits. 
+The disjunctions in the model define the operational modes for feedstocks, compressors, and reactors. There are two alternative feedstocks (cheap or expensive), two alternative compressor types (single stage or double stage) in the reactor feed stream and the recycle stream, and two alternative reactors (lower or higher conversion and cost--denoted as cheap or expensive respectively).
+The objective of the model is to maximize profit by minimizing costs and maximizing revenue, including feedstock costs, product prices, reactor costs, electricity costs, and cooling and heating costs. 
+
+References:
+    [1] Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. Computers and Chemical Engineering, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
+
+"""
+
 import pyomo.environ as pe
 import sys
 from pyomo.contrib.fbbt.fbbt import fbbt, compute_bounds_on_expr
@@ -7,15 +19,6 @@ import pyomo.gdp as gdp
 
 assert sys.version_info.major == 3
 assert sys.version_info.minor >= 6
-
-# Methanol production example from https://doi.org/10.1016/0098-1354(95)00219-7 
-
-# This model solves a methanol production process with minimum purity of 90% and amount of 1000 tons/day requirements. The structure contains 19 units; two feedstocks, two compressor types (single stage, double stage) in the reactor feed stream and the recycle streams, two reactors, four coolers, three heaters and a flash separator. 
-# There are two alternative feedstocks (cheap or expensive), two alternative compressor types (single stage or double stage) in the reactor feed stream and the recycle stream, and two alternative reactors (lower or higher conversion and cost--denoted as cheap or expensive respectively). The objective is to maximize profit by minimizing costs and maximizing revenue.
-
-# References:
-
-# Example 3 from source paper: Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. Computers and Chemical Engineering, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
 
 class InfeasibleError(Exception):
     """
@@ -77,11 +80,11 @@ class MethanolModel(object):
         reactor_volume : float
             Volume of the reactor.
         electricity_cost : float
-            Cost of electricity.  ($ / 10 kWh)
+            Cost of electricity.  [$/10kWh]
         cooling_cost : float    
-            Cost of water for cooling. ($ / 10^9 kJ)
+            Cost of water for cooling. [$/10^9 kJ]
         heating_cost : float 
-            Cost of steam for heating. ($ / 10^9 kJ)
+            Cost of steam for heating. [$/10^9 kJ]
         purity_demand : float
             Purity demand in product stream. 
         demand : float
@@ -95,13 +98,13 @@ class MethanolModel(object):
         flow_feed_pressure : float
             Feed pressure.
         cost_flow_1 : float
-            Cost of feed 1. ($ / ton of methanol)
+            Cost of feed 1. [$/ton of methanol]
         cost_flow_2 : float
-            Cost of feed 2. ($ / ton of methanol)
+            Cost of feed 2. [$/ton of methanol]
         price_of_product : float
-            Price of product ($ / ton of methanol)
+            Price of product [$/ton of methanol]
         price_of_byproduct : float
-            Price of byproduct (purge stream) ($ / ton of methanol)
+            Price of byproduct (purge stream) [$/ton of methanol]
         cheap_reactor_fixed_cost : float
             Fixed cost of the cheap reactor. 
         cheap_reactor_variable_cost : float
@@ -112,7 +115,7 @@ class MethanolModel(object):
             Variable cost of the expensive reactor.
         heat_unit_match : float
             Heat unit conversion factor.
-        capacity_redundancy : float 
+        capacity_redundancy : float (not used in the model)
             Capacity redundancy.
         antoine_unit_trans: float
             Antoine unit conversion factor.
@@ -123,7 +126,7 @@ class MethanolModel(object):
         reactor_relation : float
             Reactor relation.
         purity_demand : float
-            Purity demand. (90%) 
+            Purity demand. [90%]
         fix_electricity_cost : float
             Fixed cost of electricity.
         two_stage_fix_cost : float
@@ -183,17 +186,19 @@ class MethanolModel(object):
 
         m.streams = pe.Set(initialize=list(range(1, 34)), ordered=True, doc='Set of streams')
         m.components = pe.Set(initialize=['H2', 'CO', 'CH3OH', 'CH4'], ordered=True, doc='Set of components')
-        m.flows = pe.Var(m.streams, bounds=(0, 20), doc='Flowrates (kg-mol/hr)')
+        m.flows = pe.Var(m.streams, bounds=(0, 20), doc='Flowrates [kg-mol/hr]')
         m.temps = pe.Var(m.streams, bounds=(3, 9), doc='Temperature')
-        m.pressures = pe.Var(m.streams, bounds=(0.1, 15), doc='Pressures (MPa)')
-        m.component_flows = pe.Var(m.streams, m.components, bounds=(0, 20), doc='Component flowrates (kg-mol/hr)')
+        m.pressures = pe.Var(m.streams, bounds=(0.1, 15), doc='Pressures [MPa]')
+        m.component_flows = pe.Var(m.streams, m.components, bounds=(0, 20), doc='Component flowrates [kg-mol/hr]')
 
-        flow_1 = dict() # Feed 1 (cheap feedstock; component percentages)
+        flow_1 = dict() 
+        # Feed 1 (cheap feedstock; component fractions)
         flow_1['H2'] = 0.6 
         flow_1['CO'] = 0.25
         flow_1['CH4'] = 0.15
         m.flow_1_composition = pe.Param(m.components,initialize = flow_1,default = 0, doc='Composition of feed 1')
-        flow_2 = dict() # Feed 2 (expensive feedstock; component percentages)
+        flow_2 = dict() 
+        # Feed 2 (expensive feedstock; component fractions)
         flow_2['H2'] = 0.65
         flow_2['CO'] = 0.30
         flow_2['CH4'] = 0.05
@@ -485,9 +490,7 @@ class MethanolModel(object):
             return m.component_flows[out_stream, _c] == m.component_flows[in_stream, _c]
         b.component_balances = pe.Constraint(m.components, rule=_component_balances, doc='Component balances')
         b.t_ratio_con = pe.Constraint(expr=t[out_stream] == b.p_ratio * t[in_stream], doc='Temperature ratio constraint')
-        b.electricity_requirement_con = pe.Constraint(expr=(b.electricity_requirement == self.alpha *
-                                                            (b.p_ratio - 1) * t[in_stream] * m.flows[in_stream] /
-                                                            (10.0 * self.eta * self.gamma)), doc='Electricity requirement constraint')
+        b.electricity_requirement_con = pe.Constraint(expr=(b.electricity_requirement == self.alpha * (b.p_ratio - 1) * t[in_stream] * m.flows[in_stream] / (10.0 * self.eta * self.gamma)), doc='Electricity requirement constraint')
         b.p_ratio_con = pe.Constraint(expr=p[out_stream]**self.gamma == b.p_ratio * p[in_stream]**self.gamma, doc='Pressure ratio constraint')
 
     def build_expansion_valve(self, block, unit_number):
