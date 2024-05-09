@@ -1,4 +1,7 @@
-from __future__ import division
+"""
+model.py
+
+"""
 
 import os
 
@@ -26,7 +29,7 @@ def build_model():
     ----------
     [1] Chen, Q., & Grossmann, I. E. (2019). Economies of numbers for a modular stranded gas processing network: Modeling and optimization. In Computer Aided Chemical Engineering (Vol. 47, pp. 257-262). Elsevier. DOI: 10.1016/B978-0-444-64241-7.50100-3
     """
-    m = ConcreteModel()
+    m = ConcreteModel('Stranded gas production')
     m.BigM = Suffix(direction=Suffix.LOCAL)
 
     m.periods_per_year = Param(initialize=4, doc="Quarters per year")
