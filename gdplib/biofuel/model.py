@@ -1,4 +1,11 @@
-from __future__ import division
+"""
+model.py
+This model describes a cost minimization for a multi-period biofuel processing network.
+
+References:
+    [1] Lara, C. L., Trespalacios, F., & Grossmann, I. E. (2018). Global optimization algorithm for capacitated multi-facility continuous location-allocation problems. Journal of Global Optimization, 71(4), 871-889. https://doi.org/10.1007/s10898-018-0621-6
+    [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
+"""
 
 import os
 from math import fabs
@@ -25,7 +32,8 @@ from pyomo.gdp import Disjunct
 
 
 def build_model():
-    """_summary_
+    """
+    Build a concrete model that describes a cost minimization for a multi-period biofuel processing network.
 
     Returns
     -------
@@ -37,7 +45,7 @@ def build_model():
     [1] Lara, C. L., Trespalacios, F., & Grossmann, I. E. (2018). Global optimization algorithm for capacitated multi-facility continuous location-allocation problems. Journal of Global Optimization, 71(4), 871-889. https://doi.org/10.1007/s10898-018-0621-6
     [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
     """
-    m = ConcreteModel()
+    m = ConcreteModel('Biofuel processing network')
     m.bigM = Suffix(direction=Suffix.LOCAL)
     m.time = RangeSet(0, 120, doc="months in 10 years")
     m.suppliers = RangeSet(10)  # 10 suppliers
