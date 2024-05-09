@@ -1,16 +1,14 @@
-# coding: utf-8
+"""
+spectrolog.py
+IR Spectroscopy Parameter Estimation
 
-# # [Pyomo.GDP](./index.ipynb) Logical Expression System Demo - IR Spectroscopy Parameter Estimation
-#
-# This is a reproduction of the IR spectroscopy parameter estimation problem found in:
-#
-# > Vecchietti A. & Grossmann I. E.
-# > LOGMIP: A disjunctive 0-1 non-linear optimizer for process system models,
-# > *Comp. & Chem Eng.* 23, p. 555-565, 1999.
-#
-# This code relies on the logic-v1 branch at https://github.com/qtothec/pyomo/tree/logic-v1
+This is a reproduction of the IR spectroscopy parameter estimation problem found in:
 
-# Optimal value: 12.0893
+[1] Vecchietti, A., & Grossmann, I. E. (1997). LOGMIP: a disjunctive 0-1 nonlinear optimizer for process systems models. Computers & chemical engineering, 21, S427-S432. https://doi.org/10.1016/S0098-1354(97)87539-4
+[2] Brink, A., & Westerlund, T. (1995). The joint problem of model structure determination and parameter estimation in quantitative IR spectroscopy. Chemometrics and intelligent laboratory systems, 29(1), 29-36. https://doi.org/10.1016/0169-7439(95)00033-3
+  
+Optimal value: 12.0893
+"""
 
 from pyomo.environ import *
 from pyomo.gdp import *
@@ -38,7 +36,7 @@ def build_model():
 
     References
     ----------
-    [1] Vecchietti, A., & Grossmann, I. E. (1997). LOGMIP: a disjunctive 0–1 nonlinear optimizer for process systems models. Computers & chemical engineering, 21, S427-S432. https://doi.org/10.1016/S0098-1354(97)87539-4
+    [1] Vecchietti, A., & Grossmann, I. E. (1997). LOGMIP: a disjunctive 0-1 nonlinear optimizer for process systems models. Computers & chemical engineering, 21, S427-S432. https://doi.org/10.1016/S0098-1354(97)87539-4
     [2] Brink, A., & Westerlund, T. (1995). The joint problem of model structure determination and parameter estimation in quantitative IR spectroscopy. Chemometrics and intelligent laboratory systems, 29(1), 29-36. https://doi.org/10.1016/0169-7439(95)00033-3
     """
     # Matrix of absorbance values across different wave numbers (rows) and spectra numbers (columns)
@@ -198,7 +196,7 @@ def build_model():
     m.profit = Objective(
         expr=sum(m.val[j] for j in m.spectra_data)
         + 2 * sum(m.ent[k, i] for k in m.compounds for i in m.wave_number),
-        doc='Objective to maximize spectroscopic agreement and encourage compound presence.',
+        doc='Maximizes the total spectroscopic agreement across data points and promotes the activation of compound-wave number pairs.',
     )
     #  The first sum represents total spectroscopic value across data points, and the second weighted sum promotes activation of compound-wave number pairs.
 
