@@ -10,6 +10,16 @@ gdp_col_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def initialize(m, excel_file=None):
+    """
+    Initializes the distillation column model using data from an Excel file or default settings. 
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        A Pyomo model of the distillation column for separation of benzene and toluene.
+    excel_file : str, optional
+        The file path to an Excel file containing the initialization data. Defaults to 'init.xlsx' if not provided.
+    """
     m.reflux_frac.set_value(value(
         m.reflux_ratio / (1 + m.reflux_ratio)))
     m.boilup_frac.set_value(value(
@@ -23,7 +33,16 @@ def initialize(m, excel_file=None):
                                       sheet_name=None)
 
     def set_value_if_not_fixed(var, val):
-        """Set variable to the value if it is not fixed."""
+        """
+        Set variable to the value if it is not fixed.
+
+        Parameters
+        ----------
+        var : Pyomo.Var
+            The Pyomo variable to potentially modify.
+        val : float
+            The value to assign to the variable if it is not fixed.
+        """
         if not var.fixed:
             var.set_value(val)
 
