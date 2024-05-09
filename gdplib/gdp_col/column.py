@@ -55,19 +55,20 @@ def build_column(min_trays, max_trays, xD, xB):
 
     @m.Disjunction(m.conditional_trays, doc='Tray exists or does not')
     def tray_no_tray(b, t):
-        """_summary_
+        """
+        Disjunction for tray existence or absence.
 
         Parameters
         ----------
-        b : _type_
-            _description_
+        b : Pyomo.Disjunct
+            Pyomo disjunct representing the existence or absence of a tray in the distillation column model.
         t : int
             Index of tray in the distillation column model. Tray numbering ascends from the reboiler at the bottom (tray 1) to the condenser at the top (tray max_trays)
 
         Returns
         -------
         List of Disjuncts
-            _description_
+            List of disjuncts representing the existence or absence of a tray in the distillation column model.
         """
         return [b.tray[t], b.no_tray[t]]
     m.minimum_num_trays = Constraint(
