@@ -2,6 +2,12 @@
 model.py
 This model describes a cost minimization for a multi-period biofuel processing network.
 
+The model enforces constraints to ensure that raw material supplies do not exceed available amounts, product shipments meet market demands exactly, and production at each site matches outgoing shipments and available resources.
+It also optimizes transportation costs by managing both variable and fixed costs associated with active transportation routes.
+The disjunctions in the model define the operational modes for facility sites (modular, conventional, or inactive) and the activity status of supply and product routes (active or inactive). 
+These elements allow the model to simulate different operational scenarios and strategic decisions, optimizing the network's layout and logistics based on economic and market conditions.
+The objective of the model is to optimize the network layout and production allocation to minimize total costs, which include setup and teardown of facilities, production costs, and transportation costs.
+
 References:
     [1] Lara, C. L., Trespalacios, F., & Grossmann, I. E. (2018). Global optimization algorithm for capacitated multi-facility continuous location-allocation problems. Journal of Global Optimization, 71(4), 871-889. https://doi.org/10.1007/s10898-018-0621-6
     [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
@@ -46,7 +52,7 @@ def build_model():
     [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
     """
     m = ConcreteModel('Biofuel processing network')
-    m.bigM = Suffix(direction=Suffix.LOCAL)
+    m.bigM = Suffix(direction=Suffix.LOCAL, initialize=7000)
     m.time = RangeSet(0, 120, doc="months in 10 years")
     m.suppliers = RangeSet(10)  # 10 suppliers
     m.markets = RangeSet(10)  # 10 markets
