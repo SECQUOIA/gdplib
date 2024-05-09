@@ -1,11 +1,17 @@
-"""Heat integration case study.
+"""
+Heat integration case study.
 
-This is example 1 of the Yee & Grossmann, 1990 paper "Simultaneous optimization
-models for heat integration--II".
-DOI: 10.1016/0098-1354(90)85010-8
+This is example 1 of the Yee & Grossmann, 1990 paper "Simultaneous optimization models for heat integration--II". DOI: 10.1016/0098-1354(90)85010-8
 
-This file provides common modeling elements.
+This file provides common modeling elements of the heat exchanger network.
+The model utilizes sets to organize hot and cold process streams, utility streams, and stages of heat exchange, with parameters defining the essential properties like temperatures and flow capacities. This structure facilitates detailed modeling of the heat transfer process across different stages and stream types.
+Disjunctions are employed to model the binary decision of either installing or not installing a heat exchanger between specific stream pairs at each stage, enhancing the model's flexibility and ability to find an optimal solution that balances cost and efficiency.
+The objective function aims to minimize the total cost of the heat exchanger network, which includes the costs associated with utility usage and the capital and operational expenses of the heat exchangers, ensuring economic feasibility alongside energy optimization.
 
+Given the common.py, the model can be shown as the conventional model, or can be modified into single module type, integer or discretized formulation, and other various formulations.
+
+References:
+    Yee, T. F., & Grossmann, I. E. (1990). Simultaneous optimization models for heat integration—II. Heat exchanger network synthesis. Computers & Chemical Engineering, 14(10), 1165–1184. https://doi.org/10.1016/0098-1354(90)85010-8
 """
 from __future__ import division
 
