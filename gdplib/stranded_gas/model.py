@@ -1,6 +1,15 @@
 """
 model.py
+Pyomo ConcreteModel for optimizing a modular stranded gas processing network. 
 
+The model is designed to convert stranded gas into gasoline using a modular and intensified GTL process. 
+It incorporates the economic dynamics of module investments, gas processing, and product transportation.
+Constraints manage the balance of gas supply and consumption, module availability and movement, and production capacities at potential sites. 
+Disjunctions delineate operational scenarios, such as the existence or absence of pipelines and the activation status of sites, enabling dynamic and flexible system configuration.
+The objective function aims to maximize the network's net profit by optimizing revenue from gasoline sales while minimizing operational and capital expenditures across the network.
+
+References:
+    [1] Chen, Q., & Grossmann, I. E. (2019). Economies of numbers for a modular stranded gas processing network: Modeling and optimization. In Computer Aided Chemical Engineering (Vol. 47, pp. 257-262). Elsevier. DOI: 10.1016/B978-0-444-64241-7.50100-3
 """
 
 import os
