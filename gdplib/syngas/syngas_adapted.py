@@ -33,7 +33,7 @@ def build_model():
     [1] Chen, Q. (2020). Pyosyn: Advanced Computational Tools for Process Synthesis (Doctoral dissertation, Carnegie Mellon University).
     [2] Medrano-García, J. D., Ruiz-Femenia, R., & Caballero, J. A. (2017). Multi-objective optimization of combined synthesis gas reforming technologies. Journal of CO2 Utilization, 22, 355-373. https://doi.org/10.1016/j.jcou.2017.09.019
     """
-    m = ConcreteModel()
+    m = ConcreteModel('Syngas')
 
     m.syngas_techs = Set(
         doc="syngas process technologies",
