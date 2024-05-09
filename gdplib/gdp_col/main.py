@@ -12,6 +12,14 @@ from gdplib.gdp_col.initialize import initialize
 
 
 def main():
+    """
+    Solve the distillation column model.
+
+    Returns
+    -------
+    m : Pyomo.ConcreteModel
+        The distillation column model solution obtained by using GDPopt, Logic-based Outer Approximation.
+    """
     m = build_column(min_trays=8, max_trays=17, xD=0.95, xB=0.95)
     # Fix feed conditions
     m.feed['benzene'].fix(50)
@@ -43,6 +51,14 @@ def main():
 
 
 def display_column(m):
+    """
+    Display the distillation column model solution.
+
+    Parameters
+    ----------
+    m : Pyomo.ConcreteModel
+        The distillation column model solution obtained by using GDPopt, Logic-based Outer Approximation.
+    """
     print('Objective: %s' % value(m.obj))
     print('Qc: {: >3.0f}kW  DB: {: >3.0f} DT: {: >3.0f} dis: {: >3.0f}'
           .format(value(m.Qc * 1E3),

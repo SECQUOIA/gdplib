@@ -25,7 +25,7 @@ def build_column(min_trays, max_trays, xD, xB):
     Returns
     -------
     Pyomo.ConcreteModel
-        A Pyomo model of the distillation column. for separation of benzene and toluene
+        A Pyomo model of the distillation column for separation of benzene and toluene.
     """
     m = ConcreteModel('benzene-toluene column')
     m.comps = Set(initialize=['benzene', 'toluene'], doc='Set of components')
