@@ -1,3 +1,21 @@
+"""
+HDA_GDP_gdpopt.py
+This model describes the profit maximization of a Hydrodealkylation of Toluene process, first presented in Reference [1], and later implemented as a GDP in Reference [2]. The MINLP formulation of this problem is available in GAMS, Reference [3]. 
+
+The chemical plant performed the hydro-dealkylation of toluene into benzene and methane. The flowsheet model was used to make decisions on choosing between alternative process units at various stages of the process. The resulting model is GDP model.
+
+
+
+# The model enforces constraints to ensure that the product purity meets the minimum requirement, the production flowrate is within the specified range, and the temperature and pressure conditions in the process units are maintained within the operational limits. 
+# The disjunctions in the model define the operational modes for feedstocks, compressors, and reactors. There are two alternative feedstocks (cheap or expensive), two alternative compressor types (single stage or double stage) in the reactor feed stream and the recycle stream, and two alternative reactors (lower or higher conversion and cost--denoted as cheap or expensive respectively).
+# The objective of the model is to maximize profit by minimizing costs and maximizing revenue, including feedstock costs, product prices, reactor costs, electricity costs, and cooling and heating costs. 
+
+References:
+    [1] James M Douglas (1988). Conceptual Design of Chemical Processes, McGraw-Hill. ISBN-13: 978-0070177628
+    [2] G.R. Kocis, and I.E. Grossmann (1989). Computational Experience with DICOPT Solving Minlp Problems in Process Synthesis. Computers and Chemical Engineering 13, 3, 307-315. https://doi.org/10.1016/0098-1354(89)85008-2
+    [3] GAMS Development Corporation (2023). Hydrodealkylation Process. Available at: https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_hda.html 
+"""
+
 import math
 import os
 import pandas as pd
@@ -8,16 +26,121 @@ from pyomo.util.infeasible import log_infeasible_constraints
 
 
 def HDA_model():
-    '''
-    The chemical plant performed the hydro-dealkylation of toluene into benzene and methane. The flowsheet model was used to make decisions on choosing between alternative process units at various stages of the process. The resulting model is GDP model.
-    '''
+    """
+    Builds the Hydrodealkylation of Toluene process model.
 
+    Parameters
+    ----------
+    alpha : float
+        compressor coefficient
+    compeff : float
+        compressor efficiency
+    gam : float
+        ratio of cp to cv
+    abseff : float
+        absorber tray efficiency
+    disteff : float
+        column tray efficiency
+    uflow : float
+        upper bound - flow logicals
+    upress : float  
+        upper bound - pressure logicals
+    utemp : float
+        upper bound - temperature logicals
+    costelec : float
+        electricity cost
+    costqc : float
+        cooling cost
+    costqh : float
+        heating cost
+    costfuel : float
+        fuel cost furnace
+    furnpdrop : float
+        pressure drop of furnace
+    heatvap : float
+        heat of vaporization [kj per kg-mol]
+    cppure : float
+        pure component heat capacities [kj per kg-mol-K]
+    gcomp : float
+        guess composition values
+    cp : float
+        heat capacities [kj per kg-mol-K]
+    anta : float
+        antoine coefficient A
+    antb : float
+        antoine coefficient B
+    antc : float
+        antoine coefficient C
+    perm : float
+        permeability [kg-mole/m**2-min-mpa]
+    cbeta : float
+        constant values (exp(beta)) in absorber 
+    aabs : float
+        absorption factors
+    eps1 : float
+        small number to avoid div. by zero
+    heatrxn : float
+        heat of reaction [kj per kg-mol]
+    f1comp : float
+        feedstock compositions (h2 feed)
+    f66comp : float
+        feedstock compositions (tol feed)
+    f67comp : float
+        feedstock compositions (tol feed)
+
+    Sets
+    ----
+    str : int
+        process streams
+    compon : str
+        chemical components
+    abs : int
+        absorber
+    comp : int
+        compressor
+    dist : int
+        distillation column
+    flsh : int
+        flash drums
+    furn : int
+        furnace
+    hec : int
+        coolers
+    heh : int
+        heaters
+    exch : int
+        heat exchangers
+    memb : int
+        membrane separators
+    mxr1 : int
+        single inlet stream mixers
+    mxr : int
+        mixers
+    pump : int
+        pumps
+    rct : int
+        reactors
+    spl1 : int
+        single outlet stream splitters
+    spl : int
+        splitter
+    valve : int
+        expansion valve
+    str2 : int
+        process streams
+    compon2 : str
+        chemical components
+    
+
+    Returns
+    -------
+    m : Pyomo model
+        Pyomo model of the Hydrodealkylation of Toluene process
+        
+    """
     dir_path = os.path.dirname(os.path.abspath(__file__))
 
     m = ConcreteModel()
-
-    # ## scalars
-
 
     m.alpha = Param(initialize=0.3665, doc="compressor coefficient")
     m.compeff = Param(initialize=0.750, doc="compressor effiency")
@@ -35,8 +158,15 @@ def HDA_model():
 
     # ## sets
 
-
     def strset(i):
+        """
+        Process streams 
+
+        Returns
+        -------
+        s : list
+            integer list from 1 to 74
+        """
         s = []
         i = 1
         for i in range(1, 36):
@@ -48,8 +178,7 @@ def HDA_model():
             i += i
         return s
     m.str = Set(initialize=strset, doc="process streams")
-    m.compon = Set(initialize=['h2', 'ch4', 'ben',
-                               'tol', 'dip'], doc="chemical components")
+    m.compon = Set(initialize=['h2', 'ch4', 'ben', 'tol', 'dip'], doc="chemical components")
     m.abs = RangeSet(1)
     m.comp = RangeSet(4)
     m.dist = RangeSet(3)
@@ -67,22 +196,19 @@ def HDA_model():
     m.spl = RangeSet(3)
     m.valve = RangeSet(6)
     m.str2 = Set(initialize=strset, doc="process streams")
-    m.compon2 = Set(initialize=['h2', 'ch4', 'ben',
-                                'tol', 'dip'], doc="chemical components")
+    m.compon2 = Set(initialize=['h2', 'ch4', 'ben', 'tol', 'dip'], doc="chemical components")
 
     # parameters
     Heatvap = {}
     Heatvap['tol'] = 30890.00
-    m.heatvap = Param(m.compon, initialize=Heatvap, default=0,
-                      doc='heat of vaporization (kj per kg-mol)')
+    m.heatvap = Param(m.compon, initialize=Heatvap, default=0, doc='heat of vaporization [kj per kg-mol]')
     Cppure = {}
     Cppure['h2'] = 30
     Cppure['ch4'] = 40
     Cppure['ben'] = 225
     Cppure['tol'] = 225
     Cppure['dip'] = 450
-    m.cppure = Param(m.compon, initialize=Cppure, default=0,
-                     doc='pure component heat capacities')
+    m.cppure = Param(m.compon, initialize=Cppure, default=0, doc='pure component heat capacities')
     Gcomp = {}
     Gcomp[7, 'h2'] = 0.95
     Gcomp[7, 'ch4'] = 0.05
@@ -183,13 +309,11 @@ def HDA_model():
     Gcomp[71, 'tol'] = 0.10
     Gcomp[72, 'h2'] = 0.50
     Gcomp[72, 'ch4'] = 0.50
-    m.gcomp = Param(m.str, m.compon, initialize=Gcomp,
-                    default=0, doc='guess composition values')
+    m.gcomp = Param(m.str, m.compon, initialize=Gcomp, default=0, doc='guess composition values')
 
     def cppara(compon, stream):
         return sum(m.cppure[compon] * m.gcomp[stream, compon] for compon in m.compon)
-    m.cp = Param(m.str, initialize=cppara, default=0,
-                 doc='heat capacities ( kj per kgmole-k)')
+    m.cp = Param(m.str, initialize=cppara, default=0, doc='heat capacities [kJ per kg-mol-k]')
 
     Anta = {}
     Anta['h2'] = 13.6333
@@ -197,24 +321,22 @@ def HDA_model():
     Anta['ben'] = 15.9008
     Anta['tol'] = 16.0137
     Anta['dip'] = 16.6832
-    m.anta = Param(m.compon, initialize=Anta,
-                   default=0, doc='antoine coefficient')
+    m.anta = Param(m.compon, initialize=Anta, default=0, doc='antoine coefficient A')
+
     Antb = {}
     Antb['h2'] = 164.9
     Antb['ch4'] = 897.84
     Antb['ben'] = 2788.51
     Antb['tol'] = 3096.52
     Antb['dip'] = 4602.23
-    m.antb = Param(m.compon, initialize=Antb,
-                   default=0, doc='antoine coefficient')
+    m.antb = Param(m.compon, initialize=Antb, default=0, doc='antoine coefficient B')
     Antc = {}
     Antc['h2'] = 3.19
     Antc['ch4'] = -7.16
     Antc['ben'] = -52.36
     Antc['tol'] = -53.67
     Antc['dip'] = -70.42
-    m.antc = Param(m.compon, initialize=Antc,
-                   default=0, doc='antoine coefficient')
+    m.antc = Param(m.compon, initialize=Antc, default=0, doc='antoine coefficient C')
     Perm = {}
     for i in m.compon:
         Perm[i] = 0
@@ -223,258 +345,178 @@ def HDA_model():
 
     def Permset(m, compon):
         return Perm[compon] * (1. / 22400.) * 1.0e4 * 750.062 * 60. / 1000.
-    m.perm = Param(m.compon, initialize=Permset,
-                   default=0, doc='permeability ')
+    m.perm = Param(m.compon, initialize=Permset, default=0, doc='permeability')
 
     Cbeta = {}
     Cbeta['h2'] = 1.0003
     Cbeta['ch4'] = 1.0008
     Cbeta['dip'] = 1.0e+04
-    m.cbeta = Param(m.compon, initialize=Cbeta, default=0,
-                    doc='constant values (exp(beta)) in absorber')
+    m.cbeta = Param(m.compon, initialize=Cbeta, default=0, doc='constant values (exp(beta)) in absorber')
     Aabs = {}
     Aabs['ben'] = 1.4
     Aabs['tol'] = 4.0
-    m.aabs = Param(m.compon, initialize=Aabs,
-                   default=0, doc=' absorption factors')
+    m.aabs = Param(m.compon, initialize=Aabs, default=0, doc=' absorption factors')
     m.eps1 = Param(initialize=1e-4, doc='small number to avoid div. by zero')
     Heatrxn = {}
     Heatrxn[1] = 50100.
     Heatrxn[2] = 50100.
-    m.heatrxn = Param(m.rct, initialize=Heatrxn, default=0,
-                      doc='heat of reaction  (kj per kg-mol)')
+    m.heatrxn = Param(m.rct, initialize=Heatrxn, default=0, doc='heat of reaction  [kj per kg-mol]')
+
     F1comp = {}
     F1comp['h2'] = 0.95
     F1comp['ch4'] = 0.05
     F1comp['dip'] = 0.00
     F1comp['ben'] = 0.00
     F1comp['tol'] = 0.00
-    m.f1comp = Param(m.compon, initialize=F1comp, default=0,
-                     doc='feedstock compositions  (h2 feed)')
+    m.f1comp = Param(m.compon, initialize=F1comp, default=0, doc='feedstock compositions (h2 feed)')
+
     F66comp = {}
     F66comp['tol'] = 1.0
     F66comp['h2'] = 0.00
     F66comp['ch4'] = 0.00
     F66comp['dip'] = 0.00
     F66comp['ben'] = 0.00
-    m.f66comp = Param(m.compon, initialize=F66comp, default=0,
-                      doc='feedstock compositions  (tol feed)')
+    m.f66comp = Param(m.compon, initialize=F66comp, default=0, doc='feedstock compositions (tol feed)')
+
     F67comp = {}
     F67comp['tol'] = 1.0
     F67comp['h2'] = 0.00
     F67comp['ch4'] = 0.00
     F67comp['dip'] = 0.00
     F67comp['ben'] = 0.00
-    m.f67comp = Param(m.compon, initialize=F67comp, default=0,
-                      doc='feedstock compositions  (tol feed)')
+    m.f67comp = Param(m.compon, initialize=F67comp, default=0, doc='feedstock compositions (tol feed)')
 
     # # matching streams
 
-    m.ilabs = Set(initialize=[(1, 67)],
-                  doc="abs-stream (inlet liquid) matches")
-    m.olabs = Set(initialize=[(1, 68)],
-                  doc="abs-stream (outlet liquid) matches")
-    m.ivabs = Set(initialize=[(1, 63)],
-                  doc=" abs-stream (inlet vapor) matches ")
-    m.ovabs = Set(initialize=[(1, 64)],
-                  doc="abs-stream (outlet vapor) matches")
+    m.ilabs = Set(initialize=[(1, 67)], doc="abs-stream (inlet liquid) matches")
+    m.olabs = Set(initialize=[(1, 68)], doc="abs-stream (outlet liquid) matches")
+    m.ivabs = Set(initialize=[(1, 63)], doc=" abs-stream (inlet vapor) matches ")
+    m.ovabs = Set(initialize=[(1, 64)], doc="abs-stream (outlet vapor) matches")
     m.asolv = Set(initialize=[(1, 'tol')], doc="abs-solvent component matches")
-    m.anorm = Set(initialize=[(1, 'ben')],
-                  doc="abs-comp matches (normal model)")
-    m.asimp = Set(initialize=[(1, 'h2'), (1, 'ch4'),
-                              (1, 'dip')], doc="abs-heavy component matches")
+    m.anorm = Set(initialize=[(1, 'ben')], doc="abs-comp matches (normal model)")
+    m.asimp = Set(initialize=[(1, 'h2'), (1, 'ch4'), (1, 'dip')], doc="abs-heavy component matches")
 
-    m.icomp = Set(initialize=[(1, 5), (2, 59), (3, 64),
-                              (4, 56)], doc="compressor-stream (inlet) matches")
-    m.ocomp = Set(initialize=[(1, 6), (2, 60), (3, 65),
-                              (4, 57)], doc=" compressor-stream (outlet) matches")
+    m.icomp = Set(initialize=[(1, 5), (2, 59), (3, 64), (4, 56)], doc="compressor-stream (inlet) matches")
+    m.ocomp = Set(initialize=[(1, 6), (2, 60), (3, 65), (4, 57)], doc=" compressor-stream (outlet) matches")
 
-    m.idist = Set(initialize=[(1, 25), (2, 30), (3, 33)],
-                  doc="dist-stream (inlet) matches")
-    m.vdist = Set(initialize=[(1, 26), (2, 31), (3, 34)],
-                  doc="dist-stream (vapor) matches")
-    m.ldist = Set(initialize=[(1, 27), (2, 32), (3, 35)],
-                  doc="dist-stream (liquid) matches")
-    m.dl = Set(initialize=[(1, 'h2'), (2, 'ch4'),
-                           (3, 'ben')], doc="dist-light components matches")
-    m.dlkey = Set(initialize=[(1, 'ch4'), (2, 'ben'),
-                              (3, 'tol')], doc="dist-heavy key component matches")
-    m.dhkey = Set(initialize=[(1, 'ben'), (2, 'tol'),
-                              (3, 'dip')], doc="dist-heavy components matches ")
-    m.dh = Set(initialize=[(1, 'tol'), (1, 'dip'),
-                           (2, 'dip')], doc="dist-key component matches")
+    m.idist = Set(initialize=[(1, 25), (2, 30), (3, 33)], doc="dist-stream (inlet) matches")
+    m.vdist = Set(initialize=[(1, 26), (2, 31), (3, 34)], doc="dist-stream (vapor) matches")
+    m.ldist = Set(initialize=[(1, 27), (2, 32), (3, 35)], doc="dist-stream (liquid) matches")
+    m.dl = Set(initialize=[(1, 'h2'), (2, 'ch4'), (3, 'ben')], doc="dist-light components matches")
+    m.dlkey = Set(initialize=[(1, 'ch4'), (2, 'ben'), (3, 'tol')], doc="dist-heavy key component matches")
+    m.dhkey = Set(initialize=[(1, 'ben'), (2, 'tol'), (3, 'dip')], doc="dist-heavy components matches ")
+    m.dh = Set(initialize=[(1, 'tol'), (1, 'dip'), (2, 'dip')], doc="dist-key component matches")
 
     i = list(m.dlkey)
     q = list(m.dhkey)
     dkeyset = i + q
     m.dkey = Set(initialize=dkeyset, doc='dist-key component matches')
 
-    m.iflsh = Set(initialize=[(1, 17), (2, 46), (3, 39)],
-                  doc="flsh-stream (inlet) matches")
-    m.vflsh = Set(initialize=[(1, 18), (2, 47), (3, 40)],
-                  doc="flsh-stream (vapor) matches")
-    m.lflsh = Set(initialize=[(1, 19), (2, 48), (3, 41)],
-                  doc="flsh-stream (liquid) matches")
-    m.fkey = Set(initialize=[(1, 'ch4'), (2, 'ch4'),
-                             (3, 'tol')], doc="flash-key component matches")
+    m.iflsh = Set(initialize=[(1, 17), (2, 46), (3, 39)], doc="flsh-stream (inlet) matches")
+    m.vflsh = Set(initialize=[(1, 18), (2, 47), (3, 40)], doc="flsh-stream (vapor) matches")
+    m.lflsh = Set(initialize=[(1, 19), (2, 48), (3, 41)], doc="flsh-stream (liquid) matches")
+    m.fkey = Set(initialize=[(1, 'ch4'), (2, 'ch4'), (3, 'tol')], doc="flash-key component matches")
 
     m.ifurn = Set(initialize=[(1, 70)], doc="furn-stream (inlet) matches")
     m.ofurn = Set(initialize=[(1, 9)], doc="furn-stream (outlet) matches")
 
-    m.ihec = Set(initialize=[(1, 71), (2, 45)],
-                 doc="hec-stream (inlet) matches")
-    m.ohec = Set(initialize=[(1, 17), (2, 46)],
-                 doc="hec-stream (outlet) matches")
+    m.ihec = Set(initialize=[(1, 71), (2, 45)], doc="hec-stream (inlet) matches")
+    m.ohec = Set(initialize=[(1, 17), (2, 46)], doc="hec-stream (outlet) matches")
 
-    m.iheh = Set(initialize=[(1, 24), (2, 23), (3, 37),
-                             (4, 61)], doc="heh-stream (inlet) matches")
-    m.oheh = Set(initialize=[(1, 25), (2, 44), (3, 38),
-                             (4, 73)], doc="heh-stream (outlet) matches")
+    m.iheh = Set(initialize=[(1, 24), (2, 23), (3, 37), (4, 61)], doc="heh-stream (inlet) matches")
+    m.oheh = Set(initialize=[(1, 25), (2, 44), (3, 38), (4, 73)], doc="heh-stream (outlet) matches")
 
-    m.icexch = Set(initialize=[(1, 8)],
-                   doc="exch-cold stream (inlet)  matches")
-    m.ocexch = Set(initialize=[(1, 70)],
-                   doc="exch-cold stream (outlet) matches")
-    m.ihexch = Set(initialize=[(1, 16)],
-                   doc="exch-hot  stream (inlet)  matches")
-    m.ohexch = Set(initialize=[(1, 71)],
-                   doc="exch-hot  stream (outlet) matches")
+    m.icexch = Set(initialize=[(1, 8)], doc="exch-cold stream (inlet)  matches")
+    m.ocexch = Set(initialize=[(1, 70)], doc="exch-cold stream (outlet) matches")
+    m.ihexch = Set(initialize=[(1, 16)], doc="exch-hot  stream (inlet)  matches")
+    m.ohexch = Set(initialize=[(1, 71)], doc="exch-hot  stream (outlet) matches")
 
-    m.imemb = Set(initialize=[(1, 3), (2, 54)],
-                  doc="memb-stream (inlet) matches")
-    m.nmemb = Set(initialize=[(1, 4), (2, 55)],
-                  doc=" memb-stream (non-permeate) matches")
-    m.pmemb = Set(initialize=[(1, 5), (2, 56)],
-                  doc="memb-stream (permeate) matches")
-    m.mnorm = Set(initialize=[(1, 'h2'), (1, 'ch4'),
-                              (2, 'h2'), (2, 'ch4')], doc="normal components  ")
-    m.msimp = Set(initialize=[(1, 'ben'), (1, 'tol'), (1, 'dip'), (2, 'ben'),
-                              (2, 'tol'), (2, 'dip')], doc="simplified flux components  ")
+    m.imemb = Set(initialize=[(1, 3), (2, 54)], doc="memb-stream (inlet) matches")
+    m.nmemb = Set(initialize=[(1, 4), (2, 55)], doc=" memb-stream (non-permeate) matches")
+    m.pmemb = Set(initialize=[(1, 5), (2, 56)], doc="memb-stream (permeate) matches")
+    m.mnorm = Set(initialize=[(1, 'h2'), (1, 'ch4'), (2, 'h2'), (2, 'ch4')], doc="normal components  ")
+    m.msimp = Set(initialize=[(1, 'ben'), (1, 'tol'), (1, 'dip'), (2, 'ben'), (2, 'tol'), (2, 'dip')], doc="simplified flux components  ")
 
-    m.imxr1 = Set(initialize=[(1, 2), (1, 6), (2, 11), (2, 13), (3, 27), (3, 48), (
-        4, 34), (4, 40), (5, 49), (5, 50)], doc="mixer-stream (inlet) matches")
-    m.omxr1 = Set(initialize=[(1, 7), (2, 14), (3, 30), (4, 42),
-                              (5, 51)], doc=" mixer-stream (outlet) matches")
-    m.mxr1spl1 = Set(initialize=[(1, 2, 2), (1, 6, 3), (2, 11, 10), (2, 13, 12), (3, 27, 24), (3, 48, 23), (
-        4, 34, 33), (4, 40, 37), (5, 49, 23), (5, 50, 24)], doc="1-mxr-inlet 1-spl-outlet matches")
+    m.imxr1 = Set(initialize=[(1, 2), (1, 6), (2, 11), (2, 13), (3, 27), (3, 48), (4, 34), (4, 40), (5, 49), (5, 50)], doc="mixer-stream (inlet) matches")
+    m.omxr1 = Set(initialize=[(1, 7), (2, 14), (3, 30), (4, 42), (5, 51)], doc=" mixer-stream (outlet) matches")
+    m.mxr1spl1 = Set(initialize=[(1, 2, 2), (1, 6, 3), (2, 11, 10), (2, 13, 12), (3, 27, 24), (3, 48, 23), (4, 34, 33), (4, 40, 37), (5, 49, 23), (5, 50, 24)], doc="1-mxr-inlet 1-spl-outlet matches")
 
-    m.imxr = Set(initialize=[(1, 7), (1, 43), (1, 66), (1, 72), (2, 15), (2, 20), (3, 21), (
-        3, 69), (4, 51), (4, 62), (5, 57), (5, 60), (5, 65)], doc="mixer-stream (inlet) matches")
-    m.omxr = Set(initialize=[(1, 8), (2, 16), (3, 22), (4, 63),
-                             (5, 72)], doc=" mixer-stream (outlet) matches ")
+    m.imxr = Set(initialize=[(1, 7), (1, 43), (1, 66), (1, 72), (2, 15), (2, 20), (3, 21), (3, 69), (4, 51), (4, 62), (5, 57), (5, 60), (5, 65)], doc="mixer-stream (inlet) matches")
+    m.omxr = Set(initialize=[(1, 8), (2, 16), (3, 22), (4, 63), (5, 72)], doc=" mixer-stream (outlet) matches ")
 
-    m.ipump = Set(initialize=[(1, 42), (2, 68)],
-                  doc="pump-stream (inlet) matches")
-    m.opump = Set(initialize=[(1, 43), (2, 69)],
-                  doc="pump-stream (outlet) matches")
+    m.ipump = Set(initialize=[(1, 42), (2, 68)], doc="pump-stream (inlet) matches")
+    m.opump = Set(initialize=[(1, 43), (2, 69)], doc="pump-stream (outlet) matches")
 
-    m.irct = Set(initialize=[(1, 10), (2, 12)],
-                 doc="reactor-stream (inlet) matches")
-    m.orct = Set(initialize=[(1, 11), (2, 13)],
-                 doc="reactor-stream (outlet) matches")
-    m.rkey = Set(initialize=[(1, 'tol'), (2, 'tol')],
-                 doc="reactor-key component matches")
+    m.irct = Set(initialize=[(1, 10), (2, 12)], doc="reactor-stream (inlet) matches")
+    m.orct = Set(initialize=[(1, 11), (2, 13)], doc="reactor-stream (outlet) matches")
+    m.rkey = Set(initialize=[(1, 'tol'), (2, 'tol')], doc="reactor-key component matches")
 
-    m.ispl1 = Set(initialize=[(1, 1), (2, 9), (3, 22), (4, 32),
-                              (5, 52), (6, 58)], doc="splitter-stream (inlet) matches ")
-    m.ospl1 = Set(initialize=[(1, 2), (1, 3), (2, 10), (2, 12), (3, 23), (3, 24), (4, 33), (
-        4, 37), (5, 53), (5, 54), (6, 59), (6, 61)], doc="splitter-stream (outlet) matches")
+    m.ispl1 = Set(initialize=[(1, 1), (2, 9), (3, 22), (4, 32), (5, 52), (6, 58)], doc="splitter-stream (inlet) matches ")
+    m.ospl1 = Set(initialize=[(1, 2), (1, 3), (2, 10), (2, 12), (3, 23), (3, 24), (4, 33), (4, 37), (5, 53), (5, 54), (6, 59), (6, 61)], doc="splitter-stream (outlet) matches")
 
-    m.ispl = Set(initialize=[(1, 19), (2, 18), (3, 26)],
-                 doc="splitter-stream (inlet) matches")
-    m.ospl = Set(initialize=[(1, 20), (1, 21), (2, 52), (2, 58),
-                             (3, 28), (3, 29)], doc="splitter-stream (outlet) matches")
+    m.ispl = Set(initialize=[(1, 19), (2, 18), (3, 26)], doc="splitter-stream (inlet) matches")
+    m.ospl = Set(initialize=[(1, 20), (1, 21), (2, 52), (2, 58), (3, 28), (3, 29)], doc="splitter-stream (outlet) matches")
 
-    m.ival = Set(initialize=[(1, 44), (2, 38), (3, 14), (4, 47),
-                             (5, 29), (6, 73)], doc="exp.valve-stream (inlet) matches")
-    m.oval = Set(initialize=[(1, 45), (2, 39), (3, 15), (4, 49),
-                             (5, 50), (6, 62)], doc="exp.valve-stream (outlet) matches")
+    m.ival = Set(initialize=[(1, 44), (2, 38), (3, 14), (4, 47), (5, 29), (6, 73)], doc="exp.valve-stream (inlet) matches")
+    m.oval = Set(initialize=[(1, 45), (2, 39), (3, 15), (4, 49), (5, 50), (6, 62)], doc="exp.valve-stream (outlet) matches")
 
     # variables
 
     # absorber
-    m.nabs = Var(m.abs, within=NonNegativeReals, bounds=(0, 40),
-                 initialize=1, doc='number of absorber trays')
+    m.nabs = Var(m.abs, within=NonNegativeReals, bounds=(0, 40), initialize=1, doc='number of absorber trays')
     m.gamma = Var(m.abs, m.compon, within=Reals, initialize=1)
     m.beta = Var(m.abs, m.compon, within=Reals, initialize=1)
+
     # compressor
-    m.elec = Var(m.comp, within=NonNegativeReals, bounds=(0, 100),
-                 initialize=1, doc='electricity requirement (kw)')
-    m.presrat = Var(m.comp, within=NonNegativeReals, bounds=(
-        1, 8/3), initialize=1, doc='ratio of outlet to inlet pressure')
+    m.elec = Var(m.comp, within=NonNegativeReals, bounds=(0, 100), initialize=1, doc='electricity requirement (kw)')
+    m.presrat = Var(m.comp, within=NonNegativeReals, bounds=(1, 8/3), initialize=1, doc='ratio of outlet to inlet pressure')
+
     # distillation
     m.nmin = Var(m.dist, within=NonNegativeReals, initialize=1)
-    m.ndist = Var(m.dist, within=NonNegativeReals,
-                  initialize=1, doc='number of trays in column')
-    m.rmin = Var(m.dist, within=NonNegativeReals,
-                 initialize=1, doc='minimum reflux ratio')
-    m.reflux = Var(m.dist, within=NonNegativeReals,
-                   initialize=1, doc='reflux ratio')
-    m.distp = Var(m.dist, within=NonNegativeReals, initialize=1,
-                  bounds=(0.1, 4.0), doc='column pressure')
-    m.avevlt = Var(m.dist, within=NonNegativeReals,
-                   initialize=1, doc='average volatility')
-    # flash
-    m.flsht = Var(m.flsh, within=NonNegativeReals, initialize=1,
-                  doc='flash temperature   (100 k)')
-    m.flshp = Var(m.flsh, within=NonNegativeReals, initialize=1,
-                  doc='flash pressure      (mega-pascal)')
-    m.eflsh = Var(m.flsh, m.compon, within=NonNegativeReals, bounds=(
-        0, 1), initialize=0.5, doc='vapor phase recovery in flash')
-    # furnace
-    m.qfuel = Var(m.furn, within=NonNegativeReals, bounds=(
-        None, 10), initialize=1, doc='heating requied (1.e+12 kj per yr)')
-    # cooler
-    m.qc = Var(m.hec, within=NonNegativeReals, bounds=(None, 10),
-               initialize=1, doc='utility requirement (1.e+12 kj per yr)')
-    # heater
-    m.qh = Var(m.heh, within=NonNegativeReals, bounds=(None, 10),
-               initialize=1, doc='utility requirement (1.e+12 kj per yr)')
-    # exchanger
-    m.qexch = Var(m.exch, within=NonNegativeReals, bounds=(
-        None, 10), initialize=1, doc='heat exchanged (1.e+12 kj per yr)')
-    # membrane
-    m.a = Var(m.memb, within=NonNegativeReals, bounds=(100, 10000),
-              initialize=1, doc='surface area for mass transfer ( m**2 )')
-    # mixer(1 input)
-    m.mxr1p = Var(m.mxr1, within=NonNegativeReals, bounds=(
-        0.1, 4), initialize=0, doc='mixer temperature     (100 k)')
-    m.mxr1t = Var(m.mxr1, within=NonNegativeReals, bounds=(3, 10),
-                  initialize=0, doc='mixer pressure        (m-pa)')
-    # mixer
-    m.mxrt = Var(m.mxr, within=NonNegativeReals, bounds=(3.0, 10),
-                 initialize=3, doc='mixer temperature     (100 k)')  # ?
-    m.mxrp = Var(m.mxr, within=NonNegativeReals, bounds=(0.1, 4.0),
-                 initialize=3, doc='mixer pressure        (m-pa)')
-    # reactor
-    m.rctt = Var(m.rct, within=NonNegativeReals, bounds=(
-        8.9427, 9.7760), doc='reactor temperature    (100 k)')
-    m.rctp = Var(m.rct, within=NonNegativeReals, bounds=(
-        3.4474, 3.4474), doc=' reactor pressure       (m-pa)')
-    m.rctvol = Var(m.rct, within=NonNegativeReals, bounds=(
-        None, 200), doc='reactor volume         (cubic meter)')
-    m.krct = Var(m.rct, within=NonNegativeReals, initialize=1,
-                 bounds=(0.0123471, 0.149543), doc='rate constant')
-    m.conv = Var(m.rct, m.compon, within=NonNegativeReals, bounds=(
-        None, 0.973), doc='conversion of key component')
-    m.sel = Var(m.rct, within=NonNegativeReals, bounds=(
-        None, 0.9964), doc='selectivity to benzene')
-    m.consum = Var(m.rct, m.compon, within=NonNegativeReals, bounds=(
-        0, 10000000000), initialize=0, doc='consumption rate of key')
-    m.q = Var(m.rct, within=NonNegativeReals, bounds=(
-        0, 10000000000), doc='heat removed   (1.e+9  kj per yr)')
-    # splitter (1 output)
-    m.spl1t = Var(m.spl1, within=PositiveReals, bounds=(
-        3.00, 10.00), doc='splitter temperature     (100 k)')
-    m.spl1p = Var(m.spl1, within=PositiveReals, bounds=(
-        0.1, 4.0), doc='splitter pressure        (m-pa)')
-    # splitter
-    m.splp = Var(m.spl, within=Reals, bounds=(0.1, 4.0),
-                 doc='splitter pressure        (m-pa)')
-    m.splt = Var(m.spl, within=Reals, bounds=(3.0, 10.0),
-                 doc='splitter temperature     (100 k)')
-    # stream
+    m.ndist = Var(m.dist, within=NonNegativeReals, initialize=1, doc='number of trays in column')
+    m.rmin = Var(m.dist, within=NonNegativeReals, initialize=1, doc='minimum reflux ratio')
+    m.reflux = Var(m.dist, within=NonNegativeReals, initialize=1, doc='reflux ratio')
+    m.distp = Var(m.dist, within=NonNegativeReals, initialize=1, bounds=(0.1, 4.0), doc='column pressure')
+    m.avevlt = Var(m.dist, within=NonNegativeReals, initialize=1, doc='average volatility')
 
+    # flash
+    m.flsht = Var(m.flsh, within=NonNegativeReals, initialize=1, doc='flash temperature   [100 k]')
+    m.flshp = Var(m.flsh, within=NonNegativeReals, initialize=1, doc='flash pressure [mega-pascal]')
+    m.eflsh = Var(m.flsh, m.compon, within=NonNegativeReals, bounds=(0, 1), initialize=0.5, doc='vapor phase recovery in flash')
+
+    # furnace
+    m.qfuel = Var(m.furn, within=NonNegativeReals, bounds=(None, 10), initialize=1, doc='heating requied [1.e+12 kj per yr]')
+    # cooler
+    m.qc = Var(m.hec, within=NonNegativeReals, bounds=(None, 10), initialize=1, doc='utility requirement [1.e+12 kj per yr]')
+    # heater
+    m.qh = Var(m.heh, within=NonNegativeReals, bounds=(None, 10), initialize=1, doc='utility requirement [1.e+12 kj per yr]')
+    # exchanger
+    m.qexch = Var(m.exch, within=NonNegativeReals, bounds=(None, 10), initialize=1, doc='heat exchanged [1.e+12 kj per yr]')
+    # membrane
+    m.a = Var(m.memb, within=NonNegativeReals, bounds=(100, 10000), initialize=1, doc='surface area for mass transfer [m**2]')
+    # mixer(1 input)
+    m.mxr1p = Var(m.mxr1, within=NonNegativeReals, bounds=(0.1, 4), initialize=0, doc='mixer temperature [100 k]')
+    m.mxr1t = Var(m.mxr1, within=NonNegativeReals, bounds=(3, 10), initialize=0, doc='mixer pressure [m-pa]')
+    # mixer
+    m.mxrt = Var(m.mxr, within=NonNegativeReals, bounds=(3.0, 10), initialize=3, doc='mixer temperature [100 k]')  # ?
+    m.mxrp = Var(m.mxr, within=NonNegativeReals, bounds=(0.1, 4.0), initialize=3, doc='mixer pressure [m-pa]')
+    # reactor
+    m.rctt = Var(m.rct, within=NonNegativeReals, bounds=(8.9427, 9.7760), doc='reactor temperature [100 k]')
+    m.rctp = Var(m.rct, within=NonNegativeReals, bounds=(3.4474, 3.4474), doc=' reactor pressure [m-pa]')
+    m.rctvol = Var(m.rct, within=NonNegativeReals, bounds=(None, 200), doc='reactor volume [cubic meter]')
+    m.krct = Var(m.rct, within=NonNegativeReals, initialize=1, bounds=(0.0123471, 0.149543), doc='rate constant')
+    m.conv = Var(m.rct, m.compon, within=NonNegativeReals, bounds=(None, 0.973), doc='conversion of key component')
+    m.sel = Var(m.rct, within=NonNegativeReals, bounds=(None, 0.9964), doc='selectivity to benzene')
+    m.consum = Var(m.rct, m.compon, within=NonNegativeReals, bounds=(0, 10000000000), initialize=0, doc='consumption rate of key')
+    m.q = Var(m.rct, within=NonNegativeReals, bounds=(0, 10000000000), doc='heat removed [1.e+9  kj per yr]')
+    # splitter (1 output)
+    m.spl1t = Var(m.spl1, within=PositiveReals, bounds=(3.00, 10.00), doc='splitter temperature [100 k]')
+    m.spl1p = Var(m.spl1, within=PositiveReals, bounds=(0.1, 4.0), doc='splitter pressure [m-pa]')
+    # splitter
+    m.splp = Var(m.spl, within=Reals, bounds=(0.1, 4.0), doc='splitter pressure [m-pa]')
+    m.splt = Var(m.spl, within=Reals, bounds=(3.0, 10.0), doc='splitter temperature [100 k]')
+
+    # stream
     def bound_f(m, stream):
         if stream in range(8, 19):
             return (0, 50)
@@ -482,22 +524,17 @@ def HDA_model():
             return(0, 50)
         else:
             return (0, 10)
-    m.f = Var(m.str, within=NonNegativeReals, bounds=bound_f,
-              initialize=1, doc='stream flowrates (kg-mole per min)')
+    m.f = Var(m.str, within=NonNegativeReals, bounds=bound_f, initialize=1, doc='stream flowrates [kg-mole per min]')
 
     def bound_fc(m, stream, compon):
         if stream in range(8, 19) or stream in [52, 54, 56, 57, 58, 59, 60, 70, 71, 72]:
             return (0, 30)
         else:
             return (0, 10)
-    m.fc = Var(m.str, m.compon, within=Reals, bounds=bound_fc,
-               initialize=1, doc='component flowrates (kg-mole per min)')
-    m.p = Var(m.str, within=NonNegativeReals, bounds=(0.1, 4.0),
-              initialize=3.0, doc='stream pressure     (mega_pascal)')
-    m.t = Var(m.str, within=NonNegativeReals, bounds=(3.0, 10.0),
-              initialize=3.0, doc='stream temperature  (100 k)')
-    m.vp = Var(m.str, m.compon, within=NonNegativeReals, initialize=1,
-               bounds=(0, 10), doc='vapor pressure      (mega-pascal)')
+    m.fc = Var(m.str, m.compon, within=Reals, bounds=bound_fc, initialize=1, doc='component flowrates [kg-mole per min]')
+    m.p = Var(m.str, within=NonNegativeReals, bounds=(0.1, 4.0), initialize=3.0, doc='stream pressure [mega_pascal]')
+    m.t = Var(m.str, within=NonNegativeReals, bounds=(3.0, 10.0), initialize=3.0, doc='stream temperature [100 k]')
+    m.vp = Var(m.str, m.compon, within=NonNegativeReals, initialize=1, bounds=(0, 10), doc='vapor pressure [mega-pascal]')
 
     def boundsofe(m):
         if i == 20:
@@ -506,8 +543,7 @@ def HDA_model():
             return (0.5, 1.0)
         else:
             return (None, 1.0)
-    m.e = Var(m.str, within=NonNegativeReals,
-              bounds=boundsofe, doc='split fraction')
+    m.e = Var(m.str, within=NonNegativeReals, bounds=boundsofe, doc='split fraction')
     # obj function
     m.const = Param(initialize=22.5, doc='constant term in obj fcn')
 
@@ -549,36 +585,24 @@ def HDA_model():
     m.t[26].setub(3.2)
     for i in range(49, 52):
         m.t[i].setlb(2.0)
-    m.t[27].setlb((m.antb['ben'] / (m.anta['ben'] -
-                                    log(m.distp[1].lb * 7500.6168)) - m.antc['ben']) / 100.)
-    m.t[27].setub((m.antb['ben'] / (m.anta['ben'] -
-                                    log(m.distp[1].ub * 7500.6168)) - m.antc['ben']) / 100.)
-    m.t[31].setlb((m.antb['ben'] / (m.anta['ben'] -
-                                    log(m.distp[2].lb * 7500.6168)) - m.antc['ben']) / 100.)
-    m.t[31].setub((m.antb['ben'] / (m.anta['ben'] -
-                                    log(m.distp[2].ub * 7500.6168)) - m.antc['ben']) / 100.)
-    m.t[32].setlb((m.antb['tol'] / (m.anta['tol'] -
-                                    log(m.distp[2].lb * 7500.6168)) - m.antc['tol']) / 100.)
-    m.t[32].setub((m.antb['tol'] / (m.anta['tol'] -
-                                    log(m.distp[2].ub * 7500.6168)) - m.antc['tol']) / 100.)
-    m.t[34].setlb((m.antb['tol'] / (m.anta['tol'] -
-                                    log(m.distp[3].lb * 7500.6168)) - m.antc['tol']) / 100.)
-    m.t[34].setub((m.antb['tol'] / (m.anta['tol'] -
-                                    log(m.distp[3].ub * 7500.6168)) - m.antc['tol']) / 100.)
-    m.t[35].setlb((m.antb['dip'] / (m.anta['dip'] -
-                                    log(m.distp[3].lb * 7500.6168)) - m.antc['dip']) / 100.)
-    m.t[35].setub((m.antb['dip'] / (m.anta['dip'] -
-                                    log(m.distp[3].ub * 7500.6168)) - m.antc['dip']) / 100.)
+    m.t[27].setlb((m.antb['ben'] / (m.anta['ben'] - log(m.distp[1].lb * 7500.6168)) - m.antc['ben']) / 100.)
+    m.t[27].setub((m.antb['ben'] / (m.anta['ben'] - log(m.distp[1].ub * 7500.6168)) - m.antc['ben']) / 100.)
+    m.t[31].setlb((m.antb['ben'] / (m.anta['ben'] - log(m.distp[2].lb * 7500.6168)) - m.antc['ben']) / 100.)
+    m.t[31].setub((m.antb['ben'] / (m.anta['ben'] - log(m.distp[2].ub * 7500.6168)) - m.antc['ben']) / 100.)
+    m.t[32].setlb((m.antb['tol'] / (m.anta['tol'] - log(m.distp[2].lb * 7500.6168)) - m.antc['tol']) / 100.)
+    m.t[32].setub((m.antb['tol'] / (m.anta['tol'] - log(m.distp[2].ub * 7500.6168)) - m.antc['tol']) / 100.)
+    m.t[34].setlb((m.antb['tol'] / (m.anta['tol'] - log(m.distp[3].lb * 7500.6168)) - m.antc['tol']) / 100.)
+    m.t[34].setub((m.antb['tol'] / (m.anta['tol'] - log(m.distp[3].ub * 7500.6168)) - m.antc['tol']) / 100.)
+    m.t[35].setlb((m.antb['dip'] / (m.anta['dip'] - log(m.distp[3].lb * 7500.6168)) - m.antc['dip']) / 100.)
+    m.t[35].setub((m.antb['dip'] / (m.anta['dip'] - log(m.distp[3].ub * 7500.6168)) - m.antc['dip']) / 100.)
 
     # absorber
     m.beta[1, 'ben'].setlb(0.00011776)
     m.beta[1, 'ben'].setub(5.72649)
     m.beta[1, 'tol'].setlb(0.00018483515)
     m.beta[1, 'tol'].setub(15)
-    m.gamma[1, 'tol'].setlb(log(
-        (1 - m.aabs['tol'] ** (m.nabs[1].lb * m.abseff + m.eps1)) / (1 - m.aabs['tol'])))
-    m.gamma[1, 'tol'].setub(min(15, log(
-        (1 - m.aabs['tol'] ** (m.nabs[1].ub * m.abseff + m.eps1)) / (1 - m.aabs['tol']))))
+    m.gamma[1, 'tol'].setlb(log((1 - m.aabs['tol'] ** (m.nabs[1].lb * m.abseff + m.eps1)) / (1 - m.aabs['tol'])))
+    m.gamma[1, 'tol'].setub(min(15, log((1 - m.aabs['tol'] ** (m.nabs[1].ub * m.abseff + m.eps1)) / (1 - m.aabs['tol']))))
     for abso in m.abs:
         for compon in m.compon:
             m.beta[abso, compon].setlb(log(
@@ -588,10 +612,8 @@ def HDA_model():
     m.t[67].setlb(3.0)
     m.t[67].setub(3.0)
     for compon in m.compon:
-        m.vp[67, compon].setlb((1. / 7500.6168) * exp(m.anta[compon] -
-                                                      m.antb[compon] / (value(m.t[67]) * 100. + m.antc[compon])))
-        m.vp[67, compon].setub((1. / 7500.6168) * exp(m.anta[compon] -
-                                                      m.antb[compon] / (value(m.t[67]) * 100. + m.antc[compon])))
+        m.vp[67, compon].setlb((1. / 7500.6168) * exp(m.anta[compon] - m.antb[compon] / (value(m.t[67]) * 100. + m.antc[compon])))
+        m.vp[67, compon].setub((1. / 7500.6168) * exp(m.anta[compon] - m.antb[compon] / (value(m.t[67]) * 100. + m.antc[compon])))
 
     
     flashdata_file = os.path.join(dir_path,'flashdata.csv')
@@ -600,10 +622,8 @@ def HDA_model():
     two_digit_number = flash.iloc[:, [0]].dropna().values
     two_digit_compon = flash.iloc[:, [1]].dropna().values
     for i in range(len(two_digit_number)):
-        m.eflsh[two_digit_number[i, 0], two_digit_compon[i, 0]].setlb(
-            flash.iloc[:, [2]].dropna().values[i, 0])
-        m.eflsh[two_digit_number[i, 0], two_digit_compon[i, 0]].setub(
-            flash.iloc[:, [3]].dropna().values[i, 0])
+        m.eflsh[two_digit_number[i, 0], two_digit_compon[i, 0]].setlb(flash.iloc[:, [2]].dropna().values[i, 0])
+        m.eflsh[two_digit_number[i, 0], two_digit_compon[i, 0]].setub(flash.iloc[:, [3]].dropna().values[i, 0])
     for i in range(len(number)):
         m.flshp[number[i, 0]].setlb(flash.iloc[:, [5]].dropna().values[i, 0])
         m.flshp[number[i, 0]].setub(flash.iloc[:, [6]].dropna().values[i, 0])
@@ -622,10 +642,8 @@ def HDA_model():
 
     for stream in m.str:
         for compon in m.compon:
-            m.vp[stream, compon].setlb((1. / 7500.6168) * exp(
-                m.anta[compon] - m.antb[compon] / (m.t[stream].lb * 100. + m.antc[compon])))
-            m.vp[stream, compon].setub((1. / 7500.6168) * exp(
-                m.anta[compon] - m.antb[compon] / (m.t[stream].ub * 100. + m.antc[compon])))
+            m.vp[stream, compon].setlb((1. / 7500.6168) * exp(m.anta[compon] - m.antb[compon] / (m.t[stream].lb * 100. + m.antc[compon])))
+            m.vp[stream, compon].setub((1. / 7500.6168) * exp(m.anta[compon] - m.antb[compon] / (m.t[stream].ub * 100. + m.antc[compon])))
 
     m.p[1].setub(3.93)
     m.p[1].setlb(3.93)
@@ -799,15 +817,13 @@ def HDA_model():
             if (i, compon) in m.anorm:
                 return sum(m.f[stream] * m.p[stream] for (absb, stream) in m.ilabs if absb == i) == sum(m.f[stream] for (absc, stream) in m.ivabs if absc == i) * m.aabs[compon] * sum(m.vp[stream, compon] for (absd, stream) in m.ilabs if absd == i)
             return Constraint.Skip
-        b.absfact = Constraint(
-            [absorber], m.compon, rule=Absfact, doc='absorbption factor equation')
+        b.absfact = Constraint([absorber], m.compon, rule=Absfact, doc='absorbption factor equation')
 
         def Gameqn(_m, i, compon):
             if (i, compon) in m.asolv:
                 return m.gamma[i, compon] == log((1 - m.aabs[compon] ** (m.nabs[i] * m.abseff + m.eps1)) / (1 - m.aabs[compon]))
             return Constraint.Skip
-        b.gameqn = Constraint([absorber], m.compon,
-                              rule=Gameqn, doc='definition of gamma')
+        b.gameqn = Constraint([absorber], m.compon, rule=Gameqn, doc='definition of gamma')
 
         def Betaeqn(_m, i, compon):
             if (i, compon) not in m.asimp:
