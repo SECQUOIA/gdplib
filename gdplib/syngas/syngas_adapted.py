@@ -1538,7 +1538,7 @@ def build_model():
     @m.Constraint(m.species)
     def purge_flow_limit(m, species):
         """
-        Limits the purge flow of each species to no more than 1% of its inflow to the mixer\splitter (ms4).
+        Limits the purge flow of each species to no more than 1% of its inflow to the mixer/splitter (ms4).
 
         Parameters
         ----------
@@ -1620,7 +1620,7 @@ def build_model():
         Returns
         -------
         Pyomo.Constraint
-            Enforces that the inflow of each species into splitter (s2) equals the outflow from splitter (s2) to the mixer\splitter (ms1).
+            Enforces that the inflow of each species into splitter (s2) equals the outflow from splitter (s2) to the mixer/splitter (ms1).
         """
         return m.flow_into['s2', species] == m.flow['s2', 'ms1', species]
 
