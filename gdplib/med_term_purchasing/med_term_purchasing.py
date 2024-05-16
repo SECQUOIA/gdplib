@@ -1106,7 +1106,7 @@ def build_model():
         doc='Input/output balance equation 2 for Process 3 in the process network',
     )
 
-    # process capacity contraints
+    # process capacity constraints
     # these are hardcoded based on the three processes and the process flow structure
     def process_capacity_rule1(model, t):
         """
