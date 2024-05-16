@@ -50,7 +50,7 @@ def calculate_Fenske(xD, xB):
     m.gamma = Var(
         m.comps,
         m.trays,
-        doc='liquid activity coefficent of component on tray',
+        doc='liquid activity coefficient of component on tray',
         domain=NonNegativeReals,
         bounds=(0, 10),
         initialize=1,

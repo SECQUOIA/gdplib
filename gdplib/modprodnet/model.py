@@ -4,8 +4,19 @@ import os
 
 import pandas as pd
 from pyomo.environ import (
-    ConcreteModel, Constraint, Integers, maximize, Objective, Param, RangeSet, SolverFactory, summation,
-    TransformationFactory, value, Var, )
+    ConcreteModel,
+    Constraint,
+    Integers,
+    maximize,
+    Objective,
+    Param,
+    RangeSet,
+    SolverFactory,
+    summation,
+    TransformationFactory,
+    value,
+    Var,
+)
 from pyomo.gdp import Disjunct, Disjunction
 
 
@@ -28,17 +39,21 @@ def build_model(case="Growth"):
         return (7 / 12) * m.discount_factor[mo]
 
     xls_data = pd.read_excel(
-        os.path.join(os.path.dirname(__file__), "market_size.xlsx"), sheet_name="single_market", index_col=0)
+        os.path.join(os.path.dirname(__file__), "market_size.xlsx"),
+        sheet_name="single_market",
+        index_col=0,
+    )
 
     @m.Param(m.months)
     def market_demand(m, mo):
         return float(xls_data[case][mo])
 
-    m.conv_size = Var(bounds=(25, 350), initialize=25,
-                      doc="Size of conventional plant")
+    m.conv_size = Var(bounds=(25, 350), initialize=25, doc="Size of conventional plant")
     m.conv_base_cost = Param(initialize=1000, doc="Cost for size 25")
     m.conv_exponent = Param(initialize=0.6)
-    m.conv_cost = Var(bounds=(0, value(m.conv_base_cost * (m.conv_size.ub / 25) ** m.conv_exponent)))
+    m.conv_cost = Var(
+        bounds=(0, value(m.conv_base_cost * (m.conv_size.ub / 25) ** m.conv_exponent))
+    )
     m.module_base_cost = Param(initialize=1000, doc="Cost for size 25")
 
     m.production = Var(m.months, bounds=(0, 350))
@@ -68,12 +83,22 @@ def build_model(case="Growth"):
 
     @m.Expression(m.months)
     def module_sell_value(m, mo):
-        return m.module_base_cost * m.discount_factor[mo] * m.module_salvage_value * m.modules_sold[mo]
+        return (
+            m.module_base_cost
+            * m.discount_factor[mo]
+            * m.module_salvage_value
+            * m.modules_sold[mo]
+        )
 
     @m.Expression()
     def module_final_salvage(m):
         mo = max(m.months)
-        return m.module_base_cost * m.discount_factor[mo] * m.module_salvage_value * m.num_modules[mo]
+        return (
+            m.module_base_cost
+            * m.discount_factor[mo]
+            * m.module_salvage_value
+            * m.num_modules[mo]
+        )
 
     m.profit = Objective(
         expr=sum(m.revenue[:])
@@ -82,7 +107,8 @@ def build_model(case="Growth"):
         - summation(m.module_buy_cost)
         + summation(m.module_sell_value)
         + m.module_final_salvage,
-        sense=maximize)
+        sense=maximize,
+    )
 
     _build_conventional_disjunct(m)
     _build_modular_disjunct(m)
@@ -95,8 +121,8 @@ def _build_conventional_disjunct(m):
     m.conventional = Disjunct()
 
     m.conventional.cost_calc = Constraint(
-        expr=m.conv_cost == (
-            m.conv_base_cost * (m.conv_size / 25) ** m.conv_exponent))
+        expr=m.conv_cost == (m.conv_base_cost * (m.conv_size / 25) ** m.conv_exponent)
+    )
 
     @m.conventional.Constraint(m.months)
     def conv_production_limit(conv_disj, mo):
@@ -107,7 +133,10 @@ def _build_conventional_disjunct(m):
 
     @m.conventional.Constraint()
     def no_modules(conv_disj):
-        return sum(m.num_modules[:]) + sum(m.modules_purchased[:]) + sum(m.modules_sold[:]) == 0
+        return (
+            sum(m.num_modules[:]) + sum(m.modules_purchased[:]) + sum(m.modules_sold[:])
+            == 0
+        )
 
 
 def _build_modular_disjunct(m):
@@ -116,7 +145,11 @@ def _build_modular_disjunct(m):
     @m.modular.Constraint(m.months)
     def module_balance(disj, mo):
         existing_modules = 0 if mo == 0 else m.num_modules[mo - 1]
-        new_modules = 0 if mo < m.modular_setup_time else m.modules_purchased[mo - m.modular_setup_time]
+        new_modules = (
+            0
+            if mo < m.modular_setup_time
+            else m.modules_purchased[mo - m.modular_setup_time]
+        )
         sold_modules = m.modules_sold[mo]
         return m.num_modules[mo] == existing_modules + new_modules - sold_modules
 
@@ -126,15 +159,22 @@ def _build_modular_disjunct(m):
 
 
 def display_conventional(m, writer, sheet_name):
-    df = pd.DataFrame(
-        list([
-            mo,
-            m.production[mo].value,
-            m.market_demand[mo],
-            m.conv_size.value if mo >= m.conv_setup_time else 0
-        ] for mo in m.months),
-        columns=("Month", "Production", "Demand", "Capacity")
-    ).set_index('Month').round(2)
+    df = (
+        pd.DataFrame(
+            list(
+                [
+                    mo,
+                    m.production[mo].value,
+                    m.market_demand[mo],
+                    m.conv_size.value if mo >= m.conv_setup_time else 0,
+                ]
+                for mo in m.months
+            ),
+            columns=("Month", "Production", "Demand", "Capacity"),
+        )
+        .set_index('Month')
+        .round(2)
+    )
     df.to_excel(writer, sheet_name)
     print('Conventional Profit', round(value(m.profit)))
     print('Conventional Revenue', round(value(sum(m.revenue[:]))))
@@ -145,26 +185,46 @@ def display_conventional(m, writer, sheet_name):
 
 
 def display_modular(m, writer, sheet_name):
-    df = pd.DataFrame(
-        list([
-            mo,
-            m.production[mo].value,
-            m.market_demand[mo],
-            m.num_modules[mo].value * 25,
-            m.num_modules[mo].value,
-            m.modules_purchased[mo].value,
-            m.modules_sold[mo].value] for mo in m.months
-        ),
-        columns=("Month", "Production", "Demand", "Capacity",
-                 "Num Modules", "Add Modules", "Sold Modules")
-    ).set_index('Month').round(2)
+    df = (
+        pd.DataFrame(
+            list(
+                [
+                    mo,
+                    m.production[mo].value,
+                    m.market_demand[mo],
+                    m.num_modules[mo].value * 25,
+                    m.num_modules[mo].value,
+                    m.modules_purchased[mo].value,
+                    m.modules_sold[mo].value,
+                ]
+                for mo in m.months
+            ),
+            columns=(
+                "Month",
+                "Production",
+                "Demand",
+                "Capacity",
+                "Num Modules",
+                "Add Modules",
+                "Sold Modules",
+            ),
+        )
+        .set_index('Month')
+        .round(2)
+    )
     df.to_excel(writer, sheet_name)
     print('Modular Profit', round(value(m.profit)))
     print('Modular Revenue', round(value(sum(m.revenue[:]))))
-    print('Modular Revenue before conventional startup', round(value(sum(m.revenue[mo] for mo in m.months if mo < 12))))
+    print(
+        'Modular Revenue before conventional startup',
+        round(value(sum(m.revenue[mo] for mo in m.months if mo < 12))),
+    )
     print('Modular Build Cost', round(value(sum(m.module_buy_cost[:]))))
     print('Modules Purchased', round(value(sum(m.modules_purchased[:]))))
-    print('Modular Nondiscount Cost', round(value(m.module_base_cost * sum(m.modules_purchased[:]))))
+    print(
+        'Modular Nondiscount Cost',
+        round(value(m.module_base_cost * sum(m.modules_purchased[:]))),
+    )
     print('Modular Sale Credit', round(value(sum(m.module_sell_value[:]))))
     print('Modular Final Salvage Credit', round(value(m.module_final_salvage)))
     print()

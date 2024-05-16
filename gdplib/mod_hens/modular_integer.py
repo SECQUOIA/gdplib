@@ -8,6 +8,7 @@ This is a modification to support the incorporation of standardized exchanger
 modules using integer variables for module selection.
 
 """
+
 from __future__ import division
 
 from pyomo.environ import Constraint, Integers, log, Var

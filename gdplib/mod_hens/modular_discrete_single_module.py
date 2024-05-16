@@ -12,6 +12,7 @@ the nonlinear expressions, specialized to the case of allowing only a single
 exchanger module type (size).
 
 """
+
 from __future__ import division
 
 from pyomo.environ import Binary, Constraint, RangeSet, Var

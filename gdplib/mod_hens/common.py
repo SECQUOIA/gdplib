@@ -13,6 +13,7 @@ Given the common.py, the model can be shown as the conventional model, or can be
 References:
     Yee, T. F., & Grossmann, I. E. (1990). Simultaneous optimization models for heat integration—II. Heat exchanger network synthesis. Computers & Chemical Engineering, 14(10), 1165–1184. https://doi.org/10.1016/0098-1354(90)85010-8
 """
+
 from __future__ import division
 
 from pyomo.environ import (
@@ -407,14 +408,16 @@ def build_model(use_cafaro_approximation, num_stages):
                 for stg in m.stages
             )
             if strm in m.cold_utility_streams
-            else 0
-            + sum(
-                m.heat_exchanged[strm, cold, stg]
-                for cold in m.cold_process_streams
-                for stg in m.stages
+            else (
+                0
+                + sum(
+                    m.heat_exchanged[strm, cold, stg]
+                    for cold in m.cold_process_streams
+                    for stg in m.stages
+                )
+                if strm in m.hot_utility_streams
+                else 0
             )
-            if strm in m.hot_utility_streams
-            else 0
         )
 
     @m.Constraint(

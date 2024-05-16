@@ -11,9 +11,18 @@ This file performs the parameter estimation.
 (2) cost = factor * k * ln(bx + 1)
 
 """
+
 from __future__ import division
 
-from pyomo.environ import (ConcreteModel, Constraint, log, NonNegativeReals, SolverFactory, value, Var)
+from pyomo.environ import (
+    ConcreteModel,
+    Constraint,
+    log,
+    NonNegativeReals,
+    SolverFactory,
+    value,
+    Var,
+)
 
 
 def calculate_cafaro_coefficients(area1, area2, exponent):
@@ -39,7 +48,7 @@ def calculate_cafaro_coefficients(area1, area2, exponent):
     -------
     tuple of float
         A tuple containing the coefficients `k` and `b`.
-    
+
     References
     ----------
     [1] Cafaro, D. C., & Grossmann, I. E. (2014). Alternate approximation of concave cost functions for process design and supply chain optimization problems. Computers & chemical engineering, 60, 376-380. https://doi.org/10.1016/j.compchemeng.2013.10.001
@@ -48,10 +57,8 @@ def calculate_cafaro_coefficients(area1, area2, exponent):
     m.k = Var(domain=NonNegativeReals)
     m.b = Var(domain=NonNegativeReals)
 
-    m.c1 = Constraint(
-        expr=area1 ** exponent == m.k * log(m.b * area1 + 1))
-    m.c2 = Constraint(
-        expr=area2 ** exponent == m.k * log(m.b * area2 + 1))
+    m.c1 = Constraint(expr=area1**exponent == m.k * log(m.b * area1 + 1))
+    m.c2 = Constraint(expr=area2**exponent == m.k * log(m.b * area2 + 1))
 
     SolverFactory('ipopt').solve(m)
 
