@@ -11,7 +11,7 @@ jobs:
       - name: Black Formatting Check
         uses: psf/black@stable
         with:
-          args: . -S -C --check --diff
+          options: "-S -C --check --diff"
       - name: Spell Check
         uses: crate-ci/typos@master
 
