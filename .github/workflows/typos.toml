@@ -1,4 +1,4 @@
-[default.extend - words]
+[default.extend-words]
 # Ignore HDA
 hda = "hda"
 HDA = "HDA"
