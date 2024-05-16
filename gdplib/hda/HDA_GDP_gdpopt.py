@@ -376,7 +376,7 @@ def HDA_model():
     Heatrxn = {}
     Heatrxn[1] = 50100.
     Heatrxn[2] = 50100.
-    m.heatrxn = Param(m.rct, initialize=Heatrxn, default=0, doc='heat of reaction  [kj per kg-mol]')
+    m.heatrxn = Param(m.rct, initialize=Heatrxn, default=0, doc='heat of reaction [kj per kg-mol]')
 
     F1comp = {}
     F1comp['h2'] = 0.95
@@ -479,8 +479,8 @@ def HDA_model():
 
     # absorber
     m.nabs = Var(m.abs, within=NonNegativeReals, bounds=(0, 40), initialize=1, doc='number of absorber trays')
-    m.gamma = Var(m.abs, m.compon, within=Reals, initialize=1)
-    m.beta = Var(m.abs, m.compon, within=Reals, initialize=1)
+    m.gamma = Var(m.abs, m.compon, within=Reals, initialize=1, doc='gamma')
+    m.beta = Var(m.abs, m.compon, within=Reals, initialize=1, doc='beta')
 
     # compressor
     m.elec = Var(m.comp, within=NonNegativeReals, bounds=(0, 100), initialize=1, doc='electricity requirement [kw]')
@@ -513,7 +513,7 @@ def HDA_model():
     m.mxr1p = Var(m.mxr1, within=NonNegativeReals, bounds=(0.1, 4), initialize=0, doc='mixer temperature [100 k]')
     m.mxr1t = Var(m.mxr1, within=NonNegativeReals, bounds=(3, 10), initialize=0, doc='mixer pressure [mega-pascal]')
     # mixer
-    m.mxrt = Var(m.mxr, within=NonNegativeReals, bounds=(3.0, 10), initialize=3, doc='mixer temperature [100 k]')  # ?
+    m.mxrt = Var(m.mxr, within=NonNegativeReals, bounds=(3.0, 10), initialize=3, doc='mixer temperature [100 k]')  
     m.mxrp = Var(m.mxr, within=NonNegativeReals, bounds=(0.1, 4.0), initialize=3, doc='mixer pressure [mega-pascal]')
     # reactor
     m.rctt = Var(m.rct, within=NonNegativeReals, bounds=(8.9427, 9.7760), doc='reactor temperature [100 k]')
@@ -813,7 +813,7 @@ def HDA_model():
         m.spl1t[i+1] = spl1t.to_numpy()[i, 0]
 
     # ## constraints
-    m.specrec = Constraint(expr=m.fc[72, 'h2'] >= 0.5 * m.f[72], doc='specification on h2 reccycle')
+    m.specrec = Constraint(expr=m.fc[72, 'h2'] >= 0.5 * m.f[72], doc='specification on h2 recycle')
     m.specprod = Constraint(expr=m.fc[31, 'ben'] >= 0.9997 * m.f[31], doc='specification on benzene production')
 
     def Fbal(_m, stream):
@@ -896,31 +896,31 @@ def HDA_model():
         def Abscmb(_m, i, compon):
             return sum(m.fc[stream, compon] for (i, stream) in m.ilabs) + sum(m.fc[stream, compon] for (i, stream) in m.ivabs) == sum(m.fc[stream, compon] for (i, stream) in m.olabs) + sum(m.fc[stream, compon] for (i, stream) in m.ovabs)
         b.abscmb = Constraint([absorber], m.compon, rule=Abscmb,
-                              doc='overall component mass balance')
+                              doc='overall component mass balance in absorber')
 
         def Abspl(_m, i):
             return sum(m.p[stream] for (_, stream) in m.ilabs) == sum(m.p[stream] for (_, stream) in m.olabs)
         b.abspl = Constraint([absorber], rule=Abspl,
-                             doc='pressure relation for liquid')
+                             doc='pressure relation for liquid in absorber')
 
         def Abstl(_m, i):
             return sum(m.t[stream] for (_, stream) in m.ilabs) == sum(m.t[stream] for (_, stream) in m.olabs)
         b.abstl = Constraint([absorber], rule=Abstl,
-                             doc='temperature relation for liquid')
+                             doc='temperature relation for liquid in absorber')
 
         def Abspv(_m, i):
             return sum(m.p[stream] for (_, stream) in m.ivabs) == sum(m.p[stream] for (_, stream) in m.ovabs)
         b.abspv = Constraint([absorber], rule=Abspv,
-                             doc='pressure relation for vapor')
+                             doc='pressure relation for vapor in absorber')
 
         def Abspin(_m, i):
             return sum(m.p[stream] for (_, stream) in m.ilabs) == sum(m.p[stream] for (_, stream) in m.ivabs)
-        b.absp = Constraint([absorber], rule=Abspin, doc='pressure relation at inlet')
+        b.absp = Constraint([absorber], rule=Abspin, doc='pressure relation at inlet of absorber')
 
         def Absttop(_m, i):
             return sum(m.t[stream] for (_, stream) in m.ilabs) == sum(m.t[stream] for (_, stream) in m.ovabs)
         b.abst = Constraint([absorber], rule=Absttop,
-                            doc='temperature relation at top')
+                            doc='temperature relation at top of absorber')
 
     def build_compressor(b, comp):
         """
@@ -938,28 +938,28 @@ def HDA_model():
                 return sum(m.fc[stream, compon] for (comp_, stream) in m.ocomp if comp_ == comp1) == sum(m.fc[stream, compon] for (comp_, stream) in m.icomp if comp_ == comp1)
             return Constraint.Skip
         b.compcmb = Constraint(
-            [comp], m.compon, rule=Compcmb, doc='component balance for compressor')
+            [comp], m.compon, rule=Compcmb, doc='component balance in compressor')
 
         def Comphb(_m, comp1):
             if comp1 == comp:
                 return sum(m.t[stream] for (_, stream) in m.ocomp if _ == comp) == m.presrat[comp] * sum(m.t[stream] for (_, stream) in m.icomp if _ == comp)
             return Constraint.Skip
         b.comphb = Constraint([comp], rule=Comphb,
-                              doc='heat balance for compressor')
+                              doc='heat balance in compressor')
 
         def Compelec(_m, comp_):
             if comp_ == comp:
                 return m.elec[comp_] == m.alpha * (m.presrat[comp_] - 1) * sum(100. * m.t[stream] * m.f[stream] / 60. * (1./m.compeff) * (m.gam / (m.gam - 1.)) for (comp1, stream) in m.icomp if comp_ == comp1)
             return Constraint.Skip
         b.compelec = Constraint([comp], rule=Compelec,
-                                doc="energy balance for compressor")
+                                doc="energy balance in compressor")
 
         def Ratio(_m, comp_):
             if comp == comp_:
                 return m.presrat[comp_] ** (m.gam/(m.gam-1.)) == sum(m.p[stream] for (comp1, stream) in m.ocomp if comp_ == comp1) / sum(m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_)
             return Constraint.Skip
         b.ratio = Constraint([comp], rule=Ratio,
-                             doc='pressure ratio (out to in)')
+                             doc='pressure ratio (out to in) in compressor')
 
 
     m.vapor_pressure_unit_match = Param(
@@ -1102,7 +1102,7 @@ def HDA_model():
                 return sum(m.fc[stream, compon] for (dist1, stream) in m.idist if dist1 == dist_) == sum(m.fc[stream, compon] for (dist1, stream) in m.vdist if dist1 == dist_) + sum(m.fc[stream, compon] for (dist1, stream) in m.ldist if dist1 == dist_)
             return Constraint.Skip
         b.distcmb = Constraint(
-            [dist], m.compon, rule=Distcmb, doc='component mass balance')
+            [dist], m.compon, rule=Distcmb, doc='component mass balance in distillation column')
 
     
 
@@ -1122,7 +1122,7 @@ def HDA_model():
                 return sum(m.fc[stream, compon] for (flsh1, stream) in m.iflsh if flsh1 == flsh_) == sum(m.fc[stream, compon] for (flsh1, stream) in m.vflsh if flsh1 == flsh_) + sum(m.fc[stream, compon] for (flsh1, stream) in m.lflsh if flsh1 == flsh_)
             return Constraint.Skip
         b.flshcmb = Constraint(
-            [flsh], m.compon, rule=Flshcmb, doc='component mass balance')
+            [flsh], m.compon, rule=Flshcmb, doc='component mass balance in flash')
 
         def Antflsh(_m, flsh_, stream, compon):
             if (flsh_, stream) in m.lflsh and flsh_ == flsh:
@@ -1213,20 +1213,20 @@ def HDA_model():
             if furn == furnace:
                 return m.qfuel[furn] == (sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (furn, stream) in m.ofurn) - sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (furn, stream) in m.ifurn)) * m.heat_unit_match
             return Constraint.Skip
-        b.furnhb = Constraint([furnace], rule=Furnhb, doc='heat balance for furnace')
+        b.furnhb = Constraint([furnace], rule=Furnhb, doc='heat balance in furnace')
 
         def Furncmb(_m, furn, compon):
             if furn == furnace:
                 return sum(m.fc[stream, compon] for (furn, stream) in m.ofurn) == sum(m.fc[stream, compon] for (furn, stream) in m.ifurn)
             return Constraint.Skip
         b.furncmb = Constraint([furnace], m.compon,
-                               rule=Furncmb, doc='component mass balance')
+                               rule=Furncmb, doc='component mass balance in furnace')
 
         def Furnp(_m, furn):
             if furn == furnace:
                 return sum(m.p[stream] for (furn, stream) in m.ofurn) == sum(m.p[stream] for (furn, stream) in m.ifurn) - m.furnpdrop
             return Constraint.Skip
-        b.furnp = Constraint([furnace], rule=Furnp, doc='pressure relation')
+        b.furnp = Constraint([furnace], rule=Furnp, doc='pressure relation in furnace')
 
     
 
@@ -1244,16 +1244,16 @@ def HDA_model():
         def Heccmb(_m, hec, compon):
             return sum(m.fc[stream, compon] for (hec_, stream) in m.ohec if hec_ == hec) == sum(m.fc[stream, compon] for (hec_, stream) in m.ihec if hec_ == hec)
         b.heccmb = Constraint([cooler], m.compon,
-                              rule=Heccmb, doc='heat balance for cooler')
+                              rule=Heccmb, doc='heat balance in cooler')
 
         def Hechb(_m, hec):
             return m.qc[hec] == (sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (hec_, stream) in m.ihec if hec_ == hec) - sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (hec_, stream) in m.ohec if hec_ == hec)) * m.heat_unit_match
         b.hechb = Constraint([cooler], rule=Hechb,
-                             doc='component mass balance')
+                             doc='component mass balance in cooler')
 
         def Hecp(_m, hec):
             return sum(m.p[stream] for(hec_, stream) in m.ihec if hec_ == hec) == sum(m.p[stream] for(hec_, stream) in m.ohec if hec_ == hec)
-        b.hecp = Constraint([cooler], rule=Hecp, doc='pressure relation')
+        b.hecp = Constraint([cooler], rule=Hecp, doc='pressure relation in cooler')
 
     
 
@@ -1281,7 +1281,7 @@ def HDA_model():
                                      sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (heh_, stream) in m.iheh if heh_ == heh)) * m.heat_unit_match
             return Constraint.Skip
         b.hehhb = Constraint(
-            Set(initialize=[heater]), rule=Hehhb, doc='heat balance for heater')
+            Set(initialize=[heater]), rule=Hehhb, doc='heat balance in heater')
 
         def hehp(_m, heh):
             if heh == heater:
@@ -1309,26 +1309,26 @@ def HDA_model():
                 return sum(m.fc[stream, compon] for (exch_, stream) in m.ocexch if exch == exch_) == sum(m.fc[stream, compon] for (exch_, stream) in m.icexch if exch == exch_)
             return Constraint.Skip
         b.exchcmbc = Constraint([exchanger], m.compon,
-                                rule=Exchcmbc, doc='component balance (cold)')
+                                rule=Exchcmbc, doc='component balance (cold) in exchanger')
 
         def Exchcmbh(_m, exch, compon):
             if exch in m.exch and compon in m.compon:
                 return sum(m.fc[stream, compon] for (exch_, stream) in m.ohexch if exch == exch_) == sum(m.fc[stream, compon] for (exch_, stream) in m.ihexch if exch == exch_)
             return Constraint.Skip
         b.exchcmbh = Constraint([exchanger], m.compon,
-                                rule=Exchcmbh, doc='component balance (hot)')
+                                rule=Exchcmbh, doc='component balance (hot) in exchanger')
 
         def Exchhbc(_m, exch):
             if exch in m.exch:
                 return (sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (exch_, stream) in m.ocexch if exch == exch_) - sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (exch_, stream) in m.icexch if exch == exch_)) * m.heat_unit_match == m.qexch[exch]
             return Constraint.Skip
         b.exchhbc = Constraint([exchanger], rule=Exchhbc,
-                               doc='heat balance for cold stream')
+                               doc='heat balance for cold stream in exchanger')
 
         def Exchhbh(_m, exch):
             return (sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (exch, stream) in m.ihexch) - sum(m.cp[stream] * m.f[stream] * 100. * m.t[stream] for (exch, stream) in m.ohexch)) * m.heat_unit_match == m.qexch[exch]
         b.exchhbh = Constraint([exchanger], rule=Exchhbh,
-                               doc='heat balance for hot stream')
+                               doc='heat balance for hot stream in exchanger')
 
         def Exchdtm1(_m, exch):
             return sum(m.t[stream] for (exch, stream) in m.ohexch) >= sum(m.t[stream] for (exch, stream) in m.icexch) + m.exchanger_temp_drop
@@ -1343,12 +1343,12 @@ def HDA_model():
         def Exchpc(_m, exch):
             return sum(m.p[stream] for (exch, stream) in m.ocexch) == sum(m.p[stream] for (exch, stream) in m.icexch)
         b.exchpc = Constraint([exchanger], rule=Exchpc,
-                              doc='pressure relation (cold)')
+                              doc='pressure relation (cold) in exchanger')
 
         def Exchph(_m, exch):
             return sum(m.p[stream] for (exch, stream) in m.ohexch) == sum(m.p[stream] for (exch, stream) in m.ihexch)
         b.exchph = Constraint([exchanger], rule=Exchph,
-                              doc='pressure relation (hot)')
+                              doc='pressure relation (hot) in exchanger')
 
     
     m.membrane_recovery_sepc = Param(initialize=0.50)
@@ -1370,21 +1370,21 @@ def HDA_model():
                 return m.fc[stream, compon] == sum(m.fc[stream, compon] for (memb_, stream) in m.pmemb if memb == memb_) + sum(m.fc[stream, compon] for (memb_, stream) in m.nmemb if memb == memb_)
             return Constraint.Skip
         b.memcmb = Constraint([membrane], m.str, m.compon,
-                              rule=Memcmb, doc='component mass balance')
+                              rule=Memcmb, doc='component mass balance in membrane separator')
 
         def Flux(_m, memb, stream, compon):
             if (memb, stream) in m.pmemb and (memb, compon) in m.mnorm and memb == membrane:
                 return m.fc[stream, compon] == m.a[memb] * m.perm[compon] / 2.0 * (sum(m.p[stream2] for (memb_, stream2) in m.imemb if memb_ == memb) * (sum((m.fc[stream2, compon] + m.eps1)/(m.f[stream2] + m.eps1) for (memb_, stream2) in m.imemb if memb_ == memb) + sum((m.fc[stream2, compon] + m.eps1)/(m.f[stream2] + m.eps1) for (memb_, stream2) in m.nmemb if memb_ == memb)) - 2.0 * m.p[stream] * (m.fc[stream, compon] + m.eps1) / (m.f[stream] + m.eps1))
             return Constraint.Skip
         b.flux = Constraint([membrane], m.str, m.compon,
-                            rule=Flux, doc='mass flux relation')
+                            rule=Flux, doc='mass flux relation in membrane separator')
 
         def Simp(_m, memb, stream, compon):
             if (memb, stream) in m.pmemb and (memb, compon) in m.msimp and memb == membrane:
                 return m.fc[stream, compon] == 0.0
             return Constraint.Skip
         b.simp = Constraint([membrane], m.str, m.compon,
-                            rule=Simp, doc='mass flux relation (simplified)')
+                            rule=Simp, doc='mass flux relation (simplified) in membrane separator')
 
         def Memtp(_m, memb, stream):
             if (memb, stream) in m.pmemb and memb == membrane:
@@ -1492,19 +1492,19 @@ def HDA_model():
                 return sum(m.fc[stream, compon] for (pump_, stream) in m.opump if pump == pump_) == sum(m.fc[stream, compon] for (pump_, stream) in m.ipump if pump_ == pump)
             return Constraint.Skip
         b.pumpcmb = Constraint(
-            [pump_], m.compon, rule=Pumpcmb, doc='component balance for pump')
+            [pump_], m.compon, rule=Pumpcmb, doc='component balance in pump')
 
         def Pumphb(_m, pump):
             if pump == pump_:
                 return sum(m.t[stream] for (pump_, stream) in m.opump if pump == pump_) == sum(m.t[stream] for (pump_, stream) in m.ipump if pump == pump_)
             return Constraint.Skip
-        b.pumphb = Constraint([pump_], rule=Pumphb, doc='heat balance for pump')
+        b.pumphb = Constraint([pump_], rule=Pumphb, doc='heat balance in pump')
 
         def Pumppr(_m, pump):
             if pump == pump_:
                 return sum(m.p[stream] for (pump_, stream) in m.opump if pump == pump_) >= sum(m.p[stream] for (pump_, stream) in m.ipump if pump == pump_)
             return Constraint.Skip
-        b.pumppr = Constraint([pump_], rule=Pumppr, doc='pressure relation for pump')
+        b.pumppr = Constraint([pump_], rule=Pumppr, doc='pressure relation in pump')
 
     
 
@@ -1524,14 +1524,14 @@ def HDA_model():
                 return m.fc[stream, compon] == sum(m.e[stream]*m.fc[str2, compon] for (spl_, str2) in m.ispl if spl == spl_)
             return Constraint.Skip
         b.splcmb = Constraint([multi_splitter], m.str, m.compon,
-                              rule=Splcmb, doc='component balance for splitter')
+                              rule=Splcmb, doc='component balance in splitter')
 
         def Esum(_m, spl):
             if spl in m.spl and spl == multi_splitter:
                 return sum(m.e[stream] for (spl_, stream) in m.ospl if spl_ == spl) == 1.0
             return Constraint.Skip
         b.esum = Constraint([multi_splitter], rule=Esum,
-                            doc='split fraction relation for splitter')
+                            doc='split fraction relation in splitter')
 
         def Splpi(_m, spl, stream):
             if (spl, stream) in m.ispl and spl == multi_splitter:
@@ -1576,15 +1576,15 @@ def HDA_model():
         """
         def Valcmb(_m, valve, compon):
             return sum(m.fc[stream, compon] for (valve_, stream) in m.oval if valve == valve_) == sum(m.fc[stream, compon] for (valve_, stream) in m.ival if valve == valve_)
-        b.valcmb = Constraint([valve_], m.compon, rule=Valcmb, doc='component balance for valve')
+        b.valcmb = Constraint([valve_], m.compon, rule=Valcmb, doc='component balance in valve')
 
         def Valt(_m, valve):
             return sum(m.t[stream] / (m.p[stream] ** ((m.gam - 1.) / m.gam)) for (valv, stream) in m.oval if valv == valve) == sum(m.t[stream] / (m.p[stream] ** ((m.gam - 1.) / m.gam)) for (valv, stream) in m.ival if valv == valve)
-        b.valt = Constraint([valve_], rule=Valt, doc='temperature relation for valve')
+        b.valt = Constraint([valve_], rule=Valt, doc='temperature relation in valve')
 
         def Valp(_m, valve):
             return sum(m.p[stream] for (valv, stream) in m.oval if valv == valve) <= sum(m.p[stream] for (valv, stream) in m.ival if valv == valve)
-        b.valp = Constraint([valve_], rule=Valp, doc='pressure relation for valve')
+        b.valp = Constraint([valve_], rule=Valp, doc='pressure relation in valve')
 
 
     m.Prereference_factor = Param(
