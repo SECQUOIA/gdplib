@@ -11,6 +11,7 @@ This is a further modification to support discretization of area simplifying
 the nonlinear expressions.
 
 """
+
 from __future__ import division
 
 from pyomo.environ import Binary, Constraint, log, Set, Var

@@ -17,9 +17,23 @@ import os
 import pandas as pd
 
 from pyomo.environ import (
-    ConcreteModel, Constraint, Integers, NonNegativeReals, Objective, Param,
-    RangeSet, Set, SolverFactory, Suffix, TransformationFactory, Var, exp, log,
-    sqrt, summation, value
+    ConcreteModel,
+    Constraint,
+    Integers,
+    NonNegativeReals,
+    Objective,
+    Param,
+    RangeSet,
+    Set,
+    SolverFactory,
+    Suffix,
+    TransformationFactory,
+    Var,
+    exp,
+    log,
+    sqrt,
+    summation,
+    value,
 )
 from gdplib.stranded_gas.util import alphanum_sorted
 from pyomo.environ import TerminationCondition as tc
@@ -43,13 +57,13 @@ def build_model():
 
     m.periods_per_year = Param(initialize=4, doc="Quarters per year")
     m.project_life = Param(initialize=15, doc="Years")
-    m.time = RangeSet(0, m.periods_per_year *
-                      m.project_life - 1, doc="Time periods")
+    m.time = RangeSet(0, m.periods_per_year * m.project_life - 1, doc="Time periods")
     m.discount_rate = Param(initialize=0.08, doc="8%")
-    m.learning_rate = Param(initialize=0.1, doc="Fraction discount for doubling of quantity")
+    m.learning_rate = Param(
+        initialize=0.1, doc="Fraction discount for doubling of quantity"
+    )
 
-    m.module_setup_time = Param(
-        initialize=1, doc="1 quarter for module transfer")
+    m.module_setup_time = Param(initialize=1, doc="1 quarter for module transfer")
 
     @m.Param(m.time)
     def discount_factor(m, t):
@@ -70,7 +84,9 @@ def build_model():
         """
         return (1 + m.discount_rate / m.periods_per_year) ** (-t / m.periods_per_year)
 
-    xlsx_data = pd.read_excel(os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None)
+    xlsx_data = pd.read_excel(
+        os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None
+    )
     module_sheet = xlsx_data['modules'].set_index('Type')
     m.module_types = Set(initialize=module_sheet.columns.tolist(), doc="Module types")
 
@@ -93,7 +109,9 @@ def build_model():
         """
         return float(module_sheet[mtype]['Capital Cost [MM$]'])
 
-    @m.Param(m.module_types, doc="Natural gas consumption per module of this type [MMSCF/d]")
+    @m.Param(
+        m.module_types, doc="Natural gas consumption per module of this type [MMSCF/d]"
+    )
     def unit_gas_consumption(m, mtype):
         """
         Calculates the natural gas consumption per module of a given type.
@@ -131,7 +149,10 @@ def build_model():
         """
         return float(module_sheet[mtype]['Gasoline [kBD]'])
 
-    @m.Param(m.module_types, doc="Overall conversion of natural gas into gasoline per module of this type [kB/MMSCF]")
+    @m.Param(
+        m.module_types,
+        doc="Overall conversion of natural gas into gasoline per module of this type [kB/MMSCF]",
+    )
     def module_conversion(m, mtype):
         """
         Calculates the overall conversion of natural gas into gasoline per module of a given type.
@@ -155,7 +176,8 @@ def build_model():
     m.site_pairs = Set(
         doc="Pairs of potential sites",
         initialize=m.potential_sites * m.potential_sites,
-        filter=lambda _, x, y: not x == y)
+        filter=lambda _, x, y: not x == y,
+    )
 
     @m.Param(m.potential_sites)
     def site_x(m, site):
@@ -237,14 +259,18 @@ def build_model():
         return float(well_sheet['y'][well])
 
     sched_sheet = xlsx_data['well-schedule']
-    decay_curve = [1] + [3.69 * exp(-1.31 * (t + 1) ** 0.292) for t in range(m.project_life * 12)]
+    decay_curve = [1] + [
+        3.69 * exp(-1.31 * (t + 1) ** 0.292) for t in range(m.project_life * 12)
+    ]
     well_profiles = {well: [0 for _ in decay_curve] for well in m.well_clusters}
     for _, well_info in sched_sheet.iterrows():
         start_time = int(well_info['Month'])
-        prod = [0] * start_time + decay_curve[:len(decay_curve) - start_time]
+        prod = [0] * start_time + decay_curve[: len(decay_curve) - start_time]
         prod = [x * float(well_info['max prod [MMSCF/d]']) for x in prod]
         current_profile = well_profiles[well_info['well-cluster']]
-        well_profiles[well_info['well-cluster']] = [val + prod[i] for i, val in enumerate(current_profile)]
+        well_profiles[well_info['well-cluster']] = [
+            val + prod[i] for i, val in enumerate(current_profile)
+        ]
 
     @m.Param(m.well_clusters, m.time, doc="Supply of gas from well cluster [MMSCF/day]")
     def gas_supply(m, well, t):
@@ -265,7 +291,7 @@ def build_model():
         Pyomo.Parameter
             A float representing the supply of gas from the well cluster in the given time period.
         """
-        return sum(well_profiles[well][t * 3:t * 3 + 2]) / 3
+        return sum(well_profiles[well][t * 3 : t * 3 + 2]) / 3
 
     mkt_sheet = xlsx_data['markets'].set_index('Market')
     m.markets = Set(initialize=mkt_sheet.index.tolist(), doc="Markets")
@@ -335,7 +361,7 @@ def build_model():
         """
         Calculates the Euclidean distance between a source and a destination within the gas processing network.
         Assuming `src_x`, `src_y` for a source and `dest_x`, `dest_y` for a destination are defined within the model, the distance is calculated as follows:
-    
+
         distance = sqrt((src_x - dest_x) ** 2 + (src_y - dest_y) ** 2)
 
         Parameters
@@ -367,17 +393,32 @@ def build_model():
         return sqrt((src_x - dest_x) ** 2 + (src_y - dest_y) ** 2)
 
     m.num_modules = Var(
-        m.module_types, m.potential_sites, m.time,
+        m.module_types,
+        m.potential_sites,
+        m.time,
         doc="Number of active modules of each type at a site in a period",
-        domain=Integers, bounds=(0, 50), initialize=1)
+        domain=Integers,
+        bounds=(0, 50),
+        initialize=1,
+    )
     m.modules_transferred = Var(
-        m.module_types, m.site_pairs, m.time,
+        m.module_types,
+        m.site_pairs,
+        m.time,
         doc="Number of module transfers initiated from one site to another in a period.",
-        domain=Integers, bounds=(0, 15), initialize=0)
+        domain=Integers,
+        bounds=(0, 15),
+        initialize=0,
+    )
     m.modules_purchased = Var(
-        m.module_types, m.potential_sites, m.time,
+        m.module_types,
+        m.potential_sites,
+        m.time,
         doc="Number of modules of each type purchased for a site in a period",
-        domain=Integers, bounds=(0, 30), initialize=1)
+        domain=Integers,
+        bounds=(0, 30),
+        initialize=1,
+    )
 
     m.pipeline_unit_cost = Param(doc="MM$/mile", initialize=2)
 
@@ -482,7 +523,10 @@ def build_model():
     m.learning_factor = Var(
         m.module_types,
         doc="Fraction of cost due to economies of mass production",
-        domain=NonNegativeReals, bounds=(0, 1), initialize=1)
+        domain=NonNegativeReals,
+        bounds=(0, 1),
+        initialize=1,
+    )
 
     @m.Disjunct(m.module_types)
     def mtype_exists(disj, mtype):
@@ -504,11 +548,16 @@ def build_model():
             Ensures that at least one module of this type is purchased, activating this disjunct.
         """
         disj.learning_factor_calc = Constraint(
-            expr=m.learning_factor[mtype] == (1 - m.learning_rate) ** (
-                log(sum(m.modules_purchased[mtype, :, :])) / log(2)), doc="Learning factor calculation")
+            expr=m.learning_factor[mtype]
+            == (1 - m.learning_rate)
+            ** (log(sum(m.modules_purchased[mtype, :, :])) / log(2)),
+            doc="Learning factor calculation",
+        )
         m.BigM[disj.learning_factor_calc] = 1
         disj.require_module_purchases = Constraint(
-            expr=sum(m.modules_purchased[mtype, :, :]) >= 1, doc="At least one module purchase")
+            expr=sum(m.modules_purchased[mtype, :, :]) >= 1,
+            doc="At least one module purchase",
+        )
 
     @m.Disjunct(m.module_types)
     def mtype_absent(disj, mtype):
@@ -523,7 +572,8 @@ def build_model():
             Index of the module type.
         """
         disj.constant_learning_factor = Constraint(
-            expr=m.learning_factor[mtype] == 1, doc="Constant learning factor")
+            expr=m.learning_factor[mtype] == 1, doc="Constant learning factor"
+        )
 
     @m.Disjunction(m.module_types)
     def mtype_existence(m, mtype):
@@ -563,25 +613,46 @@ def build_model():
         Pyomo.Expression
             A Pyomo Expression that calculates the total unit cost of a module for a given type and time period.
         """
-        return m.module_base_cost[mtype] * m.learning_factor[mtype] * m.discount_factor[t]
+        return (
+            m.module_base_cost[mtype] * m.learning_factor[mtype] * m.discount_factor[t]
+        )
 
     m.production = Var(
-        m.potential_sites, m.time,
+        m.potential_sites,
+        m.time,
         doc="Production of gasoline in a time period [kBD]",
-        domain=NonNegativeReals, bounds=(0, 30), initialize=10)
+        domain=NonNegativeReals,
+        bounds=(0, 30),
+        initialize=10,
+    )
     m.gas_consumption = Var(
-        m.potential_sites, m.module_types, m.time,
+        m.potential_sites,
+        m.module_types,
+        m.time,
         doc="Consumption of natural gas by each module type "
         "at each site in a time period [MMSCF/d]",
-        domain=NonNegativeReals, bounds=(0, 250), initialize=50)
+        domain=NonNegativeReals,
+        bounds=(0, 250),
+        initialize=50,
+    )
     m.gas_flows = Var(
-        m.well_clusters, m.potential_sites, m.time,
+        m.well_clusters,
+        m.potential_sites,
+        m.time,
         doc="Flow of gas from a well cluster to a site [MMSCF/d]",
-        domain=NonNegativeReals, bounds=(0, 200), initialize=15)
+        domain=NonNegativeReals,
+        bounds=(0, 200),
+        initialize=15,
+    )
     m.product_flows = Var(
-        m.potential_sites, m.markets, m.time,
+        m.potential_sites,
+        m.markets,
+        m.time,
         doc="Product shipments from a site to a market in a period [kBD]",
-        domain=NonNegativeReals, bounds=(0, 30), initialize=10)
+        domain=NonNegativeReals,
+        bounds=(0, 30),
+        initialize=10,
+    )
 
     @m.Constraint(m.potential_sites, m.module_types, m.time)
     def consumption_capacity(m, site, mtype, t):
@@ -605,7 +676,8 @@ def build_model():
             A constraint that limits the gas consumption per module type at each site, ensuring it does not exceed the capacity provided by the number of active modules of that type at the site during the time period.
         """
         return m.gas_consumption[site, mtype, t] <= (
-            m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype])
+            m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype]
+        )
 
     @m.Constraint(m.potential_sites, m.time)
     def production_limit(m, site, t):
@@ -628,7 +700,8 @@ def build_model():
         """
         return m.production[site, t] <= sum(
             m.gas_consumption[site, mtype, t] * m.module_conversion[mtype]
-            for mtype in m.module_types)
+            for mtype in m.module_types
+        )
 
     @m.Expression(m.potential_sites, m.time)
     def capacity(m, site, t):
@@ -650,8 +723,11 @@ def build_model():
             An expression that sums up the potential production capacity at a site, calculated as the product of the number of modules, their individual gas consumption rates, and their conversion efficiency.
         """
         return sum(
-            m.num_modules[mtype, site, t] * m.unit_gas_consumption[mtype]
-            * m.module_conversion[mtype] for mtype in m.module_types)
+            m.num_modules[mtype, site, t]
+            * m.unit_gas_consumption[mtype]
+            * m.module_conversion[mtype]
+            for mtype in m.module_types
+        )
 
     @m.Constraint(m.potential_sites, m.time)
     def gas_supply_meets_consumption(m, site, t):
@@ -693,8 +769,10 @@ def build_model():
         Pyomo.Constraint
             A constraint that limits the total gas flow from a well cluster to various sites to not exceed the gas supply available at that well cluster for the given time period.
         """
-        return sum(m.gas_flows[well, site, t]
-                   for site in m.potential_sites) <= m.gas_supply[well, t]
+        return (
+            sum(m.gas_flows[well, site, t] for site in m.potential_sites)
+            <= m.gas_supply[well, t]
+        )
 
     @m.Constraint(m.potential_sites, m.time)
     def gasoline_production_requirement(m, site, t):
@@ -715,8 +793,10 @@ def build_model():
         Pyomo.Constraint
             A constraint that the sum of product flows (gasoline) from a site to various markets equals the total production at that site for the given period.
         """
-        return sum(m.product_flows[site, mkt, t]
-                   for mkt in m.markets) == m.production[site, t]
+        return (
+            sum(m.product_flows[site, mkt, t] for mkt in m.markets)
+            == m.production[site, t]
+        )
 
     @m.Constraint(m.potential_sites, m.module_types, m.time)
     def module_balance(m, site, mtype, t):
@@ -740,12 +820,14 @@ def build_model():
             A constraint that maintains an accurate balance of module counts at each site, considering new purchases, transfers in, existing inventory, and transfers out.
         """
         if t >= m.module_setup_time:
-            modules_added = m.modules_purchased[
-                mtype, site, t - m.module_setup_time]
+            modules_added = m.modules_purchased[mtype, site, t - m.module_setup_time]
             modules_transferred_in = sum(
                 m.modules_transferred[
-                    mtype, from_site, to_site, t - m.module_setup_time]
-                for from_site, to_site in m.site_pairs if to_site == site)
+                    mtype, from_site, to_site, t - m.module_setup_time
+                ]
+                for from_site, to_site in m.site_pairs
+                if to_site == site
+            )
         else:
             modules_added = 0
             modules_transferred_in = 0
@@ -755,11 +837,16 @@ def build_model():
             existing_modules = 0
         modules_transferred_out = sum(
             m.modules_transferred[mtype, from_site, to_site, t]
-            for from_site, to_site in m.site_pairs if from_site == site)
+            for from_site, to_site in m.site_pairs
+            if from_site == site
+        )
 
         return m.num_modules[mtype, site, t] == (
-            existing_modules + modules_added
-            + modules_transferred_in - modules_transferred_out)
+            existing_modules
+            + modules_added
+            + modules_transferred_in
+            - modules_transferred_out
+        )
 
     @m.Disjunct(m.potential_sites)
     def site_active(disj, site):
@@ -787,27 +874,33 @@ def build_model():
         site : str
             The index for the potential site.
         """
-        disj.no_production = Constraint(
-            expr=sum(m.production[site, :]) == 0)
+        disj.no_production = Constraint(expr=sum(m.production[site, :]) == 0)
         disj.no_gas_consumption = Constraint(
-            expr=sum(m.gas_consumption[site, :, :]) == 0)
-        disj.no_gas_flows = Constraint(
-            expr=sum(m.gas_flows[:, site, :]) == 0)
-        disj.no_product_flows = Constraint(
-            expr=sum(m.product_flows[site, :, :]) == 0)
-        disj.no_modules = Constraint(
-            expr=sum(m.num_modules[:, site, :]) == 0)
+            expr=sum(m.gas_consumption[site, :, :]) == 0
+        )
+        disj.no_gas_flows = Constraint(expr=sum(m.gas_flows[:, site, :]) == 0)
+        disj.no_product_flows = Constraint(expr=sum(m.product_flows[site, :, :]) == 0)
+        disj.no_modules = Constraint(expr=sum(m.num_modules[:, site, :]) == 0)
         disj.no_modules_transferred = Constraint(
             expr=sum(
                 m.modules_transferred[mtypes, from_site, to_site, t]
                 for mtypes in m.module_types
                 for from_site, to_site in m.site_pairs
                 for t in m.time
-                if from_site == site or to_site == site) == 0, doc="No modules transferred")
+                if from_site == site or to_site == site
+            )
+            == 0,
+            doc="No modules transferred",
+        )
         disj.no_modules_purchased = Constraint(
             expr=sum(
                 m.modules_purchased[mtype, site, t]
-                for mtype in m.module_types for t in m.time) == 0, doc="No modules purchased")
+                for mtype in m.module_types
+                for t in m.time
+            )
+            == 0,
+            doc="No modules purchased",
+        )
 
     @m.Disjunction(m.potential_sites)
     def site_active_or_not(m, site):
@@ -859,7 +952,9 @@ def build_model():
             The index for the potential site.
         """
         disj.no_natural_gas_flow = Constraint(
-            expr=sum(m.gas_flows[well, site, t] for t in m.time) == 0, doc="No natural gas flow")
+            expr=sum(m.gas_flows[well, site, t] for t in m.time) == 0,
+            doc="No natural gas flow",
+        )
 
     @m.Disjunction(m.well_clusters, m.potential_sites)
     def pipeline_existence(m, well, site):
@@ -903,11 +998,13 @@ def build_model():
         return sum(
             m.product_flows[site, mkt, t]  # kBD
             * 1000  # bbl/kB
-            / 1E6  # $ to MM$
+            / 1e6  # $ to MM$
             * m.days_per_period
-            * m.gasoline_price[t] * m.gal_per_bbl
+            * m.gasoline_price[t]
+            * m.gal_per_bbl
             for mkt in m.markets
-            for t in m.time)
+            for t in m.time
+        )
 
     @m.Expression(m.potential_sites, doc="MM$")
     def raw_material_cost(m, site):
@@ -927,15 +1024,20 @@ def build_model():
             An expression calculating the total cost of natural gas used, taking into account the gas price and the conversion factor from MSCF to MMSCF.
         """
         return sum(
-            m.gas_consumption[site, mtype, t] * m.days_per_period
-            / 1E6  # $ to MM$
+            m.gas_consumption[site, mtype, t]
+            * m.days_per_period
+            / 1e6  # $ to MM$
             * m.nat_gas_price[t]
             * 1000  # MMSCF to MSCF
-            for mtype in m.module_types for t in m.time)
+            for mtype in m.module_types
+            for t in m.time
+        )
 
     @m.Expression(
-        m.potential_sites, m.markets,
-        doc="Aggregate cost to transport gasoline from a site to market [MM$]")
+        m.potential_sites,
+        m.markets,
+        doc="Aggregate cost to transport gasoline from a site to market [MM$]",
+    )
     def product_transport_cost(m, site, mkt):
         """
         Computes the cost of transporting gasoline from each production site to different markets, expressed in million dollars.
@@ -955,11 +1057,15 @@ def build_model():
             The total transportation cost for shipping gasoline from a site to a market, adjusted for the distance and transportation rate.
         """
         return sum(
-            m.product_flows[site, mkt, t] * m.gal_per_bbl
+            m.product_flows[site, mkt, t]
+            * m.gal_per_bbl
             * 1000  # bbl/kB
-            / 1E6  # $ to MM$
-            * m.distance[site, mkt] / 100 * m.gasoline_tranport_cost[t]
-            for t in m.time)
+            / 1e6  # $ to MM$
+            * m.distance[site, mkt]
+            / 100
+            * m.gasoline_tranport_cost[t]
+            for t in m.time
+        )
 
     @m.Expression(m.well_clusters, m.potential_sites, doc="MM$")
     def pipeline_construction_cost(m, well, site):
@@ -980,8 +1086,11 @@ def build_model():
         Pyomo.Expression
             The cost of pipeline construction, in million dollars, if a pipeline is established between the well cluster and the site.
         """
-        return (m.pipeline_unit_cost * m.distance[well, site]
-                * m.pipeline_exists[well, site].binary_indicator_var)
+        return (
+            m.pipeline_unit_cost
+            * m.distance[well, site]
+            * m.pipeline_exists[well, site].binary_indicator_var
+        )
 
     # Module transport cost
     @m.Expression(m.site_pairs, doc="MM$")
@@ -1005,13 +1114,15 @@ def build_model():
         """
         return sum(
             m.modules_transferred[mtype, from_site, to_site, t]
-            * m.distance[from_site, to_site] / 100
+            * m.distance[from_site, to_site]
+            / 100
             * m.module_transport_distance_cost[t]
-            / 1E3  # M$ to MM$
+            / 1e3  # M$ to MM$
             + m.modules_transferred[mtype, from_site, to_site, t]
             * m.module_transport_unit_cost[t]
             for mtype in m.module_types
-            for t in m.time)
+            for t in m.time
+        )
 
     @m.Expression(m.potential_sites, doc="MM$")
     def module_purchase_cost(m, site):
@@ -1033,7 +1144,8 @@ def build_model():
         return sum(
             m.module_unit_cost[mtype, t] * m.modules_purchased[mtype, site, t]
             for mtype in m.module_types
-            for t in m.time)
+            for t in m.time
+        )
 
     @m.Expression(doc="MM$")
     def profit(m):
@@ -1059,7 +1171,9 @@ def build_model():
             - summation(m.module_purchase_cost)
         )
 
-    m.neg_profit = Objective(expr=-m.profit, doc="Objective Function: Minimize Negative Profit")
+    m.neg_profit = Objective(
+        expr=-m.profit, doc="Objective Function: Minimize Negative Profit"
+    )
 
     # Tightening constraints
     @m.Constraint(doc="Limit total module purchases over project span.")

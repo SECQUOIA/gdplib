@@ -7,6 +7,7 @@ DOI: 10.1016/0098-1354(90)85010-8
 This is an implementation of the conventional problem.
 
 """
+
 from __future__ import division
 
 from pyomo.environ import Constraint, log, value

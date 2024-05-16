@@ -57,7 +57,7 @@ def main():
     for sec in m.section:
         for n_tray in m.tray:
             m.P[sec, n_tray].fix(m.Preb)
-            
+
     ## Initial values for the tray existence or absence
     for n_tray in m.candidate_trays_main:
         for sec in m.section_main:
@@ -70,53 +70,38 @@ def main():
         m.tray_exists[3, n_tray].indicator_var.set_value(1)
         m.tray_absent[3, n_tray].indicator_var.set_value(0)
 
-       
-
     intro_message(m)
 
+    results = SolverFactory('gdpopt').solve(
+        m,
+        strategy='LOA',
+        tee=True,
+        time_limit=3600,
+        mip_solver='gams',
+        mip_solver_args=dict(solver='cplex'),
+    )
 
-    results = SolverFactory('gdpopt').solve(m,
-                                            strategy='LOA',
-                                            tee=True,
-                                            time_limit = 3600, 
-                                            mip_solver='gams',
-                                            mip_solver_args=dict(solver='cplex')
-    )
-    
-    m.calc_nt = (
-        sum(
-            sum(m.tray_exists[sec, n_tray].indicator_var.value
-                for n_tray in m.tray)
-            for sec in m.section)
-        - sum(m.tray_exists[3, n_tray].indicator_var.value
-              for n_tray in m.tray)
-    )
+    m.calc_nt = sum(
+        sum(m.tray_exists[sec, n_tray].indicator_var.value for n_tray in m.tray)
+        for sec in m.section
+    ) - sum(m.tray_exists[3, n_tray].indicator_var.value for n_tray in m.tray)
     m.dw_start = (
-        sum(m.tray_exists[1, n_tray].indicator_var.value
-            for n_tray in m.tray)
-        + 1
+        sum(m.tray_exists[1, n_tray].indicator_var.value for n_tray in m.tray) + 1
     )
-    m.dw_end = (
-        sum(m.tray_exists[1, n_tray].indicator_var.value
-            for n_tray in m.tray)
-        + sum(m.tray_exists[2, n_tray].indicator_var.value
-            for n_tray in m.tray)
-    )
-
+    m.dw_end = sum(
+        m.tray_exists[1, n_tray].indicator_var.value for n_tray in m.tray
+    ) + sum(m.tray_exists[2, n_tray].indicator_var.value for n_tray in m.tray)
 
     display_results(m)
 
-
-    print('  ', results)  
+    print('  ', results)
     print('  Solver Status: ', results.solver.status)
     print('  Termination condition: ', results.solver.termination_condition)
 
 
-
-
-
 def intro_message(m):
-    print("""
+    print(
+        """
 
 If you use this model and/or initialization strategy, you may cite the following:
 Rawlings, ES; Chen, Q; Grossmann, IE; Caballero, JA. Kaibel Column: Modeling, 
@@ -125,7 +110,8 @@ Comp. and Chem. Eng., 2019, 125, 31-39.
 DOI: https://doi.org/10.1016/j.compchemeng.2019.03.006
 
 
-    """)
+    """
+    )
 
 
 def display_results(m):
@@ -141,71 +127,62 @@ def display_results(m):
     print('Dividing_wall_start: %s' % value(m.dw_start))
     print('Dividing_wall_end: %s' % value(m.dw_end))
     print(' ')
-    print('Qreb: {: >3.0f}kW  B_1: {: > 2.0f}  B_2: {: >2.0f}  B_3: {: >2.0f}  B_4: {: >2.0f}  Btotal: {: >2.0f}'
-          .format(value(m.Qreb / m.Qscale ),
-                  value(m.B[1]),
-                  value(m.B[2]),
-                  value(m.B[3]),
-                  value(m.B[4]),
-                  value(m.Btotal)
-          )
+    print(
+        'Qreb: {: >3.0f}kW  B_1: {: > 2.0f}  B_2: {: >2.0f}  B_3: {: >2.0f}  B_4: {: >2.0f}  Btotal: {: >2.0f}'.format(
+            value(m.Qreb / m.Qscale),
+            value(m.B[1]),
+            value(m.B[2]),
+            value(m.B[3]),
+            value(m.B[4]),
+            value(m.Btotal),
+        )
     )
-    print('Qcon: {: >2.0f}kW  D_1: {: >2.0f}  D_2: {: >2.0f}  D_3: {: >2.0f}  D_4: {: >2.0f}  Dtotal: {: >2.0f}'
-          .format(value(m.Qcon / m.Qscale),
-                  value(m.D[1]),
-                  value(m.D[2]),
-                  value(m.D[3]),
-                  value(m.D[4]),
-                  value(m.Dtotal)
-          )
+    print(
+        'Qcon: {: >2.0f}kW  D_1: {: >2.0f}  D_2: {: >2.0f}  D_3: {: >2.0f}  D_4: {: >2.0f}  Dtotal: {: >2.0f}'.format(
+            value(m.Qcon / m.Qscale),
+            value(m.D[1]),
+            value(m.D[2]),
+            value(m.D[3]),
+            value(m.D[4]),
+            value(m.Dtotal),
+        )
     )
     print(' ')
-    print('Reflux: {: >3.4f}'
-          .format(value(m.rr)
-          )
-    )
-    print('Reboil: {: >3.4f} '
-          .format(value(m.bu)
-          )
-    )
+    print('Reflux: {: >3.4f}'.format(value(m.rr)))
+    print('Reboil: {: >3.4f} '.format(value(m.bu)))
     print(' ')
     print('Flowrates[mol/s]')
-    print('F_1: {: > 3.0f}  F_2: {: >2.0f}  F_3: {: >2.0f}  F_4: {: >2.0f}  Ftotal: {: >2.0f}'
-          .format(value(m.F[1]),
-                  value(m.F[2]),
-                  value(m.F[3]),
-                  value(m.F[4]),
-                  sum(value(m.F[comp]) for comp in m.comp)
-          )
+    print(
+        'F_1: {: > 3.0f}  F_2: {: >2.0f}  F_3: {: >2.0f}  F_4: {: >2.0f}  Ftotal: {: >2.0f}'.format(
+            value(m.F[1]),
+            value(m.F[2]),
+            value(m.F[3]),
+            value(m.F[4]),
+            sum(value(m.F[comp]) for comp in m.comp),
+        )
     )
-    print('S1_1:  {: > 1.0f}  S1_2: {: >2.0f}  S1_3: {: >2.0f}  S1_4: {: >2.0f}  S1total: {: >2.0f}'
-          .format(value(m.S[1, 1]),
-                  value(m.S[1, 2]),
-                  value(m.S[1, 3]),
-                  value(m.S[1, 4]),
-                  sum(value(m.S[1, comp]) for comp in m.comp)
-          )
+    print(
+        'S1_1:  {: > 1.0f}  S1_2: {: >2.0f}  S1_3: {: >2.0f}  S1_4: {: >2.0f}  S1total: {: >2.0f}'.format(
+            value(m.S[1, 1]),
+            value(m.S[1, 2]),
+            value(m.S[1, 3]),
+            value(m.S[1, 4]),
+            sum(value(m.S[1, comp]) for comp in m.comp),
+        )
     )
-    print('S2_1:  {: > 1.0f}  S2_2: {: >2.0f}  S2_3: {: >2.0f}  S2_4: {: >2.0f}  S2total: {: >2.0f}'
-          .format(value(m.S[2, 1]),
-                  value(m.S[2, 2]),
-                  value(m.S[2, 3]),
-                  value(m.S[2, 4]),
-                  sum(value(m.S[2, comp]) for comp in m.comp)
-          )
+    print(
+        'S2_1:  {: > 1.0f}  S2_2: {: >2.0f}  S2_3: {: >2.0f}  S2_4: {: >2.0f}  S2total: {: >2.0f}'.format(
+            value(m.S[2, 1]),
+            value(m.S[2, 2]),
+            value(m.S[2, 3]),
+            value(m.S[2, 4]),
+            sum(value(m.S[2, comp]) for comp in m.comp),
+        )
     )
     print(' ')
     print('Distributors:')
-    print('dl[2]: {: >3.4f} dl[3]: {: >3.4f}'
-          .format(value(m.dl[2]),
-                  value(m.dl[3])
-          )
-    )
-    print('dv[2]: {: >3.4f} dv[3]: {: >3.4f}'
-          .format(value(m.dv[2]),
-                  value(m.dv[3])
-          )
-    )
+    print('dl[2]: {: >3.4f} dl[3]: {: >3.4f}'.format(value(m.dl[2]), value(m.dl[3])))
+    print('dv[2]: {: >3.4f} dv[3]: {: >3.4f}'.format(value(m.dv[2]), value(m.dv[3])))
     print(' ')
     print(' ')
     print(' ')
@@ -215,15 +192,21 @@ def display_results(m):
     print(' Tray       Bottom                Feed    ')
     print('__________________________________________')
     for t in reversed(list(m.tray)):
-        print('[{: >2.0f}] {: >9.0g} {: >18.0g}   F:{: >3.0f} '
-              .format(t,
-                      fabs(value(m.tray_exists[1, t].indicator_var))
-                      if t in m.candidate_trays_main else 1,
-                      fabs(value(m.tray_exists[2, t].indicator_var))
-                      if t in m.candidate_trays_feed else 1,
-                      sum(value(m.F[comp]) for comp in m.comp)
-                      if t == m.feed_tray else 0,
-              )
+        print(
+            '[{: >2.0f}] {: >9.0g} {: >18.0g}   F:{: >3.0f} '.format(
+                t,
+                (
+                    fabs(value(m.tray_exists[1, t].indicator_var))
+                    if t in m.candidate_trays_main
+                    else 1
+                ),
+                (
+                    fabs(value(m.tray_exists[2, t].indicator_var))
+                    if t in m.candidate_trays_feed
+                    else 1
+                ),
+                sum(value(m.F[comp]) for comp in m.comp) if t == m.feed_tray else 0,
+            )
         )
     print(' ')
     print('__________________________________________')
@@ -231,21 +214,33 @@ def display_results(m):
     print('            Product                 Top   ')
     print('__________________________________________')
     for t in reversed(list(m.tray)):
-        print('[{: >2.0f}] {: >9.0g}   S1:{: >2.0f}   S2:{: >2.0f} {: >8.0g}'
-              .format(t,
-                      fabs(value(m.tray_exists[3, t].indicator_var))
-                      if t in m.candidate_trays_product else 1,
-                      sum(value(m.S[1, comp]) for comp in m.comp)
-                      if t == m.sideout1_tray else 0,
-                      sum(value(m.S[2, comp]) for comp in m.comp)
-                      if t == m.sideout2_tray else 0,
-                      fabs(value(m.tray_exists[4, t].indicator_var))
-                      if t in m.candidate_trays_main else 1
-              )
+        print(
+            '[{: >2.0f}] {: >9.0g}   S1:{: >2.0f}   S2:{: >2.0f} {: >8.0g}'.format(
+                t,
+                (
+                    fabs(value(m.tray_exists[3, t].indicator_var))
+                    if t in m.candidate_trays_product
+                    else 1
+                ),
+                (
+                    sum(value(m.S[1, comp]) for comp in m.comp)
+                    if t == m.sideout1_tray
+                    else 0
+                ),
+                (
+                    sum(value(m.S[2, comp]) for comp in m.comp)
+                    if t == m.sideout2_tray
+                    else 0
+                ),
+                (
+                    fabs(value(m.tray_exists[4, t].indicator_var))
+                    if t in m.candidate_trays_main
+                    else 1
+                ),
+            )
         )
     print(' 1 = trays exists, 0 = absent tray')
 
-    
 
 if __name__ == "__main__":
     main()
