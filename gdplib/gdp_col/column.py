@@ -30,7 +30,7 @@ def build_column(min_trays, max_trays, xD, xB):
     m = ConcreteModel('benzene-toluene column')
     m.comps = Set(initialize=['benzene', 'toluene'], doc='Set of components')
     min_T, max_T = 300, 400 # Define temperature bounds [K]
-    max_flow = 500
+    max_flow = 500 # maximum flow rate [mol/s]
     m.T_feed = Var(
         doc='Feed temperature [K]', domain=NonNegativeReals,
         bounds=(min_T, max_T), initialize=368)
@@ -81,29 +81,29 @@ def build_column(min_trays, max_trays, xD, xB):
     m.y = Var(m.comps, m.trays, doc='Vapor mole fraction',
               bounds=(0, 1), domain=NonNegativeReals, initialize=0.5)
     m.L = Var(m.comps, m.trays,
-              doc='component liquid flows from tray in kmol',
+              doc='component liquid flows from tray in mol/s',
               domain=NonNegativeReals, bounds=(0, max_flow),
               initialize=50)
     m.V = Var(m.comps, m.trays,
-              doc='component vapor flows from tray in kmol',
+              doc='component vapor flows from tray in mol/s',
               domain=NonNegativeReals, bounds=(0, max_flow),
               initialize=50)
     m.liq = Var(m.trays, domain=NonNegativeReals,
-                doc='liquid flows from tray in kmol', initialize=100,
+                doc='liquid flows from tray in mol/s', initialize=100,
                 bounds=(0, max_flow))
     m.vap = Var(m.trays, domain=NonNegativeReals,
-                doc='vapor flows from tray in kmol', initialize=100,
+                doc='vapor flows from tray in mol/s', initialize=100,
                 bounds=(0, max_flow))
     m.B = Var(m.comps, domain=NonNegativeReals,
-              doc='bottoms component flows in kmol',
+              doc='bottoms component flows in mol/s',
               bounds=(0, max_flow), initialize=50)
     m.D = Var(m.comps, domain=NonNegativeReals,
-              doc='distillate component flows in kmol',
+              doc='distillate component flows in mol/s',
               bounds=(0, max_flow), initialize=50)
     m.bot = Var(domain=NonNegativeReals, initialize=50, bounds=(0, 100),
-                doc='bottoms flow in kmol')
+                doc='bottoms flow in mol/s')
     m.dis = Var(domain=NonNegativeReals, initialize=50,
-                doc='distillate flow in kmol', bounds=(0, 100))
+                doc='distillate flow in mol/s', bounds=(0, 100))
     m.reflux_ratio = Var(domain=NonNegativeReals, bounds=(0.5, 4),
                          doc='reflux ratio', initialize=0.8329)
     m.reboil_ratio = Var(domain=NonNegativeReals, bounds=(0.5, 4),
