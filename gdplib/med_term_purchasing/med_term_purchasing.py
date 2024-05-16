@@ -46,7 +46,7 @@ def build_model():
     [1] Vecchietti, A., & Grossmann, I. (2004). Computational experience with logmip solving linear and nonlinear disjunctive programming problems. Proc. of FOCAPD, 587-590.
     [2] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial and Engineering Chemistry Research, 45(14), 5013-5026. DOI: 10.1021/ie0513144
     """
-    model = AbstractModel()
+    model = AbstractModel("Medium-term Purchasing Contracts Problem")
 
     # Constants (data that was hard-coded in GAMS model)
     AMOUNT_UB = 1000
@@ -1960,26 +1960,12 @@ def build_model():
         rule=FD_contract,
         doc='Fixed duration contract scenarios',
     )
-
+    model = model.create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
     return model
 
 
-def build_concrete():
-    """
-    Build a concrete model applying the data of the medium-term purchasing contracts problem on build_model().
-
-    Returns
-    -------
-    Pyomo.ConcreteModel
-        A concrete model for the medium-term purchasing contracts problem.
-    """
-    return build_model().create_instance(
-        join(this_file_dir(), 'med_term_purchasing.dat')
-    )
-
-
 if __name__ == "__main__":
-    m = build_concrete()
+    m = build_model()
     TransformationFactory('gdp.bigm').apply_to(m)
     SolverFactory('gams').solve(
         m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
