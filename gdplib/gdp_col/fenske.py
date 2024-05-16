@@ -1,7 +1,14 @@
 from __future__ import division
 
-from pyomo.environ import (ConcreteModel, NonNegativeReals, Set, SolverFactory,
-                           Var, log, sqrt)
+from pyomo.environ import (
+    ConcreteModel,
+    NonNegativeReals,
+    Set,
+    SolverFactory,
+    Var,
+    log,
+    sqrt,
+)
 
 
 def calculate_Fenske(xD, xB):
@@ -25,35 +32,63 @@ def calculate_Fenske(xD, xB):
     m.comps = Set(initialize=['benzene', 'toluene'])
     m.trays = Set(initialize=['condenser', 'reboiler'])
     m.Kc = Var(
-        m.comps, m.trays, doc='Phase equilibrium constant',
-        domain=NonNegativeReals, initialize=1, bounds=(0, 1000))
-    m.T = Var(m.trays, doc='Temperature [K]',
-              domain=NonNegativeReals,
-              bounds=(min_T, max_T))
+        m.comps,
+        m.trays,
+        doc='Phase equilibrium constant',
+        domain=NonNegativeReals,
+        initialize=1,
+        bounds=(0, 1000),
+    )
+    m.T = Var(
+        m.trays, doc='Temperature [K]', domain=NonNegativeReals, bounds=(min_T, max_T)
+    )
     m.T['condenser'].fix(82 + 273.15)
     m.T['reboiler'].fix(108 + 273.15)
-    m.P = Var(doc='Pressure [bar]',
-              bounds=(0, 5))
+    m.P = Var(doc='Pressure [bar]', bounds=(0, 5))
     m.P.fix(1.01)
     m.T_ref = 298.15
     m.gamma = Var(
-        m.comps, m.trays,
+        m.comps,
+        m.trays,
         doc='liquid activity coefficent of component on tray',
-        domain=NonNegativeReals, bounds=(0, 10), initialize=1)
+        domain=NonNegativeReals,
+        bounds=(0, 10),
+        initialize=1,
+    )
     m.Pvap = Var(
-        m.comps, m.trays,
+        m.comps,
+        m.trays,
         doc='pure component vapor pressure of component on tray in bar',
-        domain=NonNegativeReals, bounds=(1E-3, 5), initialize=0.4)
+        domain=NonNegativeReals,
+        bounds=(1e-3, 5),
+        initialize=0.4,
+    )
     m.Pvap_X = Var(
-        m.comps, m.trays,
+        m.comps,
+        m.trays,
         doc='Related to fraction of critical temperature (1 - T/Tc)',
-        bounds=(0.25, 0.5), initialize=0.4)
+        bounds=(0.25, 0.5),
+        initialize=0.4,
+    )
 
     m.pvap_const = {
-        'benzene': {'A': -6.98273, 'B': 1.33213, 'C': -2.62863,
-                    'D': -3.33399, 'Tc': 562.2, 'Pc': 48.9},
-        'toluene': {'A': -7.28607, 'B': 1.38091, 'C': -2.83433,
-                    'D': -2.79168, 'Tc': 591.8, 'Pc': 41.0}}
+        'benzene': {
+            'A': -6.98273,
+            'B': 1.33213,
+            'C': -2.62863,
+            'D': -3.33399,
+            'Tc': 562.2,
+            'Pc': 48.9,
+        },
+        'toluene': {
+            'A': -7.28607,
+            'B': 1.38091,
+            'C': -2.83433,
+            'D': -2.79168,
+            'Tc': 591.8,
+            'Pc': 41.0,
+        },
+    }
 
     @m.Constraint(m.comps, m.trays)
     def phase_equil_const(_, c, t):
@@ -63,7 +98,7 @@ def calculate_Fenske(xD, xB):
         Parameters
         ----------
         _ : Pyomo.ConcreteModel
-            A placeholder representing the Pyomo model instance. It specifies the context for applying the phase equilibrium constraints to the trays in the distillation column. 
+            A placeholder representing the Pyomo model instance. It specifies the context for applying the phase equilibrium constraints to the trays in the distillation column.
         c : str
             Index of component in the distillation column model. 'benzene' or 'toluene'.
         t : int
@@ -74,8 +109,7 @@ def calculate_Fenske(xD, xB):
         Pyomo.Constraint
             The phase equilibrium constant for each component in a tray multiplied with the pressure is equal to the product of the activity coefficient and the pure component vapor pressure.
         """
-        return m.Kc[c, t] * m.P == (
-            m.gamma[c, t] * m.Pvap[c, t])
+        return m.Kc[c, t] * m.P == (m.gamma[c, t] * m.Pvap[c, t])
 
     @m.Constraint(m.comps, m.trays)
     def Pvap_relation(_, c, t):
@@ -99,10 +133,8 @@ def calculate_Fenske(xD, xB):
         k = m.pvap_const[c]
         x = m.Pvap_X[c, t]
         return (log(m.Pvap[c, t]) - log(k['Pc'])) * (1 - x) == (
-            k['A'] * x +
-            k['B'] * x ** 1.5 +
-            k['C'] * x ** 3 +
-            k['D'] * x ** 6)
+            k['A'] * x + k['B'] * x**1.5 + k['C'] * x**3 + k['D'] * x**6
+        )
 
     @m.Constraint(m.comps, m.trays)
     def Pvap_X_defn(_, c, t):
@@ -166,8 +198,7 @@ def calculate_Fenske(xD, xB):
         Pyomo.Constraint
             The relative volatility of benzene to toluene is the ratio of the phase equilibrium constants of benzene to toluene on the tray.
         """
-        return m.Kc['benzene', t] == (
-            m.Kc['toluene', t] * m.relative_volatility[t])
+        return m.Kc['benzene', t] == (m.Kc['toluene', t] * m.relative_volatility[t])
 
     @m.Expression()
     def fenske(_):
@@ -185,12 +216,18 @@ def calculate_Fenske(xD, xB):
             The Fenske equation calculating the minimum number of plates required for a given separation.
         """
         return log((xD / (1 - xD)) * (xB / (1 - xB))) / (
-            log(sqrt(m.relative_volatility['condenser'] *
-                     m.relative_volatility['reboiler'])))
+            log(
+                sqrt(
+                    m.relative_volatility['condenser']
+                    * m.relative_volatility['reboiler']
+                )
+            )
+        )
 
     SolverFactory('ipopt').solve(m, tee=True)
     from pyomo.util.infeasible import log_infeasible_constraints
-    log_infeasible_constraints(m, tol=1E-3)
+
+    log_infeasible_constraints(m, tol=1e-3)
     m.fenske.display()
 
 
