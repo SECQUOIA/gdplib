@@ -499,7 +499,7 @@ def build_model():
         return 2.5 * m.discount_factor[t]
 
     @m.Param(m.time, doc="Gasoline transport cost [$/gal/100 miles]")
-    def gasoline_tranport_cost(m, t):
+    def gasoline_transport_cost(m, t):
         """
         Calculates the gasoline transport cost in a given time period.
 
@@ -1063,7 +1063,7 @@ def build_model():
             / 1e6  # $ to MM$
             * m.distance[site, mkt]
             / 100
-            * m.gasoline_tranport_cost[t]
+            * m.gasoline_transport_cost[t]
             for t in m.time
         )
 

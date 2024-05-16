@@ -181,7 +181,7 @@ def build_model():
 
     # sigmad_jt
     # sigmad(j, t) in GAMS
-    # Minimum quantity of chemical j that must be bought before recieving a Discount under discount contract
+    # Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract
     model.MinAmount_Discount = Param(
         model.Streams,
         model.TimePeriods,
@@ -189,7 +189,7 @@ def build_model():
         doc='Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract',
     )
 
-    # min quantity to recieve discount under bulk contract
+    # min quantity to receive discount under bulk contract
     # sigmab(j, t) in GAMS
     model.MinAmount_Bulk = Param(
         model.Streams,
@@ -198,7 +198,7 @@ def build_model():
         doc='Minimum quantity of chemical j that must be bought before receiving a Discount under bulk contract',
     )
 
-    # min quantity to recieve discount under length contract
+    # min quantity to receive discount under length contract
     # sigmal(j, p) in GAMS
     model.MinAmount_Length = Param(
         model.Streams,
@@ -815,7 +815,7 @@ def build_model():
 
     model.profit = Objective(rule=profit_rule, sense=maximize, doc='Maximize profit')
 
-    # flow of raw materials is the total amount purchased (accross all contracts)
+    # flow of raw materials is the total amount purchased (across all contracts)
     def raw_material_flow_rule(model, j, t):
         """
         Ensures the total flow of raw material j in time period t equals the sum of amounts purchased under all contract types.
@@ -1379,7 +1379,7 @@ def build_model():
         doc='Maximum shortfall allowed for each product j in each time period t',
     )
 
-    # maxiumum capacities of suppliers
+    # maximum capacities of suppliers
     def supplier_capacity_rule(model, j, t):
         """
         Enforces the upper limits on the supply capacity for each raw material j provided by suppliers in each time period t.

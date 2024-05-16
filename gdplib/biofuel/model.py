@@ -44,7 +44,7 @@ def build_model():
     Returns
     -------
     Pyomo.ConcreteModel
-        The Pyomo concrete model which descibes the multiperiod location-allocation optimization model designed to determine the most cost-effective network layout and production allocation to meet market demands.
+        The Pyomo concrete model which describes the multiperiod location-allocation optimization model designed to determine the most cost-effective network layout and production allocation to meet market demands.
 
     References
     ----------
@@ -72,7 +72,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         t : int
             Index of time in months from 0 to 120 (10 years)
 
@@ -97,7 +97,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         mkt : int
             Index of the market from 1 to 10
         t : int
@@ -121,7 +121,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
         t : int
@@ -149,7 +149,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
 
@@ -168,7 +168,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
 
@@ -187,7 +187,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         mkt : int
             Index of the market from 1 to 10
 
@@ -206,7 +206,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         mkt : int
             Index of the market from 1 to 10
 
@@ -225,7 +225,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
 
@@ -244,7 +244,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
 
@@ -263,7 +263,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
         site : int
@@ -287,7 +287,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         mkt : int
@@ -362,7 +362,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
         t : int
@@ -383,7 +383,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         t : int
             Index of time in months from 0 to 120 (10 years)
 
@@ -402,7 +402,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         t : int
             Index of time in months from 0 to 120 (10 years)
 
@@ -421,7 +421,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
 
         Returns
         -------
@@ -438,7 +438,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         t : int
             Index of time in months from 0 to 120 (10 years)
 
@@ -457,7 +457,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         t : int
             Index of time in months from 0 to 120 (10 years)
 
@@ -493,7 +493,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
         t : int
@@ -517,7 +517,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         mkt : int
             Index of the market from 1 to 10
         t : int
@@ -541,7 +541,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         t : int
@@ -564,7 +564,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         t : int
@@ -625,7 +625,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
 
@@ -644,7 +644,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             Index of the supplier from 1 to 10
         site : int
@@ -665,7 +665,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         mkt : int
@@ -686,7 +686,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         sup : int
             _description_
         site : int
@@ -713,7 +713,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
 
         Returns
         -------
@@ -738,7 +738,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         mkt : int
@@ -765,7 +765,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
 
         Returns
         -------
@@ -792,7 +792,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         t : int
@@ -817,7 +817,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
         t : int
@@ -838,7 +838,7 @@ def build_model():
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            Pyomo concrete model which descibes the multiperiod location-allocation optimization model
+            Pyomo concrete model which describes the multiperiod location-allocation optimization model
         site : int
             Index of the facility site from 1 to 12
 

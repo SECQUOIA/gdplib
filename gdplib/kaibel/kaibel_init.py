@@ -61,7 +61,7 @@ def initialize_kaibel():
 
     ## Column 1
     c_c1 = 4  # Components in Column 1
-    lc_c1 = 3  # Ligh component in Column 1
+    lc_c1 = 3  # Light component in Column 1
     hc_c1 = 4  # Heavy component in Column 1
     inter1_c1 = 1  # Intermediate component in Column 1
     inter2_c1 = 2  # Intermediate component in Column 1
