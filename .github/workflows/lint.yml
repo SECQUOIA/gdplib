@@ -1,0 +1,17 @@
+name: Lint
+
+on: [push, pull_request]
+
+jobs:
+  lint:
+    name: lint/style-and-typos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Black Formatting Check
+        uses: psf/black@stable
+        with:
+          args: . -S -C --check --diff
+      - name: Spell Check
+        uses: crate-ci/typos@master
+

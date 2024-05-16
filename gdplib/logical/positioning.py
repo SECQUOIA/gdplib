@@ -16,17 +16,36 @@
 from pyomo.environ import *
 from pyomo.gdp import *
 from pyomo.core.expr.logical_expr import *
-from pyomo.core.plugins.transform.logical_to_linear import update_boolean_vars_from_binary
+from pyomo.core.plugins.transform.logical_to_linear import (
+    update_boolean_vars_from_binary,
+)
 
 from six import StringIO
 import pandas as pd
 
 
 def build_model():
+    """
+    Constructs and returns a Pyomo ConcreteModel object configured to solve the optimal product positioning problem. The model seeks to position a new product in a way that optimizes its location in a multidimensional attribute space, balancing consumer satisfaction against production and positioning costs.
+
+    Returns
+    -------
+    m : Pyomo.ConcreteModel
+        The optimal positioning model that includes variables for product locations, consumer satisfaction indicators, and the constraints and objective function necessary for finding the optimal product positioning strategy.
+
+    Notes
+    -----
+    The model uses a disjunctive programming approach to handle the binary nature of consumer decisions and includes quadratic cost functions to represent varying cost behaviors associated with different product positioning strategies.
+
+    References
+    ----------
+    [1] Duran, M. A., & Grossmann, I. E. (1986). An outer-approximation algorithm for a class of mixed-integer nonlinear programs. Mathematical programming, 36, 307-339. https://doi.org/10.1007/BF02592064
+    [2] Gavish, B., Horsky, D., & Srikanth, K. (1983). An approach to the optimal positioning of a new product. Management Science, 29(11), 1277-1297. https://doi.org/10.1287/mnsc.29.11.1277
+    """
     m = ConcreteModel()
-    m.locations = RangeSet(5)
-    m.consumers = RangeSet(25)
-    m.products = RangeSet(10)
+    m.locations = RangeSet(5)  # 5 locations
+    m.consumers = RangeSet(25)  # 25 consumers
+    m.products = RangeSet(10)  # 10 products
 
     fixed_profit_data = {
         1: 1,
@@ -55,7 +74,9 @@ def build_model():
         24: 0.7,
         25: 0.7,
     }
-    m.fixed_profit = Param(m.consumers, initialize=fixed_profit_data)
+    m.fixed_profit = Param(
+        m.consumers, initialize=fixed_profit_data, doc='Fixed profit for each consumer'
+    )  # fixed profit for each consumer
 
     minimum_weights_data = {
         1: 77.84,
@@ -84,16 +105,17 @@ def build_model():
         24: 340.581,
         25: 407.52,
     }
-    m.minimum_weights = Param(m.consumers, initialize=minimum_weights_data)
-    location_bounds = {
-        1: (2, 4.5),
-        2: (0, 8.0),
-        3: (3, 9.0),
-        4: (0, 5.0),
-        5: (4, 10),
-    }
+    m.minimum_weights = Param(
+        m.consumers,
+        initialize=minimum_weights_data,
+        doc='Minimum weights for each consumer',
+    )  # minimum weights for each consumer
 
-    ideal_points_data = StringIO("""
+    # Bounds for the locations
+    location_bounds = {1: (2, 4.5), 2: (0, 8.0), 3: (3, 9.0), 4: (0, 5.0), 5: (4, 10)}
+
+    ideal_points_data = StringIO(
+        """
             1       2       3       4       5
     1       2.26    5.15    4.03    1.74    4.74
     2       5.51    9.01    3.84    1.47    9.92
@@ -120,12 +142,23 @@ def build_model():
     23      1.37    0.54    1.55    5.56    5.85
     24      8.79    5.04    4.83    6.94    0.38
     25      2.66    4.19    6.49    8.04    1.66 
-    """)
-    ideal_points_table = pd.read_csv(ideal_points_data, delimiter=r'\s+')
-    ideal_points_dict = {(k[0], int(k[1])): v for k, v in ideal_points_table.stack().to_dict().items()}
-    m.ideal_points = Param(m.consumers, m.locations, initialize=ideal_points_dict)
+    """
+    )
+    ideal_points_table = pd.read_csv(
+        ideal_points_data, delimiter=r'\s+'
+    )  # ideal points for each consumer and product
+    ideal_points_dict = {
+        (k[0], int(k[1])): v for k, v in ideal_points_table.stack().to_dict().items()
+    }
+    m.ideal_points = Param(
+        m.consumers,
+        m.locations,
+        initialize=ideal_points_dict,
+        doc='Ideal points for each consumer and product',
+    )
 
-    weights_data = StringIO("""
+    weights_data = StringIO(
+        """
             1       2       3       4       5
     1       9.57    2.74    9.75    3.96    8.67
     2       8.38    3.93    5.18    5.2     7.82
@@ -152,12 +185,21 @@ def build_model():
     23      1.47    5.71    6.95    1.42    3.49
     24      5.4     3.12    5.37    6.1     3.71
     25      6.32    0.81    6.12    6.73    7.93
-    """)
+    """
+    )
     weights_table = pd.read_csv(weights_data, delimiter=r'\s+')
-    weights_dict = {(k[0], int(k[1])): v for k, v in weights_table.stack().to_dict().items()}
-    m.weights = Param(m.consumers, m.locations, initialize=weights_dict)
+    weights_dict = {
+        (k[0], int(k[1])): v for k, v in weights_table.stack().to_dict().items()
+    }
+    m.weights = Param(
+        m.consumers,
+        m.locations,
+        initialize=weights_dict,
+        doc='Weights for each consumer and product',
+    )
 
-    existing_products_data = StringIO("""
+    existing_products_data = StringIO(
+        """
             1       2       3       4       5
     1       0.62    5.06    7.82    0.22    4.42
     2       5.21    2.66    9.54    5.03    8.01
@@ -169,29 +211,74 @@ def build_model():
     8       8.35    3.79    1.19    1.96    5.88
     9       6.44    0.17    9.93    6.8     9.75
     10      6.49    1.92    0.05    4.89    6.43
-    """)
+    """
+    )
     existing_products_table = pd.read_csv(existing_products_data, delimiter=r'\s+')
-    existing_products_dict = {(k[0], int(k[1])): v for k, v in existing_products_table.stack().to_dict().items()}
-    m.existing_products = Param(m.products, m.locations, initialize=existing_products_dict)
+    existing_products_dict = {
+        (k[0], int(k[1])): v
+        for k, v in existing_products_table.stack().to_dict().items()
+    }
+    m.existing_products = Param(
+        m.products,
+        m.locations,
+        initialize=existing_products_dict,
+        doc='Existing products for each location and product',
+    )
 
     # m.consumers * m.products
-    rr = {(i, j): sum(m.weights[i, k] * (m.existing_products[j, k] - m.ideal_points[i, k]) * (
-                m.existing_products[j, k] - m.ideal_points[i, k])
-                      for k in m.locations)
-          for (i, j) in m.consumers * m.products}
+    # Squared weighted Euclidean distance between the existing products and the ideal points
+    rr = {
+        (i, j): sum(
+            m.weights[i, k]
+            * (m.existing_products[j, k] - m.ideal_points[i, k])
+            * (m.existing_products[j, k] - m.ideal_points[i, k])
+            for k in m.locations
+        )
+        for (i, j) in m.consumers * m.products
+    }
+    # minimum dissimilarity between the existing products and consumers' ideal points
     r = {i: min(rr[i, j] for j in m.products) for i in m.consumers}
 
-    m.x = Var(m.locations)
-    m.Y = BooleanVar(m.consumers)
-    m.H = Param(initialize=1000)
-    m.U = Var(bounds=(0, 5000))
+    m.x = Var(m.locations, doc='Location of each product')
+    m.Y = BooleanVar(
+        m.consumers,
+        doc='Indicates if consumer positioning is satisfactory based on distance to ideal points.',
+    )
+    m.H = Param(initialize=1000, doc='Big M value')
+    m.U = Var(
+        bounds=(0, 5000),
+        doc='Upper bound on the sum of the distances to the ideal points',
+    )  # Slack variable
 
     @m.Disjunction(m.consumers)
     def d(m, i):
+        """
+        Define the disjunction that model whether the distance squared sum of weights and deviations from ideal points for consumer i is less than or equal to a utility threshold (r[i]) adjusted by a slack variable m.U.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            The optimal positioning model
+        i : int
+            Index for consumers
+
+        Returns
+        -------
+        Pyomo.Disjunction
+            A Pyomo Disjunction object that evaluates if the consumer's preference is met (`true` scenario) with a single Pyomo expression, or not met (`false` scenario) where the list is empty.
+        """
         return [
-            [sum(m.weights[i, k] * (m.x[k] - m.ideal_points[i, k]) ** 2 for k in m.locations) - r[i] <= m.U],
-            []
+            [
+                sum(
+                    m.weights[i, k] * (m.x[k] - m.ideal_points[i, k]) ** 2
+                    for k in m.locations
+                )
+                - r[i]
+                <= m.U
+            ],
+            [],
         ]
+
     for i in m.consumers:
         m.Y[i].associate_binary_var(m.d[i].disjuncts[0].binary_indicator_var)
     for k in m.locations:
@@ -199,15 +286,33 @@ def build_model():
         m.x[k].setlb(lb)
         m.x[k].setub(ub)
 
-    m.c1 = Constraint(expr=m.x[1] - m.x[2] + m.x[3] + m.x[4] + m.x[5] <= 10)
-    m.c2 = Constraint(expr=0.6 * m.x[1] - 0.9 * m.x[2] - 0.5 * m.x[3] + 0.1 * m.x[4] + m.x[5] <= -0.64)
-    m.c3 = Constraint(expr=m.x[1] - m.x[2] + m.x[3] - m.x[4] + m.x[5] >= 0.69)
-    m.c4 = Constraint(expr=0.157 * m.x[1] + 0.05 * m.x[2] <= 1.5)
-    m.c5 = Constraint(expr=0.25 * m.x[2] + 1.05 * m.x[4] - 0.3 * m.x[5] >= 4.5)
+    m.c1 = Constraint(
+        expr=m.x[1] - m.x[2] + m.x[3] + m.x[4] + m.x[5] <= 10, doc='Constraint 1'
+    )
+    m.c2 = Constraint(
+        expr=0.6 * m.x[1] - 0.9 * m.x[2] - 0.5 * m.x[3] + 0.1 * m.x[4] + m.x[5]
+        <= -0.64,
+        doc='Constraint 2',
+    )
+    m.c3 = Constraint(
+        expr=m.x[1] - m.x[2] + m.x[3] - m.x[4] + m.x[5] >= 0.69, doc='Constraint 3'
+    )
+    m.c4 = Constraint(expr=0.157 * m.x[1] + 0.05 * m.x[2] <= 1.5, doc='Constraint 4')
+    m.c5 = Constraint(
+        expr=0.25 * m.x[2] + 1.05 * m.x[4] - 0.3 * m.x[5] >= 4.5, doc='Constraint 5'
+    )
 
+    # Minimizes total adjusted dissimilarity costs and maximizes consumer-based fixed profit, while balancing quadratic and linear operational costs across multiple product locations.
     m.obj = Objective(
-        expr=10 * m.U - sum(m.fixed_profit[i] * m.Y[i].get_associated_binary() for i in m.consumers) + 0.6 * m.x[1] ** 2 - 0.9 * m.x[
-            2] - 0.5 * m.x[3] + 0.1 * m.x[4] ** 2 + m.x[5])
+        expr=10 * m.U
+        - sum(m.fixed_profit[i] * m.Y[i].get_associated_binary() for i in m.consumers)
+        + 0.6 * m.x[1] ** 2
+        - 0.9 * m.x[2]
+        - 0.5 * m.x[3]
+        + 0.1 * m.x[4] ** 2
+        + m.x[5],
+        doc='Objective function',
+    )
 
     return m
 
@@ -217,6 +322,8 @@ if __name__ == "__main__":
     TransformationFactory('core.logical_to_linear').apply_to(m)
     # res = SolverFactory('gdpopt').solve(m, tee=True, nlp_solver='gams')
     TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(m, tee=True, solver='baron', add_options=['option optcr=0;'])
+    SolverFactory('gams').solve(
+        m, tee=True, solver='baron', add_options=['option optcr=0;']
+    )
     update_boolean_vars_from_binary(m)
     m.Y.display()
