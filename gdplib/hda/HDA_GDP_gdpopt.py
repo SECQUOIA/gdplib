@@ -3013,7 +3013,7 @@ def HDA_model():
     m.flash_1 = Block(m.one, rule=build_flash)
     m.multi_splitter_2 = Block(m.two, rule=build_multiple_splitter)
 
-    # thrid disjunction: recycle methane with membrane or purge it
+    # third disjunction: recycle methane with membrane or purge it
     @m.Disjunct()
     def recycle_methane_purge(disj):
         disj.no_flow_54 = Constraint(expr=m.f[54] == 0)
@@ -3028,7 +3028,7 @@ def HDA_model():
         disj.compressor_4 = Block(m.four, rule=build_compressor)
 
     @m.Disjunction()
-    def methane_treatmet(m):
+    def methane_treatment(m):
         return [m.recycle_methane_purge, m.recycle_methane_membrane]
 
     # fourth disjunction: recycle hydrogen with absorber or not
@@ -3218,14 +3218,14 @@ def HDA_model():
     )
     m.adiabtic_reactor_linear_coefficient = Param(
         initialize=1.257,
-        doc="adiabatic reactor linear coefficient (times reactor volumn) [$1e3 per year]",
+        doc="adiabatic reactor linear coefficient (times reactor volume) [$1e3 per year]",
     )
     m.isothermal_reactor_fixed_cost = Param(
         initialize=92.875, doc="isothermal reactor fixed cost [$1e3 per year]"
     )
     m.isothermal_reactor_linear_coefficient = Param(
         initialize=1.57125,
-        doc="isothermal reactor linear coefficient (times reactor volumn) [$1e3 per year]",
+        doc="isothermal reactor linear coefficient (times reactor volume) [$1e3 per year]",
     )
     m.h2_feed_cost = Param(initialize=2.5, doc="h2 feed cost (95% h2,5% Ch4)")
     m.toluene_feed_cost = Param(initialize=14.0, doc="toluene feed cost (100% toluene)")
