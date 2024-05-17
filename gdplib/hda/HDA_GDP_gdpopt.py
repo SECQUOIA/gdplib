@@ -3160,9 +3160,9 @@ def HDA_model():
     )
     m.fuel_cost = Param(initialize=4000.0, doc="fuel cost with unit [1e6 kj]")
     m.abs_fixed_cost = Param(initialize=13, doc="fixed cost of absober [$1e3 per year]")
-    m.abs_linear_coeffcient = Param(
+    m.abs_linear_coefficient = Param(
         initialize=1.2,
-        doc="linear coeffcient of absorber (times tray number) [$1e3 per year]",
+        doc="linear coefficient of absorber (times tray number) [$1e3 per year]",
     )
     m.compressor_fixed_cost = Param(
         initialize=7.155, doc="compressor fixed cost [$1e3 per year]"
@@ -3170,62 +3170,62 @@ def HDA_model():
     m.compressor_fixed_cost_4 = Param(
         initialize=4.866, doc="compressor fixed cost for compressor 4 [$1e3 per year]"
     )
-    m.compressor_linear_coeffcient = Param(
+    m.compressor_linear_coefficient = Param(
         initialize=0.815,
-        doc="compressor linear coeffcient (vaporflow rate) [$1e3 per year]",
+        doc="compressor linear coefficient (vaporflow rate) [$1e3 per year]",
     )
-    m.compressor_linear_coeffcient_4 = Param(
+    m.compressor_linear_coefficient_4 = Param(
         initialize=0.887,
-        doc="compressor linear coeffcient (vaporflow rate) [$1e3 per year]",
+        doc="compressor linear coefficient (vaporflow rate) [$1e3 per year]",
     )
     m.stabilizing_column_fixed_cost = Param(
         initialize=1.126, doc="stabilizing column fixed cost [$1e3 per year]"
     )
-    m.stabilizing_column_linear_coeffcient = Param(
+    m.stabilizing_column_linear_coefficient = Param(
         initialize=0.375,
-        doc="stabilizing column linear coeffcient (times number of trays) [$1e3 per year]",
+        doc="stabilizing column linear coefficient (times number of trays) [$1e3 per year]",
     )
     m.benzene_column_fixed_cost = Param(
         initialize=16.3, doc="benzene column fixed cost [$1e3 per year]"
     )
-    m.benzene_column_linear_coeffcient = Param(
+    m.benzene_column_linear_coefficient = Param(
         initialize=1.55,
-        doc="benzene column linear coeffcient (times number of trays) [$1e3 per year]",
+        doc="benzene column linear coefficient (times number of trays) [$1e3 per year]",
     )
     m.toluene_column_fixed_cost = Param(
         initialize=3.9, doc="toluene column fixed cost [$1e3 per year]"
     )
-    m.toluene_column_linear_coeffcient = Param(
+    m.toluene_column_linear_coefficient = Param(
         initialize=1.12,
-        doc="toluene column linear coeffcient (times number of trays) [$1e3 per year]",
+        doc="toluene column linear coefficient (times number of trays) [$1e3 per year]",
     )
     m.furnace_fixed_cost = Param(
         initialize=6.20, doc="toluene column fixed cost [$1e3 per year]"
     )
-    m.furnace_linear_coeffcient = Param(
+    m.furnace_linear_coefficient = Param(
         initialize=1171.7,
-        doc="furnace column linear coeffcient [1e9kj/yr] [$1e3 per year]",
+        doc="furnace column linear coefficient [1e9kj/yr] [$1e3 per year]",
     )
     m.membrane_seperator_fixed_cost = Param(
         initialize=43.24, doc="membrane seperator fixed cost [$1e3 per year]"
     )
-    m.membrane_seperator_linear_coeffcient = Param(
+    m.membrane_seperator_linear_coefficient = Param(
         initialize=49.0,
-        doc="furnace column linear coeffcient (times inlet flowrate) [$1e3 per year]",
+        doc="furnace column linear coefficient (times inlet flowrate) [$1e3 per year]",
     )
     m.adiabtic_reactor_fixed_cost = Param(
         initialize=74.3, doc="adiabatic reactor fixed cost [$1e3 per year]"
     )
-    m.adiabtic_reactor_linear_coeffcient = Param(
+    m.adiabtic_reactor_linear_coefficient = Param(
         initialize=1.257,
-        doc="adiabatic reactor linear coeffcient (times reactor volumn) [$1e3 per year]",
+        doc="adiabatic reactor linear coefficient (times reactor volumn) [$1e3 per year]",
     )
     m.isothermal_reactor_fixed_cost = Param(
         initialize=92.875, doc="isothermal reactor fixed cost [$1e3 per year]"
     )
-    m.isothermal_reactor_linear_coeffcient = Param(
+    m.isothermal_reactor_linear_coefficient = Param(
         initialize=1.57125,
-        doc="isothermal reactor linear coeffcient (times reactor volumn) [$1e3 per year]",
+        doc="isothermal reactor linear coefficient (times reactor volumn) [$1e3 per year]",
     )
     m.h2_feed_cost = Param(initialize=2.5, doc="h2 feed cost (95% h2,5% Ch4)")
     m.toluene_feed_cost = Param(initialize=14.0, doc="toluene feed cost (100% toluene)")
@@ -3249,8 +3249,8 @@ def HDA_model():
                 + m.meathane_purge_value
                 * (m.fc[4, "ch4"] + m.fc[28, "ch4"] + m.fc[53, "ch4"] + m.fc[55, "ch4"])
             )
-            - m.compressor_linear_coeffcient * (m.elec[1] + m.elec[2] + m.elec[3])
-            - m.compressor_linear_coeffcient * m.elec[4]
+            - m.compressor_linear_coefficient * (m.elec[1] + m.elec[2] + m.elec[3])
+            - m.compressor_linear_coefficient * m.elec[4]
             - m.compressor_fixed_cost
             * (
                 m.purify_H2.binary_indicator_var
@@ -3261,42 +3261,42 @@ def HDA_model():
             - sum((m.electricity_cost * m.elec[comp]) for comp in m.comp)
             - (
                 m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var
-                + m.adiabtic_reactor_linear_coeffcient * m.rctvol[1]
+                + m.adiabtic_reactor_linear_coefficient * m.rctvol[1]
             )
             - (
                 m.isothermal_reactor_fixed_cost
                 * m.isothermal_reactor.binary_indicator_var
-                + m.isothermal_reactor_linear_coeffcient * m.rctvol[2]
+                + m.isothermal_reactor_linear_coefficient * m.rctvol[2]
             )
             - m.cooling_cost / 1000 * m.q[2]
             - (
                 m.stabilizing_column_fixed_cost
                 * m.methane_distillation_column.binary_indicator_var
-                + m.stabilizing_column_linear_coeffcient * m.ndist[1]
+                + m.stabilizing_column_linear_coefficient * m.ndist[1]
             )
             - (
                 m.benzene_column_fixed_cost
-                + m.benzene_column_linear_coeffcient * m.ndist[2]
+                + m.benzene_column_linear_coefficient * m.ndist[2]
             )
             - (
                 m.toluene_column_fixed_cost
                 * m.toluene_distillation_column.binary_indicator_var
-                + m.toluene_column_linear_coeffcient * m.ndist[3]
+                + m.toluene_column_linear_coefficient * m.ndist[3]
             )
             - (
                 m.membrane_seperator_fixed_cost * m.purify_H2.binary_indicator_var
-                + m.membrane_seperator_linear_coeffcient * m.f[3]
+                + m.membrane_seperator_linear_coefficient * m.f[3]
             )
             - (
                 m.membrane_seperator_fixed_cost
                 * m.recycle_methane_membrane.binary_indicator_var
-                + m.membrane_seperator_linear_coeffcient * m.f[54]
+                + m.membrane_seperator_linear_coefficient * m.f[54]
             )
             - (
                 m.abs_fixed_cost * m.absorber_hydrogen.binary_indicator_var
-                + m.abs_linear_coeffcient * m.nabs[1]
+                + m.abs_linear_coefficient * m.nabs[1]
             )
-            - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coeffcient * m.qfuel[1])
+            - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coefficient * m.qfuel[1])
             - sum(m.cooling_cost * m.qc[hec] for hec in m.hec)
             - sum(m.heating_cost * m.qh[heh] for heh in m.heh)
             - m.furnace_fixed_cost
