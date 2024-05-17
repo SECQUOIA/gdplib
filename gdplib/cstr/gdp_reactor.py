@@ -7,16 +7,29 @@ from pyomo.opt.base.solvers import SolverFactory
 
 
 def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
-    """
-    Function that builds CSTR superstructure model of size NT.
-    The CSTRs have a single 1st order reaction A -> B and minimizes (TODO Check)
-    total reactor volume. The optimal solution should yield NT reactors with a recycle before reactor NT.
-    Reference: Paper Linhan 1. TODO Correct reference
+    # """
+    # Function that builds CSTR superstructure model of size NT.
+    # The CSTRs have a single 1st order reaction A -> B and minimizes (TODO Check)
+    # total reactor volume. The optimal solution should yield NT reactors with a recycle before reactor NT.
+    # Reference: Paper Linhan 1. TODO Correct reference
 
-    Args:
-        NT: int. Positive Integer defining the maximum number of CSTRs
-    Returns:
-        m = Pyomo GDP model
+    # Args:
+    #     NT: int. Positive Integer defining the maximum number of CSTRs
+    # Returns:
+    #     m = Pyomo GDP model
+    # """
+    """
+    Build the CSTR superstructure model of size NT.
+    
+
+    Parameters
+    ----------
+    NT : int
+        Number of possible reactors in the reactor series superstructure
+    Returns
+    -------
+    m : Pyomo.ConcreteModel
+        _description_
     """
 
     # PYOMO MODEL
@@ -27,8 +40,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     m.N = pyo.RangeSet(1, NT, doc='Set of units in the superstructure')
 
     # PARAMETERS
-    m.k = pyo.Param(initialize=2, )  # Kinetic constant [L/(mol*s)]
-    m.order1 = pyo.Param(initialize=1)  # Partial order of reacton 1
+    m.k = pyo.Param(initialize=2, doc="Kinetic constant [L/(mol*s)]")  # Kinetic constant [L/(mol*s)]
+    m.order1 = pyo.Param(initialize=1, doc="Partial order of")  # Partial order of reacton 1
     m.order2 = pyo.Param(initialize=1)  # Partial order of reaction 2
     m.QF0 = pyo.Param(initialize=1)  # Inlet volumetric flow [L/s]
     C0_Def = {'A': 0.99, 'B': 0.01}
@@ -43,10 +56,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
+        m : Pyomo.ConcreteModel
             _description_
-        i : _type_
-            _description_
+        i : float
+            Index of the component in the reactor series.
 
         Returns
         -------
@@ -59,53 +72,53 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     # BOOLEAN VARIABLES
 
     # Unreacted feed in reactor n
-    m.YF = pyo.BooleanVar(m.N)
+    m.YF = pyo.BooleanVar(m.N, doc="Unreacted feed in reactor n")
 
     # Existence of recycle flow in unit n
-    m.YR = pyo.BooleanVar(m.N)
+    m.YR = pyo.BooleanVar(m.N, doc="Existence of recycle flow in unit n")
 
     # Unit operation in n (True if unit n is a CSTR, False if unit n is a bypass)
-    m.YP = pyo.BooleanVar(m.N)
+    m.YP = pyo.BooleanVar(m.N, doc="Unit operation in n")
 
     # REAL VARIABLES
 
     # Network Variables
     # Outlet flow rate of the superstructure unit [L/s]
-    m.Q = pyo.Var(m.N, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.Q = pyo.Var(m.N, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Outlet flow rate of the superstructure unit [L/s]")
 
     # Outlet flow rate recycle activation of the superstructure unit [L/s]
     m.QFR = pyo.Var(m.N, initialize=0,
-                   within=pyo.NonNegativeReals, bounds=(0, 10))
+                   within=pyo.NonNegativeReals, bounds=(0, 10), doc="Outlet flow rate recycle activation of the superstructure unit [L/s]")
 
     # Molar flow [mol/s]
     m.F = pyo.Var(m.I, m.N, initialize=0,
-                 within=pyo.NonNegativeReals, bounds=(0, 10))
+                 within=pyo.NonNegativeReals, bounds=(0, 10), doc="Molar flow [mol/s]")
 
     # Molar flow  recycle activation [mol/s]
     m.FR = pyo.Var(m.I, m.N, initialize=0,
-                  within=pyo.NonNegativeReals, bounds=(0, 10))
+                  within=pyo.NonNegativeReals, bounds=(0, 10), doc="Molar flow  recycle activation [mol/s]")
 
     # Reaction rate [mol/(L*s)]
-    m.rate = pyo.Var(m.I, m.N, initialize=0, within=pyo.Reals, bounds=(-10, 10))
+    m.rate = pyo.Var(m.I, m.N, initialize=0, within=pyo.Reals, bounds=(-10, 10), doc="Reaction rate [mol/(L*s)]")
 
     # Reactor volume [L]
-    m.V = pyo.Var(m.N, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.V = pyo.Var(m.N, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Reactor volume [L]")
 
     # Volume activation [L]
-    m.c = pyo.Var(m.N, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.c = pyo.Var(m.N, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Volume activation [L]")
 
     # Splitter Variables
     # Recycle flow rate [L/s]
-    m.QR = pyo.Var(initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.QR = pyo.Var(initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Recycle flow rate [L/s]")
 
     # Product flow rate [L/s]
-    m.QP = pyo.Var(initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.QP = pyo.Var(initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Product flow rate [L/s]")
 
     # Recycle molar flow [mol/s]
-    m.R = pyo.Var(m.I, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.R = pyo.Var(m.I, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Recycle molar flow [mol/s]")
 
     # Product molar flow [mol/s]
-    m.P = pyo.Var(m.I, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10))
+    m.P = pyo.Var(m.I, initialize=0, within=pyo.NonNegativeReals, bounds=(0, 10), doc="Product molar flow [mol/s]")
 
     # CONSTRAINTS
 
