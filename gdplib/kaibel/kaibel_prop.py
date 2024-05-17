@@ -1,24 +1,30 @@
 """ Properties of the system """
 
-from __future__ import division
-
 from pyomo.environ import ConcreteModel
 
 
 def get_model_with_properties():
+    """
+    Attach properties to the model and return the updated model.
+    The properties are the physical properties of the components in the system and constants for the calculation of liquid heat capacity.
+    It also includes the known initial values and scaling factors for the system, such as the number of trays, components, and flowrates.
+    Specifications for the product and the column are also included.
+    Case Study: methanol (1), ethanol (2), propanol (3), and butanol (4)
 
-    """Attach properties to the model."""
+    Returns:
+        Pyomo ConcreteModel: The Pyomo model object with attached properties.
+    """
     
-    m = ConcreteModel()
+    m = ConcreteModel("Properties of the system")
 
     # ------------------------------------------------------------------
     #                              Data
     # ------------------------------------------------------------------
 
-    m.np = 25                   # Number of possible tays
-    m.c = 4                     # Number of components
-    m.lc = 1                    # Light component
-    m.hc = 4                    # Heavy component
+    m.np = 25                   # Number of possible trays. Upper bound for each section.
+    m.c = 4                     # Number of components. Methanol (1), ethanol (2), propanol (3), and butanol (4)
+    m.lc = 1                    # Light component, methanol
+    m.hc = 4                    # Heavy component, butanol
 
     #### Constant parameters
     m.Rgas = 8.314              # Ideal gas constant in J/mol K
@@ -44,7 +50,7 @@ def get_model_with_properties():
     m.Pbot = 1.12               # Bottom-most tray pressure in bar
     m.Ptop = 1.08               # Top-most tray pressure in bar
     m.Pcon = 1.05               # Condenser pressure in bar
-    m.Pf = 1.02
+    m.Pf = 1.02                 # Column pressure in bar
 
     m.rr0 = 0.893               # Internal reflux ratio initial value
     m.bu0 = 0.871               # Internal reflux ratio initial value
