@@ -3206,10 +3206,10 @@ def HDA_model():
         initialize=1171.7,
         doc="furnace column linear coefficient [1e9kj/yr] [$1e3 per year]",
     )
-    m.membrane_seperator_fixed_cost = Param(
-        initialize=43.24, doc="membrane seperator fixed cost [$1e3 per year]"
+    m.membrane_separator_fixed_cost = Param(
+        initialize=43.24, doc="membrane separator fixed cost [$1e3 per year]"
     )
-    m.membrane_seperator_linear_coefficient = Param(
+    m.membrane_separator_linear_coefficient = Param(
         initialize=49.0,
         doc="furnace column linear coefficient (times inlet flowrate) [$1e3 per year]",
     )
@@ -3284,13 +3284,13 @@ def HDA_model():
                 + m.toluene_column_linear_coefficient * m.ndist[3]
             )
             - (
-                m.membrane_seperator_fixed_cost * m.purify_H2.binary_indicator_var
-                + m.membrane_seperator_linear_coefficient * m.f[3]
+                m.membrane_separator_fixed_cost * m.purify_H2.binary_indicator_var
+                + m.membrane_separator_linear_coefficient * m.f[3]
             )
             - (
-                m.membrane_seperator_fixed_cost
+                m.membrane_separator_fixed_cost
                 * m.recycle_methane_membrane.binary_indicator_var
-                + m.membrane_seperator_linear_coefficient * m.f[54]
+                + m.membrane_separator_linear_coefficient * m.f[54]
             )
             - (
                 m.abs_fixed_cost * m.absorber_hydrogen.binary_indicator_var
