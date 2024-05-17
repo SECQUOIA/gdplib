@@ -46,7 +46,7 @@ def build_model():
     [1] Vecchietti, A., & Grossmann, I. (2004). Computational experience with logmip solving linear and nonlinear disjunctive programming problems. Proc. of FOCAPD, 587-590.
     [2] Park, M., Park, S., Mele, F. D., & Grossmann, I. E. (2006). Modeling of purchase and sales contracts in supply chain optimization. Industrial and Engineering Chemistry Research, 45(14), 5013-5026. DOI: 10.1021/ie0513144
     """
-    model = AbstractModel()
+    model = AbstractModel("Medium-term Purchasing Contracts Problem")
 
     # Constants (data that was hard-coded in GAMS model)
     AMOUNT_UB = 1000
@@ -181,7 +181,7 @@ def build_model():
 
     # sigmad_jt
     # sigmad(j, t) in GAMS
-    # Minimum quantity of chemical j that must be bought before recieving a Discount under discount contract
+    # Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract
     model.MinAmount_Discount = Param(
         model.Streams,
         model.TimePeriods,
@@ -189,7 +189,7 @@ def build_model():
         doc='Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract',
     )
 
-    # min quantity to recieve discount under bulk contract
+    # min quantity to receive discount under bulk contract
     # sigmab(j, t) in GAMS
     model.MinAmount_Bulk = Param(
         model.Streams,
@@ -198,7 +198,7 @@ def build_model():
         doc='Minimum quantity of chemical j that must be bought before receiving a Discount under bulk contract',
     )
 
-    # min quantity to recieve discount under length contract
+    # min quantity to receive discount under length contract
     # sigmal(j, p) in GAMS
     model.MinAmount_Length = Param(
         model.Streams,
@@ -815,7 +815,7 @@ def build_model():
 
     model.profit = Objective(rule=profit_rule, sense=maximize, doc='Maximize profit')
 
-    # flow of raw materials is the total amount purchased (accross all contracts)
+    # flow of raw materials is the total amount purchased (across all contracts)
     def raw_material_flow_rule(model, j, t):
         """
         Ensures the total flow of raw material j in time period t equals the sum of amounts purchased under all contract types.
@@ -1106,7 +1106,7 @@ def build_model():
         doc='Input/output balance equation 2 for Process 3 in the process network',
     )
 
-    # process capacity contraints
+    # process capacity constraints
     # these are hardcoded based on the three processes and the process flow structure
     def process_capacity_rule1(model, t):
         """
@@ -1379,7 +1379,7 @@ def build_model():
         doc='Maximum shortfall allowed for each product j in each time period t',
     )
 
-    # maxiumum capacities of suppliers
+    # maximum capacities of suppliers
     def supplier_capacity_rule(model, j, t):
         """
         Enforces the upper limits on the supply capacity for each raw material j provided by suppliers in each time period t.
@@ -1960,26 +1960,12 @@ def build_model():
         rule=FD_contract,
         doc='Fixed duration contract scenarios',
     )
-
+    model = model.create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
     return model
 
 
-def build_concrete():
-    """
-    Build a concrete model applying the data of the medium-term purchasing contracts problem on build_model().
-
-    Returns
-    -------
-    Pyomo.ConcreteModel
-        A concrete model for the medium-term purchasing contracts problem.
-    """
-    return build_model().create_instance(
-        join(this_file_dir(), 'med_term_purchasing.dat')
-    )
-
-
 if __name__ == "__main__":
-    m = build_concrete()
+    m = build_model()
     TransformationFactory('gdp.bigm').apply_to(m)
     SolverFactory('gams').solve(
         m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
