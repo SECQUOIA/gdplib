@@ -3340,10 +3340,7 @@ def solve_with_gdpopt(m):
         mip_solver="gams",
         mip_solver_args=dict(solver="cplex", warmstart=True),
         nlp_solver="gams",
-        nlp_solver_args=dict(
-            solver="ipopth",
-            warmstart=True,
-        ),
+        nlp_solver_args=dict(solver="ipopth", warmstart=True),
         minlp_solver="gams",
         minlp_solver_args=dict(solver="dicopt", warmstart=True),
         subproblem_presolve=False,
@@ -3387,6 +3384,7 @@ def infeasible_constraints(m):
     This function checks infeasible constraint in the model
     """
     log_infeasible_constraints(m)
+
 
 # %%
 
