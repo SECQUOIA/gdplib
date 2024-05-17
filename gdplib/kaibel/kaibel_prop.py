@@ -14,63 +14,60 @@ def get_model_with_properties():
     Returns:
         Pyomo ConcreteModel: The Pyomo model object with attached properties.
     """
-    
+
     m = ConcreteModel("Properties of the system")
 
     # ------------------------------------------------------------------
     #                              Data
     # ------------------------------------------------------------------
 
-    m.np = 25                   # Number of possible trays. Upper bound for each section.
-    m.c = 4                     # Number of components. Methanol (1), ethanol (2), propanol (3), and butanol (4)
-    m.lc = 1                    # Light component, methanol
-    m.hc = 4                    # Heavy component, butanol
+    m.np = 25  # Number of possible trays. Upper bound for each section.
+    m.c = 4  # Number of components. Methanol (1), ethanol (2), propanol (3), and butanol (4)
+    m.lc = 1  # Light component, methanol
+    m.hc = 4  # Heavy component, butanol
 
     #### Constant parameters
-    m.Rgas = 8.314              # Ideal gas constant in J/mol K
-    m.Tref = 298.15             # Reference temperature in K
+    m.Rgas = 8.314  # Ideal gas constant in J/mol K
+    m.Tref = 298.15  # Reference temperature in K
 
     #### Product specifications
-    m.xspec_lc = 0.99           # Final liquid composition for methanol (1)
-    m.xspec_hc = 0.99           # Fnal liquid composition for butanol (4)
-    m.xspec_inter2 = 0.99       # Final liquid composition for ethanol (2)
-    m.xspec_inter3 = 0.99       # Final liquid composition for propanol (3)
-    m.Ddes = 50                 # Final flowrate in distillate in mol/s
-    m.Bdes = 50                 # Final flowrate in bottoms in mol/s
-    m.Sdes = 50                 # Final flowrate in side product streams in mol/s
+    m.xspec_lc = 0.99  # Final liquid composition for methanol (1)
+    m.xspec_hc = 0.99  # Fnal liquid composition for butanol (4)
+    m.xspec_inter2 = 0.99  # Final liquid composition for ethanol (2)
+    m.xspec_inter3 = 0.99  # Final liquid composition for propanol (3)
+    m.Ddes = 50  # Final flowrate in distillate in mol/s
+    m.Bdes = 50  # Final flowrate in bottoms in mol/s
+    m.Sdes = 50  # Final flowrate in side product streams in mol/s
 
     # #### Known initial values
-    m.Fi = m.Ddes + m.Bdes + 2 * m.Sdes # Side feed flowrate in mol/s
-    m.Vi = 400                  # Initial value for vapor flowrate in mol/s
-    m.Li = 400                  # Initial value for liquid flowrate in mol/s
+    m.Fi = m.Ddes + m.Bdes + 2 * m.Sdes  # Side feed flowrate in mol/s
+    m.Vi = 400  # Initial value for vapor flowrate in mol/s
+    m.Li = 400  # Initial value for liquid flowrate in mol/s
 
-    m.Tf = 358                  # Side feed temperature in K
+    m.Tf = 358  # Side feed temperature in K
 
-    m.Preb = 1.2                # Reboiler pressure in bar
-    m.Pbot = 1.12               # Bottom-most tray pressure in bar
-    m.Ptop = 1.08               # Top-most tray pressure in bar
-    m.Pcon = 1.05               # Condenser pressure in bar
-    m.Pf = 1.02                 # Column pressure in bar
+    m.Preb = 1.2  # Reboiler pressure in bar
+    m.Pbot = 1.12  # Bottom-most tray pressure in bar
+    m.Ptop = 1.08  # Top-most tray pressure in bar
+    m.Pcon = 1.05  # Condenser pressure in bar
+    m.Pf = 1.02  # Column pressure in bar
 
-    m.rr0 = 0.893               # Internal reflux ratio initial value
-    m.bu0 = 0.871               # Internal reflux ratio initial value
-
+    m.rr0 = 0.893  # Internal reflux ratio initial value
+    m.bu0 = 0.871  # Internal reflux ratio initial value
 
     #### Scaling factors
-    m.Hscale = 1e3    
-    m.Qscale = 1e-3   
+    m.Hscale = 1e3
+    m.Qscale = 1e-3
 
-   
     #### Constants for the calculation of liquid heat capacity
-    m.cpc = {}                   # Constant 1 for liquid heat capacity 
-    m.cpc2 = {}                  # Constant 2 for liquid heat capacity 
-    m.cpc[1] = m.Rgas     
+    m.cpc = {}  # Constant 1 for liquid heat capacity
+    m.cpc2 = {}  # Constant 2 for liquid heat capacity
+    m.cpc[1] = m.Rgas
     m.cpc[2] = 1
     m.cpc2['A', 1] = 1 / 100
     m.cpc2['B', 1] = 1 / 1e4
     m.cpc2['A', 2] = 1
     m.cpc2['B', 2] = 1
-
 
     # ------------------------------------------------------------------
     #                          Physical Properties
@@ -113,45 +110,48 @@ def get_model_with_properties():
     cpL['a', 'C(H3)(O)'] = 3.70344
     cpL['b', 'C(H3)(O)'] = -1.12884
     cpL['c', 'C(H3)(O)'] = 0.51239
-    sumA[1] = (cpL['a', 'C(H3)(O)']
-               + cpL['a', 'O(H)(C)'])               
-    sumB[1] = (cpL['b', 'C(H3)(O)']
-               + cpL['b', 'O(H)(C)'])
-    sumC[1] = (cpL['c', 'C(H3)(O)']
-               + cpL['c', 'O(H)(C)'])
-    sumA[2] = (cpL['a', 'C(H3)(C)']
-               + cpL['a', 'C(H2)(C)(O)']
-               + cpL['a', 'O(H)(C)'])
-    sumB[2] = (cpL['b', 'C(H3)(C)']
-               + cpL['b', 'C(H2)(C)(O)']
-               + cpL['b', 'O(H)(C)'])
-    sumC[2] = (cpL['c', 'C(H3)(C)']
-               + cpL['c', 'C(H2)(C)(O)']
-               + cpL['c', 'O(H)(C)'])
-    sumA[3] = (cpL['a', 'C(H3)(C)']
-               + cpL['a', 'C(H2)(C2)']
-               + cpL['a', 'C(H2)(C)(O)']
-               + cpL['a', 'O(H)(C)'])
-    sumB[3] = (cpL['b', 'C(H3)(C)']
-               + cpL['b', 'C(H2)(C2)']
-               + cpL['b', 'C(H2)(C)(O)']
-               + cpL['b', 'O(H)(C)'])
-    sumC[3] = (cpL['c', 'C(H3)(C)']
-               + cpL['c', 'C(H2)(C2)']
-               + cpL['c', 'C(H2)(C)(O)']
-               + cpL['c', 'O(H)(C)'])
-    sumA[4] = (cpL['a', 'C(H3)(C)']
-               + 2 * cpL['a', 'C(H2)(C2)']
-               + cpL['a', 'C(H2)(C)(O)']
-               + cpL['a', 'O(H)(C)'])
-    sumB[4] = (cpL['b', 'C(H3)(C)']
-               + 2 * cpL['b', 'C(H2)(C2)']
-               + cpL['b', 'C(H2)(C)(O)']
-               + cpL['b', 'O(H)(C)'])
-    sumC[4] = (cpL['c', 'C(H3)(C)']
-               + 2 * cpL['c', 'C(H2)(C2)']
-               + cpL['c', 'C(H2)(C)(O)']
-               + cpL['c', 'O(H)(C)'])
+    sumA[1] = cpL['a', 'C(H3)(O)'] + cpL['a', 'O(H)(C)']
+    sumB[1] = cpL['b', 'C(H3)(O)'] + cpL['b', 'O(H)(C)']
+    sumC[1] = cpL['c', 'C(H3)(O)'] + cpL['c', 'O(H)(C)']
+    sumA[2] = cpL['a', 'C(H3)(C)'] + cpL['a', 'C(H2)(C)(O)'] + cpL['a', 'O(H)(C)']
+    sumB[2] = cpL['b', 'C(H3)(C)'] + cpL['b', 'C(H2)(C)(O)'] + cpL['b', 'O(H)(C)']
+    sumC[2] = cpL['c', 'C(H3)(C)'] + cpL['c', 'C(H2)(C)(O)'] + cpL['c', 'O(H)(C)']
+    sumA[3] = (
+        cpL['a', 'C(H3)(C)']
+        + cpL['a', 'C(H2)(C2)']
+        + cpL['a', 'C(H2)(C)(O)']
+        + cpL['a', 'O(H)(C)']
+    )
+    sumB[3] = (
+        cpL['b', 'C(H3)(C)']
+        + cpL['b', 'C(H2)(C2)']
+        + cpL['b', 'C(H2)(C)(O)']
+        + cpL['b', 'O(H)(C)']
+    )
+    sumC[3] = (
+        cpL['c', 'C(H3)(C)']
+        + cpL['c', 'C(H2)(C2)']
+        + cpL['c', 'C(H2)(C)(O)']
+        + cpL['c', 'O(H)(C)']
+    )
+    sumA[4] = (
+        cpL['a', 'C(H3)(C)']
+        + 2 * cpL['a', 'C(H2)(C2)']
+        + cpL['a', 'C(H2)(C)(O)']
+        + cpL['a', 'O(H)(C)']
+    )
+    sumB[4] = (
+        cpL['b', 'C(H3)(C)']
+        + 2 * cpL['b', 'C(H2)(C2)']
+        + cpL['b', 'C(H2)(C)(O)']
+        + cpL['b', 'O(H)(C)']
+    )
+    sumC[4] = (
+        cpL['c', 'C(H3)(C)']
+        + 2 * cpL['c', 'C(H2)(C2)']
+        + cpL['c', 'C(H2)(C)(O)']
+        + cpL['c', 'O(H)(C)']
+    )
 
     ## Methanol: component 1
     m.prop[1, 'MW'] = 32.042
@@ -174,7 +174,6 @@ def get_model_with_properties():
     m.prop[1, 'cpC', 2] = 2.587e-5
     m.prop[1, 'cpD', 2] = -2.852e-8
 
-
     ## Ethanol: component 2
     m.prop[2, 'MW'] = 46.069
     m.prop[2, 'TB'] = 351.4
@@ -195,7 +194,6 @@ def get_model_with_properties():
     m.prop[2, 'cpB', 2] = 2.141e-1
     m.prop[2, 'cpC', 2] = -8.390e-5
     m.prop[2, 'cpD', 2] = 1.373e-9
-
 
     ## Propanol: component 3
     m.prop[3, 'MW'] = 60.096
@@ -218,7 +216,6 @@ def get_model_with_properties():
     m.prop[3, 'cpC', 2] = -1.855e-4
     m.prop[3, 'cpD', 2] = 4.296e-8
 
-
     ## Butanol: component 4
     m.prop[4, 'MW'] = 74.123
     m.prop[4, 'TB'] = 390.9
@@ -239,6 +236,5 @@ def get_model_with_properties():
     m.prop[4, 'cpB', 2] = 4.18e-1
     m.prop[4, 'cpC', 2] = -2.242e-4
     m.prop[4, 'cpD', 2] = 4.685e-8
-
 
     return m
