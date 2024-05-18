@@ -7,29 +7,21 @@ from pyomo.opt.base.solvers import SolverFactory
 
 
 def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
-    # """
-    # Function that builds CSTR superstructure model of size NT.
-    # The CSTRs have a single 1st order reaction A -> B and minimizes (TODO Check)
-    # total reactor volume. The optimal solution should yield NT reactors with a recycle before reactor NT.
-    # Reference: Paper Linhan 1. TODO Correct reference
-
-    # Args:
-    #     NT: int. Positive Integer defining the maximum number of CSTRs
-    # Returns:
-    #     m = Pyomo GDP model
-    # """
     """
     Build the CSTR superstructure model of size NT.
-    
+    NT is the number of reactors in series.
+    The CSTRs have a single 1st order auto catalytic reaction A -> B and minimizes total reactors series volume. 
+    The optimal solution should yield NT reactors with a recycle before reactor NT.
 
     Parameters
     ----------
     NT : int
         Number of possible reactors in the reactor series superstructure
+
     Returns
     -------
     m : Pyomo.ConcreteModel
-        _description_
+        Pyomo GDP model which represents the superstructure model of size of NT reactors.
     """
 
     # PYOMO MODEL
@@ -41,30 +33,32 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
     # PARAMETERS
     m.k = pyo.Param(initialize=2, doc="Kinetic constant [L/(mol*s)]")  # Kinetic constant [L/(mol*s)]
-    m.order1 = pyo.Param(initialize=1, doc="Partial order of")  # Partial order of reacton 1
-    m.order2 = pyo.Param(initialize=1)  # Partial order of reaction 2
-    m.QF0 = pyo.Param(initialize=1)  # Inlet volumetric flow [L/s]
+    m.order1 = pyo.Param(initialize=1, doc="Partial order of reaction 1")  # Partial order of reacton 1
+    m.order2 = pyo.Param(initialize=1, doc="Partial order of reaction 2")  # Partial order of reaction 2
+    m.QF0 = pyo.Param(initialize=1, doc="Inlet volumetric flow [L/s]")  # Inlet volumetric flow [L/s]
     C0_Def = {'A': 0.99, 'B': 0.01}
 
     # Initial concentration of reagents [mol/L]
-    m.C0 = pyo.Param(m.I, initialize=C0_Def)
+    m.C0 = pyo.Param(m.I, initialize=C0_Def, doc="Initial concentration of reagents [mol/L]")
 
     # Inlet molar flow [mol/s]
 
     def F0_Def(m, i):
-        """_summary_
+        """
+        Inlet molar flow [mol/s] for component i. 
+        The function multiplies the initial concentration of component i by the inlet volumetric flow.
 
         Parameters
         ----------
         m : Pyomo.ConcreteModel
-            _description_
+            Pyomo GDP model of the CSTR superstructure.
         i : float
             Index of the component in the reactor series.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Param
+            Inlet molar flow [mol/s] for component i
         """
         return m.C0[i]*m.QF0
     m.F0 = pyo.Param(m.I, initialize=F0_Def)
@@ -126,20 +120,21 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     # Unreacted feed unit mole balance
 
     def unreact_mole_rule(m, i, n):
-        """_summary_
+        """
+        Unreacted feed unit mole balance.
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        i : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        i : float
+            Index of the component in the reactor series.
+        n : int
+            Index of the reactor in the reactor series. The reactor index starts at 1. The number increases on the left direction
 
         Returns
         -------
-        _type_
+        Pyomo.Constraint or Pyomo.Constraint.Skip
             _description_
         """
         if n == NT:
@@ -156,10 +151,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -181,12 +176,12 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        i : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        i : float
+            Index of the component in the reactor series.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -207,10 +202,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -232,10 +227,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        i : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        i : float
+            Index of the component in the reactor series.
 
         Returns
         -------
@@ -253,8 +248,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
 
         Returns
         -------
@@ -272,10 +267,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        i : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        i : float
+            Index of the component in the reactor series.
 
         Returns
         -------
@@ -293,8 +288,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
 
         Returns
         -------
@@ -312,10 +307,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -338,8 +333,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         ----------
         disjunct : _type_
             _description_
-        n : _type_
-            _description_
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -406,8 +401,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         ----------
         disjunct : _type_
             _description_
-        n : _type_
-            _description_
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -425,8 +420,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
+            i : float
+                Index of the component in the reactor series.
 
             Returns
             -------
@@ -444,8 +439,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
+            i : float
+                Index of the component in the reactor series.
 
             Returns
             -------
@@ -492,8 +487,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         ----------
         disjunct : _type_
             _description_
-        n : _type_
-            _description_
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -511,8 +506,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
+            i : float
+                Index of the component in the reactor series.
 
             Returns
             -------
@@ -545,8 +540,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         ----------
         disjunct : _type_
             _description_
-        n : _type_
-            _description_
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -564,9 +559,9 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             ----------
             disjunct : _type_
                 _description_
-            i : _type_
-                _description_
-
+            i : float
+                Index of the component in the reactor series.
+            
             Returns
             -------
             _type_
@@ -606,14 +601,14 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
+        list
             _description_
         """
         return [m.YP_is_cstr[n], m.YP_is_bypass[n]]
@@ -624,14 +619,14 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
+        list
             _description_
         """
         return [m.YR_is_recycle[n], m.YR_is_not_recycle[n]]
@@ -649,10 +644,10 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
@@ -670,12 +665,12 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
 
         Returns
         -------
-        _type_
+        Pyomo.LogicalConstraint
             _description_
         """
         return pyo.exactly(1, m.YF)
@@ -689,12 +684,12 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
 
         Returns
         -------
-        _type_
+        Pyomo.LogicalConstraint
             _description_
         """
         return pyo.exactly(1, m.YR)
@@ -708,14 +703,14 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        m : _type_
-            _description_
-        n : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
+        Pyomo.LogicalConstraint
             _description_
         """
         if n == 1:
@@ -728,21 +723,22 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     # OBJECTIVE
 
     def obj_rule(m):
-        """_summary_
+        """
+        Objective function to minimize the total reactor volume.
 
         Parameters
         ----------
-        m : _type_
-            _description_
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo Objective
+            Objective function to minimize the total reactor volume.
         """
         return sum(m.c[n] for n in m.N)
 
-    m.obj = pyo.Objective(rule=obj_rule, sense=pyo.minimize)
+    m.obj = pyo.Objective(rule=obj_rule, sense=pyo.minimize, doc="minimum total reactor volume")
 
     return m
 
