@@ -175,7 +175,9 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     # Reactor mole balance
 
     def react_mole_rule(m, i, n):
-        """_summary_
+        """
+        Reactor mole balance.
+        The mole balance is calculated using the inlet molar flow, the recycle molar flow, the outlet molar flow, and the reaction rate for each component.
 
         Parameters
         ----------
@@ -188,20 +190,22 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Pyomo.Constraint.Skip
+            The constraint for the reactor mole balance if n is different from NT. Otherwise, it returns Pyomo.Constraint.Skip.
         """
         if n != NT:
             return m.F[i, n+1] + m.FR[i, n] - m.F[i, n] + m.rate[i, n]*m.V[n] == 0
         else:
             return pyo.Constraint.Skip
 
-    m.react_mole = pyo.Constraint(m.I, m.N, rule=react_mole_rule)
+    m.react_mole = pyo.Constraint(m.I, m.N, rule=react_mole_rule, doc="Reactor mole balance")
 
     # Reactor continuity
 
     def react_cont_rule(m, n):
-        """_summary_
+        """
+        Reactor continuity.
+        The continuity is calculated using the inlet volumetric flow, the recycle flow rate, and the outlet flow rate for the reactor n.
 
         Parameters
         ----------
@@ -212,21 +216,23 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Pyomo.Constraint.Skip
+            The constraint for the reactor continuity if n is different from NT. Otherwise, it returns Pyomo.Constraint.Skip.
         """
         if n != NT:
             return m.Q[n+1] + m.QFR[n] - m.Q[n] == 0
         else:
             return pyo.Constraint.Skip
 
-    m.react_cont = pyo.Constraint(m.N, rule=react_cont_rule)
+    m.react_cont = pyo.Constraint(m.N, rule=react_cont_rule, doc="Reactor continuity")
 
     # Splitting Point Balances
     # Splitting point mole balance
 
     def split_mole_rule(m, i):
-        """_summary_
+        """
+        Splitting point mole balance.
+        The mole balance is calculated using the product molar flow, the recycle molar flow, and the outlet molar flow for each component.
 
         Parameters
         ----------
@@ -237,17 +243,19 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint for the splitting point mole balance.
         """
         return m.F[i, 1] - m.P[i] - m.R[i] == 0
 
-    m.split_mole = pyo.Constraint(m.I, rule=split_mole_rule)
+    m.split_mole = pyo.Constraint(m.I, rule=split_mole_rule, doc="Splitting point mole balance")
 
     # Splitting point continuity
 
     def split_cont_rule(m):
-        """_summary_
+        """
+        Splitting point continuity.
+        The continuity is calculated using the product flow rate, the recycle flow rate, and the outlet flow rate for the reactor 1.
 
         Parameters
         ----------
@@ -256,17 +264,20 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint for the splitting point continuity.
         """
         return m.Q[1] - m.QP - m.QR == 0
 
-    m.split_cont = pyo.Constraint(rule=split_cont_rule)
+    m.split_cont = pyo.Constraint(rule=split_cont_rule, doc="Splitting point continuity")
 
     # Splitting point additional constraints
 
     def split_add_rule(m, i):
-        """_summary_
+        """
+        Splitting point additional constraints. 
+        Molarity constraints over initial and final flows, read as an multiplication avoid the numerical complication.
+        m.P[i]/m.QP =  m.F[i,1]/m.Q[1] (molarity balance)
 
         Parameters
         ----------
@@ -277,17 +288,19 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint for the splitting point additional constraints.
         """
         return m.P[i]*m.Q[1] - m.F[i, 1]*m.QP == 0
 
-    m.split_add = pyo.Constraint(m.I, rule=split_add_rule)
+    m.split_add = pyo.Constraint(m.I, rule=split_add_rule, doc="Splitting point additional constraints")
 
     # Product Specification
 
     def prod_spec_rule(m):
-        """_summary_
+        """
+        Product B Specification.
+        The product B specification is calculated using the product flow rate and the product molar flow.
 
         Parameters
         ----------
@@ -296,17 +309,18 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint
+            The constraint for the product B specification.
         """
         return m.QP*0.95 - m.P['B'] == 0
 
-    m.prod_spec = pyo.Constraint(rule=prod_spec_rule)
+    m.prod_spec = pyo.Constraint(rule=prod_spec_rule, doc="Product B Specification")
 
     # Volume Constraint
 
     def vol_cons_rule(m, n):
-        """_summary_
+        """
+        Volume Constraint.
 
         Parameters
         ----------
@@ -317,15 +331,15 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Pyomo.Constraint.Skip
+            The constraint for the volume constraint if n is different from 1. Otherwise, it returns Pyomo.Constraint.Skip.
         """
         if n != 1:
             return m.V[n] - m.V[n-1] == 0
         else:
             return pyo.Constraint.Skip
 
-    m.vol_cons = pyo.Constraint(m.N, rule=vol_cons_rule)
+    m.vol_cons = pyo.Constraint(m.N, rule=vol_cons_rule, doc"Volume Constraint")
 
     # YD Disjunction block equation definition
 
