@@ -122,6 +122,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     def unreact_mole_rule(m, i, n):
         """
         Unreacted feed unit mole balance.
+        The mole balance is calculated using the inlet molar flow, the recycle molar flow, the outlet molar flow, and the reaction rate for each component.
 
         Parameters
         ----------
@@ -130,24 +131,26 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         i : float
             Index of the component in the reactor series.
         n : int
-            Index of the reactor in the reactor series. The reactor index starts at 1. The number increases on the left direction
+            Index of the reactor in the reactor series. The reactor index starts at 1. The number increases on the left direction of the reactor series. The last reactor is indexed as NT which is the feed for reagent.
 
         Returns
         -------
         Pyomo.Constraint or Pyomo.Constraint.Skip
-            _description_
+            The constraint for the unreacted feed unit mole balance if n is equal to NT. Otherwise, it returns Pyomo.Constraint.Skip.
         """
         if n == NT:
             return m.F0[i] + m.FR[i, n] - m.F[i, n] + m.rate[i, n]*m.V[n] == 0
         else:
             return pyo.Constraint.Skip
 
-    m.unreact_mole = pyo.Constraint(m.I, m.N, rule=unreact_mole_rule)
+    m.unreact_mole = pyo.Constraint(m.I, m.N, rule=unreact_mole_rule, doc="Unreacted feed unit mole balance")
 
     # Unreacted feed unit continuity
 
     def unreact_cont_rule(m, n):
-        """_summary_
+        """
+        Unreacted feed unit continuity.
+        The continuity is calculated using the inlet volumetric flow, the recycle flow rate, and the outlet flow rate for the reactor NT.
 
         Parameters
         ----------
@@ -158,15 +161,15 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.Constraint or Pyomo.Constraint.Skip
+            The constraint for the unreacted feed unit continuity if n is equal to NT. Otherwise, it returns Pyomo.Constraint.Skip.
         """
         if n == NT:
             return m.QF0 + m.QFR[n] - m.Q[n] == 0
         else:
             return pyo.Constraint.Skip
 
-    m.unreact_cont = pyo.Constraint(m.N, rule=unreact_cont_rule)
+    m.unreact_cont = pyo.Constraint(m.N, rule=unreact_cont_rule, doc="Unreacted feed unit continuity")
 
     # Reactor Balances
     # Reactor mole balance
