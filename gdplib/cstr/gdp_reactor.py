@@ -489,7 +489,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             Returns
             -------
             Pyomo.Constraint
-                _description_
+                Reaction rate relation for defining pyomo model.
             """
             return m.rate["B", n] + m.rate["A", n] == 0
 
