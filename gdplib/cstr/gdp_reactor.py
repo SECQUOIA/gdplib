@@ -25,11 +25,11 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     """
 
     # PYOMO MODEL
-    m = pyo.ConcreteModel(name='gdp_reactors')
+    m = pyo.ConcreteModel(name="gdp_reactors")
 
     # SETS
-    m.I = pyo.Set(initialize=['A', 'B'], doc='Set of components')
-    m.N = pyo.RangeSet(1, NT, doc='Set of units in the superstructure')
+    m.I = pyo.Set(initialize=["A", "B"], doc="Set of components")
+    m.N = pyo.RangeSet(1, NT, doc="Set of units in the superstructure")
 
     # PARAMETERS
     m.k = pyo.Param(
@@ -44,7 +44,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     m.QF0 = pyo.Param(
         initialize=1, doc="Inlet volumetric flow [L/s]"
     )  # Inlet volumetric flow [L/s]
-    C0_Def = {'A': 0.99, 'B': 0.01}
+    C0_Def = {"A": 0.99, "B": 0.01}
 
     # Initial concentration of reagents [mol/L]
     m.C0 = pyo.Param(
@@ -399,7 +399,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         Pyomo.Constraint
             The constraint for the product B specification.
         """
-        return m.QP * 0.95 - m.P['B'] == 0
+        return m.QP * 0.95 - m.P["B"] == 0
 
     m.prod_spec = pyo.Constraint(rule=prod_spec_rule, doc="Product B Specification")
 
@@ -466,8 +466,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
                 The constraint for the calculation of the reaction rate of A for each reactor.
             """
             return (
-                m.rate['A', n] * ((m.Q[n]) ** m.order1) * ((m.Q[n]) ** m.order2)
-                + m.k * ((m.F['A', n]) ** m.order1) * ((m.F['B', n]) ** m.order2)
+                m.rate["A", n] * ((m.Q[n]) ** m.order1) * ((m.Q[n]) ** m.order2)
+                + m.k * ((m.F["A", n]) ** m.order1) * ((m.F["B", n]) ** m.order2)
                 == 0
             )
 
@@ -490,7 +490,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             Pyomo.Constraint
                 _description_
             """
-            return m.rate['B', n] + m.rate['A', n] == 0
+            return m.rate["B", n] + m.rate["A", n] == 0
 
         # Volume activation
         @disjunct.Constraint()
@@ -904,9 +904,9 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
 if __name__ == "__main__":
     m = build_cstrs()
-    pyo.TransformationFactory('core.logical_to_linear').apply_to(m)
-    pyo.TransformationFactory('gdp.bigm').apply_to(m)
-    pyo.SolverFactory('gams').solve(
-        m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
+    pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
+    pyo.TransformationFactory("gdp.bigm").apply_to(m)
+    pyo.SolverFactory("gams").solve(
+        m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
     )
     display(m)
