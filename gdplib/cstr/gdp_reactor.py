@@ -339,7 +339,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         else:
             return pyo.Constraint.Skip
 
-    m.vol_cons = pyo.Constraint(m.N, rule=vol_cons_rule, doc"Volume Constraint")
+    m.vol_cons = pyo.Constraint(m.N, rule=vol_cons_rule, doc="Volume Constraint")
 
     # YD Disjunction block equation definition
 
@@ -348,48 +348,55 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Parameters
         ----------
-        disjunct : _type_
-            _description_
+        disjunct : Pyomo.Disjunct
+            Pyomo Disjunct block to include the constraints for the activation of the CSTR reactor.
         n : int
             Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            None, the function builds the constraints for the activation of the CSTR reactor.
         """
         m = disjunct.model()
 
         # Reaction rates calculation
         @disjunct.Constraint()
         def YPD_rate_calc(disjunct):
-            """_summary_
+            """
+            Calculate the reaction rate of A for each reactor.
+            The reaction rate is calculated using the kinetic constant, the outlet flow rate, the molar flow of A, and the molar flow of B.
+            The outlet flow is multiplied on the reaction rate to avoid numerical complications.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the activation of the CSTR reactor.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                The constraint for the calculation of the reaction rate of A for each reactor.
             """
             return m.rate['A', n]*((m.Q[n])**m.order1)*((m.Q[n])**m.order2)+m.k*((m.F['A', n])**m.order1)*((m.F['B', n])**m.order2) == 0
 
         # Reaction rate relation
         @disjunct.Constraint()
         def YPD_rate_rel(disjunct):
-            """_summary_
+            """
+            Reaction rate relation for defining pyomo model.
+            Since the chemical reaction goes from A to B, the rate of A is equal to the negative rate of B.
+
+            A -> B 
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the activation of the CSTR reactor.
 
             Returns
             -------
-            _type_
+            Pyomo.Constraint
                 _description_
             """
             return m.rate['B', n] + m.rate['A', n] == 0
@@ -397,224 +404,245 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         # Volume activation
         @disjunct.Constraint()
         def YPD_vol_act(disjunct):
-            """_summary_
+            """
+            Volume Activation function for defining pyomo model.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the activation of the CSTR reactor.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Activation function for the volume of the reactor.
             """
             return m.c[n] - m.V[n] == 0
 
     def build_bypass_equations(disjunct, n):
-        """_summary_
+        """
+        Build the constraints for the deactivation of the reactor (bypass the reactor).
 
         Parameters
         ----------
-        disjunct : _type_
-            _description_
+        disjunct : Pyomo.Disjunct
+            Pyomo Disjunct block to include the constraints for the deactivation of the reactor (bypass the reactor).
         n : int
             Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            None, the function builds the constraints for the deactivation of the reactor (bypass the reactor).
         """
         m = disjunct.model()
 
-        # FR desactivation
+        # FR deactivation
         @disjunct.Constraint(m.I)
         def neg_YPD_FR_desact(disjunct, i):
-            """_summary_
+            """
+            Deactivation of the recycle flow for each component in the reactor series.
+            There are no recycle flows when the reactor is deactivated (bypassed).
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the deactivation of the reactor (bypass the reactor).
             i : float
                 Index of the component in the reactor series.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Deactivation of the recycle flow for each component in the reactor series.
             """
             return m.FR[i, n] == 0
 
-        # Rate desactivation
+        # Rate deactivation
         @disjunct.Constraint(m.I)
         def neg_YPD_rate_desact(disjunct, i):
-            """_summary_
+            """
+            Deactivate the reaction rate for each component in the reactor series.
+            There are no reaction rates when the reactor is deactivated (bypassed).
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the deactivation of the reactor (bypass the reactor).
             i : float
                 Index of the component in the reactor series.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Deactivation of the reaction rate for each component in the reactor series.
             """
             return m.rate[i, n] == 0
 
-        # QFR desactivation
+        # QFR deactivation
         @disjunct.Constraint()
         def neg_YPD_QFR_desact(disjunct):
-            """_summary_
+            """
+            Deactivate the outlet flow rate recycle activation of the reactor.
+            There is no outlet flow rate recycle activation when the reactor is deactivated (bypassed).
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the deactivation of the reactor (bypass the reactor).
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Deactivation of the outlet flow rate recycle activation of the reactor.
             """
             return m.QFR[n] == 0
 
         @disjunct.Constraint()
         def neg_YPD_vol_desact(disjunct):
-            '''
-            Volume desactivation function for defining pyomo model
-            args:
-                disjunct: pyomo block with disjunct to include the constraint
-                n: pyomo set with reactor index
-            return: 
-                return constraint
-            '''
+            """
+            Volume deactivation function for defining pyomo model.
+            There is no volume when the reactor is deactivated (bypassed).
+
+            Parameters
+            ----------
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the deactivation of the reactor (bypass the reactor).
+            
+            Returns
+            -------
+            Pyomo.Constraint
+                Volume deactivation function for defining pyomo model.
+            """
             return m.c[n] == 0
 
     # YR Disjuction block equation definition
 
     def build_recycle_equations(disjunct, n):
-        """_summary_
+        """
+        Build the constraints for the activation of the recycle flow.
 
         Parameters
         ----------
-        disjunct : _type_
-            _description_
+        disjunct : Pyomo.Disjunct
+            Pyomo Disjunct block to include the constraints for the activation of the reactor (recycle flow existence).
         n : int
             Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            None, the function builds the constraints for the activation of the recycle flow.
         """
         m = disjunct.model()
 
         # FR activation
         @disjunct.Constraint(m.I)
         def YRD_FR_act(disjunct, i):
-            """_summary_
+            """
+            Activation of the recycle flow for each component in the reactor series.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the activation of the reactor (recycle flow existence).
             i : float
                 Index of the component in the reactor series.
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Activation of the recycle flow for each component in the reactor series.
             """
             return m.FR[i, n] - m.R[i] == 0
 
         # QFR activation
         @disjunct.Constraint()
         def YRD_QFR_act(disjunct):
-            """_summary_
+            """
+            Activation of the outlet flow rate recycle activation of the reactor.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the activation of the reactor (recycle flow existence).
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Activation of the outlet flow rate recycle activation of the reactor.
             """
             return m.QFR[n] - m.QR == 0
 
     def build_no_recycle_equations(disjunct, n):
-        """_summary_
+        """
+        Build the constraints for the deactivation of the recycle flow.
 
         Parameters
         ----------
-        disjunct : _type_
-            _description_
+        disjunct : Pyomo.Disjunct
+            Pyomo Disjunct block to include the constraints for the deactivation of the reactor (recycle flow absence).
         n : int
             Index of the reactor in the reactor series.
 
         Returns
         -------
-        _type_
-            _description_
+        None
+            None, the function builds the constraints for the deactivation of the recycle flow.
         """
         m = disjunct.model()
 
-        # FR desactivation
+        # FR deactivation
         @disjunct.Constraint(m.I)
         def neg_YRD_FR_desact(disjunct, i):
-            """_summary_
+            """
+            Deactivation of the recycle flow for each component in the reactor series.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the deactivation of the reactor (recycle flow absence).
             i : float
                 Index of the component in the reactor series.
             
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Deactivation of the recycle flow for each component in the reactor series.
             """
             return m.FR[i, n] == 0
 
-        # QFR desactivation
+        # QFR deactivation
         @disjunct.Constraint()
         def neg_YRD_QFR_desact(disjunct):
-            """_summary_
+            """
+            Deactivation of the outlet flow rate recycle activation of the reactor.
 
             Parameters
             ----------
-            disjunct : _type_
-                _description_
+            disjunct : Pyomo.Disjunct
+                Pyomo Disjunct block to include the constraints for the deactivation of the reactor (recycle flow absence).
 
             Returns
             -------
-            _type_
-                _description_
+            Pyomo.Constraint
+                Deactivation of the outlet flow rate recycle activation of the reactor.
             """
             return m.QFR[n] == 0
 
     # Create disjunction blocks
-    m.YR_is_recycle = Disjunct(m.N, rule=build_recycle_equations)
-    m.YR_is_not_recycle = Disjunct(m.N, rule=build_no_recycle_equations)
+    m.YR_is_recycle = Disjunct(m.N, rule=build_recycle_equations, doc="Recycle flow in reactor n")
+    m.YR_is_not_recycle = Disjunct(m.N, rule=build_no_recycle_equations, doc="No recycle flow in reactor n")
 
-    m.YP_is_cstr = Disjunct(m.N, rule=build_cstr_equations)
-    m.YP_is_bypass = Disjunct(m.N, rule=build_bypass_equations)
+    m.YP_is_cstr = Disjunct(m.N, rule=build_cstr_equations, doc="CSTR reactor n")
+    m.YP_is_bypass = Disjunct(m.N, rule=build_bypass_equations, doc="Bypass reactor n")
 
     # Create disjunctions
 
     @m.Disjunction(m.N)
     def YP_is_cstr_or_bypass(m, n):
-        """_summary_
+        """
+        Build the disjunction for the activation of the CSTR reactor or bypass the reactor.
 
         Parameters
         ----------
@@ -626,13 +654,14 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         Returns
         -------
         list
-            _description_
+            list of the disjunctions for the activation of the CSTR reactor or bypass the reactor
         """
         return [m.YP_is_cstr[n], m.YP_is_bypass[n]]
 
     @m.Disjunction(m.N)
     def YR_is_recycle_or_not(m, n):
-        """_summary_
+        """
+        Build the disjunction for the existence of a recycle flow in the reactor.
 
         Parameters
         ----------
@@ -644,7 +673,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         Returns
         -------
         list
-            _description_
+            list of the disjunctions for the existence of a recycle flow in the reactor
         """
         return [m.YR_is_recycle[n], m.YR_is_not_recycle[n]]
 
@@ -657,7 +686,9 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     # Unit must be a CSTR to include a recycle
 
     def cstr_if_recycle_rule(m, n):
-        """_summary_
+        """
+        Build the logical constraint for the unit to be a CSTR to include a recycle.
+        The existence of a recycle flow implies the existence of a CSTR reactor.
 
         Parameters
         ----------
@@ -668,17 +699,18 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        _type_
-            _description_
+        Pyomo.LogicalConstraint
+            Logical constraint for the unit to be a CSTR to include a recycle.
         """
         return m.YR[n].implies(m.YP[n])
 
-    m.cstr_if_recycle = pyo.LogicalConstraint(m.N, rule=cstr_if_recycle_rule)
+    m.cstr_if_recycle = pyo.LogicalConstraint(m.N, rule=cstr_if_recycle_rule, doc="Unit must be a CSTR to include a recycle")
 
     # There is only one unreacted feed
 
     def one_unreacted_feed_rule(m):
-        """_summary_
+        """
+        Build the logical constraint for the existence of only one unreacted feed.
 
         Parameters
         ----------
@@ -688,16 +720,17 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         Returns
         -------
         Pyomo.LogicalConstraint
-            _description_
+            Logical constraint for the existence of only one unreacted feed.
         """
         return pyo.exactly(1, m.YF)
 
-    m.one_unreacted_feed = pyo.LogicalConstraint(rule=one_unreacted_feed_rule)
+    m.one_unreacted_feed = pyo.LogicalConstraint(rule=one_unreacted_feed_rule, doc="There is only one unreacted feed")
 
     # There is only one recycle stream
 
     def one_recycle_rule(m):
-        """_summary_
+        """
+        Build the logical constraint for the existence of only one recycle stream.
 
         Parameters
         ----------
@@ -707,16 +740,20 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         Returns
         -------
         Pyomo.LogicalConstraint
-            _description_
+            Logical constraint for the existence of only one recycle stream.
         """
         return pyo.exactly(1, m.YR)
 
-    m.one_recycle = pyo.LogicalConstraint(rule=one_recycle_rule)
+    m.one_recycle = pyo.LogicalConstraint(rule=one_recycle_rule, doc="There is only one recycle stream")
 
     # Unit operation in n constraint
 
     def unit_in_n_rule(m, n):
-        """_summary_
+        """
+        Build the logical constraint for the unit operation in n.
+        If n is equal to 1, the unit operation is a CSTR. 
+        Otherwise, the unit operation for reactor n except reactor 1 is equivalent to the logical OR of the negation of the unreacted feed of the previous reactors and the unreacted feed of reactor n.
+        Reactor n is active if either the previous reactors (1 through n-1) have no unreacted feed or reactor n has unreacted feed.
 
         Parameters
         ----------
@@ -728,7 +765,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
         Returns
         -------
         Pyomo.LogicalConstraint
-            _description_
+            Logical constraint for the unit operation in n.
         """
         if n == 1:
             return m.YP[n].equivalent_to(True)
