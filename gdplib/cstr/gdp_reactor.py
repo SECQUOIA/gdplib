@@ -431,7 +431,8 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
     # YD Disjunction block equation definition
 
     def build_cstr_equations(disjunct, n):
-        """_summary_
+        """
+        Build the constraints for the activation of the CSTR reactor.
 
         Parameters
         ----------
