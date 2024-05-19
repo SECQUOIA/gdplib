@@ -439,7 +439,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         # FR deactivation
         @disjunct.Constraint(m.I)
-        def neg_YPD_FR_desact(disjunct, i):
+        def neg_YPD_FR_deactivation(disjunct, i):
             """
             Deactivation of the recycle flow for each component in the reactor series.
             There are no recycle flows when the reactor is deactivated (bypassed).
@@ -460,7 +460,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         # Rate deactivation
         @disjunct.Constraint(m.I)
-        def neg_YPD_rate_desact(disjunct, i):
+        def neg_YPD_rate_deactivation(disjunct, i):
             """
             Deactivate the reaction rate for each component in the reactor series.
             There are no reaction rates when the reactor is deactivated (bypassed).
@@ -481,7 +481,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         # QFR deactivation
         @disjunct.Constraint()
-        def neg_YPD_QFR_desact(disjunct):
+        def neg_YPD_QFR_deactivation(disjunct):
             """
             Deactivate the outlet flow rate recycle activation of the reactor.
             There is no outlet flow rate recycle activation when the reactor is deactivated (bypassed).
@@ -499,7 +499,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
             return m.QFR[n] == 0
 
         @disjunct.Constraint()
-        def neg_YPD_vol_desact(disjunct):
+        def neg_YPD_vol_deactivation(disjunct):
             """
             Volume deactivation function for defining pyomo model.
             There is no volume when the reactor is deactivated (bypassed).
@@ -594,7 +594,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         # FR deactivation
         @disjunct.Constraint(m.I)
-        def neg_YRD_FR_desact(disjunct, i):
+        def neg_YRD_FR_deactivation(disjunct, i):
             """
             Deactivation of the recycle flow for each component in the reactor series.
 
@@ -614,7 +614,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
         # QFR deactivation
         @disjunct.Constraint()
-        def neg_YRD_QFR_desact(disjunct):
+        def neg_YRD_QFR_deactivation(disjunct):
             """
             Deactivation of the outlet flow rate recycle activation of the reactor.
 
