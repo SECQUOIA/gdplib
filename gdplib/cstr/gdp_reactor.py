@@ -1,10 +1,3 @@
-import os
-import sys
-import pyomo.environ as pyo
-from pyomo.core.base.misc import display
-from pyomo.gdp import Disjunct, Disjunction
-from pyomo.opt.base.solvers import SolverFactory
-
 """
 gdp_reactor.py
 
@@ -15,6 +8,13 @@ The optimal solution should yield NT reactors with a recycle before reactor NT.
 Reference:
     > Linan, D. A., Bernal, D. E., Gomez, J. M., & Ricardez-Sandoval, L. A. (2021). Optimal synthesis and design of catalytic distillation columns: A rate-based modeling approach. Chemical Engineering Science, 231, 116294. https://doi.org/10.1016/j.ces.2020.116294
 """
+
+import os
+import sys
+import pyomo.environ as pyo
+from pyomo.core.base.misc import display
+from pyomo.gdp import Disjunct, Disjunction
+from pyomo.opt.base.solvers import SolverFactory
 
 
 def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
