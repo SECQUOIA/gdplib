@@ -2,9 +2,11 @@
 gdp_small_batch.py
 The gdp_small_batch.py module contains the GDP model for the small batch problem based on the Kocis and Grossmann (1988) paper.
 The problem is based on the Example 4 of the paper.
+The objective is to minimize the investment cost of the batch units.
 
 References:
-    - Kocis, G. R.; Grossmann, I. E. Global Optimization of Nonconvex Mixed-Integer Nonlinear Programming (MINLP) Problems in Process Synthesis. Ind. Eng. Chem. Res. 1988, 27 (8), 1407–1421. 
+    [1] Kocis, G. R.; Grossmann, I. E. Global Optimization of Nonconvex Mixed-Integer Nonlinear Programming (MINLP) Problems in Process Synthesis. Ind. Eng. Chem. Res. 1988, 27 (8), 1407-1421. https://doi.org/10.1021/ie00080a013
+    [2] Ovalle, D., Liñán, D. A., Lee, A., Gómez, J. M., Ricardez-Sandoval, L., Grossmann, I. E., & Neira, D. E. B. (2024). Logic-Based Discrete-Steepest Descent: A Solution Method for Process Synthesis Generalized Disjunctive Programs. arXiv preprint arXiv:2405.05358. https://doi.org/10.48550/arXiv.2405.05358
 """
 import os
 
@@ -22,7 +24,8 @@ def build_small_batch():
     The function build the GDP model for the small batch problem.
 
     References:
-    - Kocis, G. R.; Grossmann, I. E. Global Optimization of Nonconvex Mixed-Integer Nonlinear Programming (MINLP) Problems in Process Synthesis. Ind. Eng. Chem. Res. 1988, 27 (8), 1407–1421.
+    [1] Kocis, G. R.; Grossmann, I. E. Global Optimization of Nonconvex Mixed-Integer Nonlinear Programming (MINLP) Problems in Process Synthesis. Ind. Eng. Chem. Res. 1988, 27 (8), 1407-1421. https://doi.org/10.1021/ie00080a013
+    [2] Ovalle, D., Liñán, D. A., Lee, A., Gómez, J. M., Ricardez-Sandoval, L., Grossmann, I. E., & Neira, D. E. B. (2024). Logic-Based Discrete-Steepest Descent: A Solution Method for Process Synthesis Generalized Disjunctive Programs. arXiv preprint arXiv:2405.05358. https://doi.org/10.48550/arXiv.2405.05358
 
     Args:
         None
@@ -366,20 +369,8 @@ def external_ref(m, x, logic_expr=None):
         for j in m.j:
             if k == ext_var[j]:
                 m.Y[k, j].fix(True)
-                # m.Y_exists[k, j].indicator_var.fix(
-                #     True
-                # )  # Is this necessary?: m.Y_exists[k, j].indicator_var.fix(True).
-                # m.Y_not_exists[k, j].indicator_var.fix(
-                #     False
-                # )  # Is this necessary?: m.Y_not_exists[k, j].indicator_var.fix(True),
             else:
                 m.Y[k, j].fix(False)
-                # m.Y_exists[k, j].indicator_var.fix(
-                #     False
-                # )  # Is this necessary?: m.Y_exists[k, j].indicator_var.fix(True),
-                # m.Y_not_exists[k, j].indicator_var.fix(
-                #     True
-                # )  # Is this necessary?: m.Y_not_exists[k, j].indicator_var.fix(True),
 
     pe.TransformationFactory('core.logical_to_linear').apply_to(m)
     pe.TransformationFactory('gdp.fix_disjuncts').apply_to(m)
@@ -390,71 +381,9 @@ def external_ref(m, x, logic_expr=None):
     return m
 
 
-def solve_with_minlp(m, transformation='bigm', minlp='baron', timelimit=10):
-    """
-    Solve the GDP optimization problem with a MINLP solver.
-    The function applies the big-M Reformulation on the GDP and solve the MINLP problem with BARON.
-
-    Args:
-        m (pyomo.ConcreteModel): GDP optimization model
-        transformation (str, optional): Reformulation applied to the GDP.
-        minlp (str, optional): MINLP solver.
-        timelimit (float, optional): Time limit for the MINLP solver.
-
-    Returns:
-        m (pyomo.ConcreteModel): GDP optimization model with the solution.
-    """
-    # Transformation step
-    pe.TransformationFactory('core.logical_to_linear').apply_to(m)
-    transformation_string = 'gdp.' + transformation
-    pe.TransformationFactory(transformation_string).apply_to(m)
-
-    # Solution step
-    dir_path = os.path.dirname(os.path.abspath(__file__))
-    gams_path = os.path.join(dir_path, "gamsfiles/")
-    if not (os.path.exists(gams_path)):
-        print(
-            'Directory for automatically generated files '
-            + gams_path
-            + ' does not exist. We will create it'
-        )
-        os.makedirs(gams_path)
-
-    solvername = 'gams'
-    opt = SolverFactory(solvername, solver=minlp)
-    m.results = opt.solve(
-        m,
-        tee=True,
-        # Uncomment the following lines if you want to save GAMS models
-        # keepfiles=True,
-        # tmpdir=gams_path,
-        # symbolic_solver_labels=True,
-        add_options=[
-            'option reslim = ' + str(timelimit) + ';'
-            'option optcr = 0.0;'
-            # Uncomment the following lines to setup IIS computation of BARON through option file
-            # 'GAMS_MODEL.optfile = 1;'
-            # '\n'
-            # '$onecho > baron.opt \n'
-            # 'CompIIS 1 \n'
-            # '$offecho'
-            # 'display(execError);'
-        ],
-    )
-    update_boolean_vars_from_binary(m)
-    return m
 
 
 if __name__ == "__main__":
     m = build_small_batch()
-    m_solved = solve_with_minlp(m, transformation='bigm', minlp='baron', timelimit=120)
 
-    # EXTERNAL REF TEST (this thest can be deleted)
-    newmodel = external_ref(m, [1, 2, 3], logic_expr=None)
-    # print('External Ref Test')
-    # print('Y[1, mixer] = ', newmodel.Y[1, 'mixer'].value)
-    # print('Y_exists[1, mixer] = ', newmodel.Y_exists[1, 'mixer'].indicator_var.value)
-    # print('Y_not_exists[1, mixer] = ', newmodel.Y_not_exists[1, 'mixer'].indicator_var.value)
-    # print('Y[2, mixer] = ', newmodel.Y[2, 'mixer'].value)
-    # print('Y_exists[2, mixer] = ', newmodel.Y_exists[2, 'mixer'].indicator_var.value)
-    # print('Y_not_exists[2, mixer] = ', newmodel.Y_not_exists[2, 'mixer'].indicator_var.value)
+
