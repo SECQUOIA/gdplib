@@ -162,8 +162,9 @@ def build_small_batch():
     def vol(m, i, j):
         """
         Volume Requirement for Stage j.
-        Equation:
-            v_j \geq log(s_ij) + b_i for i = a, b and j = mixer, reactor, centrifuge
+        Equation
+        --------
+        v_j \geq log(s_ij) + b_i for i = a, b and j = mixer, reactor, centrifuge
 
         Parameters
         ----------
@@ -177,7 +178,7 @@ def build_small_batch():
         Returns
         -------
         Pyomo.Constraint
-            Algebraic Constraint
+            A Pyomo constraint object representing the volume requirement for a given stage.
         """
         return m.v[j] >= pyo.log(m.s[i, j]) + m.b[i]
 
@@ -186,8 +187,10 @@ def build_small_batch():
     def cycle(m, i, j):
         """
         Cycle time for each product i.
-        Equation:
-            n_j + tl_i \geq log(t_ij) for i = a, b and j = mixer, reactor, centrifuge
+
+        Equation
+        --------
+        n_j + tl_i \geq log(t_ij) for i = a, b and j = mixer, reactor, centrifuge
 
         Parameters
         ----------
@@ -201,7 +204,7 @@ def build_small_batch():
         Returns
         -------
         Pyomo.Constraint
-            Algebraic Constraint
+            A Pyomo constraint object representing the cycle time requirement for each product in each stage.
         """
         return m.n[j] + m.tl[i] >= pyo.log(m.t[i, j])
 
@@ -211,7 +214,7 @@ def build_small_batch():
         """
         Production time constraint.
         Equation:
-            \sum_{i \in I} q_i * \exp(tl_i - b_i) \leq h
+            sum_{i \in I} q_i * \exp(tl_i - b_i) \leq h
 
         Parameters
         ----------
@@ -221,7 +224,7 @@ def build_small_batch():
         Returns
         -------
         Pyomo.Constraint
-            Algebraic Constraint
+            A Pyomo constraint object representing the production time constraint.
         """
         return sum(m.q[i] * pyo.exp(m.tl[i] - m.b[i]) for i in m.i) <= m.h
 
@@ -231,7 +234,7 @@ def build_small_batch():
         """
         Relating number of units to 0-1 variables.
         Equation:
-            n_j = \sum_{k \in K} coeffval_{k,j} for j = mixer, reactor, centrifuge
+            n_j = sum_{k \in K} coeffval_{k,j} for j = mixer, reactor, centrifuge
 
         Parameters
         ----------
@@ -243,7 +246,7 @@ def build_small_batch():
         Returns
         -------
         Pyomo.Constraint
-            Algebraic Constraint
+            A Pyomo constraint object representing the relationship between the number of units and the binary variables.
         """
         return m.n[j] == sum(m.coeffval[k, j] for k in m.k)
 
@@ -253,7 +256,7 @@ def build_small_batch():
         """
         Only one choice for parallel units is feasible.
         Equation:
-            \sum_{k \in K} Y_{k,j} = 1 for j = mixer, reactor, centrifuge
+            sum_{k \in K} Y_{k,j} = 1 for j = mixer, reactor, centrifuge
 
         Parameters
         ----------
@@ -265,7 +268,7 @@ def build_small_batch():
         Returns
         -------
         Pyomo.LogicalConstraint
-            Algebraic Constraint
+            A Pyomo logical constraint ensuring only one choice for parallel units is feasible.
         """
         return pyo.exactly(1, m.Y[1, j], m.Y[2, j], m.Y[3, j])
 
@@ -291,11 +294,14 @@ def build_small_batch():
         """
         m = disjunct.model()
 
-        # Coeffval activation
+        # Coefficient value activation
         @disjunct.Constraint()
         def coeffval_act(disjunct):
             """
-            Coeffval activation.
+            Coefficien value activation.
+
+            Equation
+            --------
             m.coeffval[k,j] = m.coeff[k] = log(k)
 
             Parameters
@@ -306,7 +312,7 @@ def build_small_batch():
             Returns
             -------
             Pyomo.Constraint
-                A algebraic constraint
+                A Pyomo constraint object representing the activation of the coefficient value.
             """
             return m.coeffval[k, j] == m.coeff[k]
 
@@ -330,11 +336,14 @@ def build_small_batch():
         """
         m = disjunct.model()
 
-        # Coeffval deactivation
+        # Coefficient value deactivation
         @disjunct.Constraint()
         def coeffval_deact(disjunct):
             """
-            Coeffval deactivation.
+            Coefficient value deactivation.
+
+            Equation
+            --------
             m.coeffval[k,j] = 0
 
             Parameters
@@ -342,8 +351,10 @@ def build_small_batch():
             disjunct : Pyomo.Disjunct
                 Disjunct block for the absence of the stage.
 
-            Returns:
-                Logical Constraint
+            Returns
+            -------
+            Pyomo.Constraint
+                A Pyomo constraint object representing the deactivation of the coefficient value.
             """
             return m.coeffval[k, j] == 0
 
@@ -386,8 +397,9 @@ def build_small_batch():
         """
         Objective: minimize the investment cost [$].
 
-        Equation:
-            min z = sum(alpha[j] * exp(n[j] + beta[j]*v[j])) for j = mixer, reactor, centrifuge
+        Equation
+        --------
+        min z = sum(alpha[j] * exp(n[j] + beta[j]*v[j])) for j = mixer, reactor, centrifuge
 
         Parameters
         ----------
