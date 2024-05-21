@@ -40,42 +40,44 @@ def build_small_batch():
 
     # Sets
     m.i = pyo.Set(
-        initialize=['a', 'b'], doc='Set of products'
+        initialize=["a", "b"], doc="Set of products"
     )  # Set of products, i = a, b
     m.j = pyo.Set(
-        initialize=['mixer', 'reactor', 'centrifuge']
+        initialize=["mixer", "reactor", "centrifuge"]
     )  # Set of stages, j = mixer, reactor, centrifuge
-    m.k = pyo.RangeSet(NK, doc="Set of potential number of parallel units")  # Set of potential number of parallel units, k = 1, 2, 3
+    m.k = pyo.RangeSet(
+        NK, doc="Set of potential number of parallel units"
+    )  # Set of potential number of parallel units, k = 1, 2, 3
 
     # Parameters and Scalars
 
     m.h = pyo.Param(
-        initialize=6000, doc='Horizon time [hr]'
+        initialize=6000, doc="Horizon time [hr]"
     )  # Horizon time  (available time) [hr]
     m.vlow = pyo.Param(
-        initialize=250, doc='Lower bound for size of batch unit [L]'
+        initialize=250, doc="Lower bound for size of batch unit [L]"
     )  # Lower bound for size of batch unit [L]
     m.vupp = pyo.Param(
-        initialize=2500, doc='Upper bound for size of batch unit [L]'
+        initialize=2500, doc="Upper bound for size of batch unit [L]"
     )  # Upper bound for size of batch unit [L]
 
     # Demand of product i
     m.q = pyo.Param(
         m.i,
-        initialize={'a': 200000, 'b': 150000},
-        doc='Production rate of the product [kg]',
+        initialize={"a": 200000, "b": 150000},
+        doc="Production rate of the product [kg]",
     )
     # Cost coefficient for batch units
     m.alpha = pyo.Param(
         m.j,
-        initialize={'mixer': 250, 'reactor': 500, 'centrifuge': 340},
-        doc='Cost coefficient for batch units [$/L^beta*No. of units]]',
+        initialize={"mixer": 250, "reactor": 500, "centrifuge": 340},
+        doc="Cost coefficient for batch units [$/L^beta*No. of units]]",
     )
     # Cost exponent for batch units
     m.beta = pyo.Param(
         m.j,
-        initialize={'mixer': 0.6, 'reactor': 0.6, 'centrifuge': 0.6},
-        doc='Cost exponent for batch units',
+        initialize={"mixer": 0.6, "reactor": 0.6, "centrifuge": 0.6},
+        doc="Cost exponent for batch units",
     )
 
     def coeff_init(m, k):
@@ -98,61 +100,61 @@ def build_small_batch():
 
     # Represent number of parallel units
     m.coeff = pyo.Param(
-        m.k, initialize=coeff_init, doc='Coefficient for number of parallel units'
+        m.k, initialize=coeff_init, doc="Coefficient for number of parallel units"
     )
 
     s_init = {
-        ('a', 'mixer'): 2,
-        ('a', 'reactor'): 3,
-        ('a', 'centrifuge'): 4,
-        ('b', 'mixer'): 4,
-        ('b', 'reactor'): 6,
-        ('b', 'centrifuge'): 3,
+        ("a", "mixer"): 2,
+        ("a", "reactor"): 3,
+        ("a", "centrifuge"): 4,
+        ("b", "mixer"): 4,
+        ("b", "reactor"): 6,
+        ("b", "centrifuge"): 3,
     }
 
     # Size factor for product i in stage j [kg/L]
     m.s = pyo.Param(
-        m.i, m.j, initialize=s_init, doc='Size factor for product i in stage j [kg/L]'
+        m.i, m.j, initialize=s_init, doc="Size factor for product i in stage j [kg/L]"
     )
 
     t_init = {
-        ('a', 'mixer'): 8,
-        ('a', 'reactor'): 20,
-        ('a', 'centrifuge'): 4,
-        ('b', 'mixer'): 10,
-        ('b', 'reactor'): 12,
-        ('b', 'centrifuge'): 3,
+        ("a", "mixer"): 8,
+        ("a", "reactor"): 20,
+        ("a", "centrifuge"): 4,
+        ("b", "mixer"): 10,
+        ("b", "reactor"): 12,
+        ("b", "centrifuge"): 3,
     }
 
     # Processing time of product i in batch j [hr]
     m.t = pyo.Param(
-        m.i, m.j, initialize=t_init, doc='Processing time of product i in batch j [hr]'
+        m.i, m.j, initialize=t_init, doc="Processing time of product i in batch j [hr]"
     )
 
     # Variables
-    m.Y = pyo.BooleanVar(m.k, m.j, doc='Stage existence')  # Stage existence
+    m.Y = pyo.BooleanVar(m.k, m.j, doc="Stage existence")  # Stage existence
     m.coeffval = pyo.Var(
         m.k,
         m.j,
         within=pyo.NonNegativeReals,
         bounds=(0, pyo.log(NK)),
-        doc='Activation of Coefficient',
+        doc="Activation of Coefficient",
     )  # Activation of coeff
     m.v = pyo.Var(
         m.j,
         within=pyo.NonNegativeReals,
         bounds=(pyo.log(m.vlow), pyo.log(m.vupp)),
-        doc='Colume of stage j [L]',
+        doc="Colume of stage j [L]",
     )  # Volume of stage j [L]
     m.b = pyo.Var(
-        m.i, within=pyo.NonNegativeReals, doc='Batch size of product i [L]'
+        m.i, within=pyo.NonNegativeReals, doc="Batch size of product i [L]"
     )  # Batch size of product i [L]
     m.tl = pyo.Var(
-        m.i, within=pyo.NonNegativeReals, doc='Cycle time of product i [hr]'
+        m.i, within=pyo.NonNegativeReals, doc="Cycle time of product i [hr]"
     )  # Cycle time of product i [hr]
     # Number of units in parallel stage j
     m.n = pyo.Var(
-        m.j, within=pyo.NonNegativeReals, doc='Number of units in parallel stage j'
+        m.j, within=pyo.NonNegativeReals, doc="Number of units in parallel stage j"
     )
 
     # Constraints
@@ -359,8 +361,12 @@ def build_small_batch():
             return m.coeffval[k, j] == 0
 
     # Create disjunction block
-    m.Y_exists = Disjunct(m.k, m.j, rule=build_existence_equations, doc="Existence of the stage")
-    m.Y_not_exists = Disjunct(m.k, m.j, rule=build_not_existence_equations, doc="Absence of the stage")
+    m.Y_exists = Disjunct(
+        m.k, m.j, rule=build_existence_equations, doc="Existence of the stage"
+    )
+    m.Y_not_exists = Disjunct(
+        m.k, m.j, rule=build_not_existence_equations, doc="Absence of the stage"
+    )
 
     # Create disjunction
 
@@ -420,8 +426,9 @@ def build_small_batch():
 
 if __name__ == "__main__":
     m = build_small_batch()
-    pyo.TransformationFactory('core.logical_to_linear').apply_to(m)
-    pyo.TransformationFactory('gdp.bigm').apply_to(m)
-    pyo.SolverFactory('gams').solve(m, solver='baron', tee=True, add_options=['option optcr=1e-6;'])
+    pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
+    pyo.TransformationFactory("gdp.bigm").apply_to(m)
+    pyo.SolverFactory("gams").solve(
+        m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
+    )
     display(m)
-
