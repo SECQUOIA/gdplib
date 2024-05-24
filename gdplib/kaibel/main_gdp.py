@@ -57,7 +57,9 @@ from math import fabs
 import matplotlib.pyplot as plt
 from pyomo.environ import *
 
-from kaibel_solve_gdp import build_model
+# from kaibel_solve_gdp import build_model
+from gdplib.kaibel.kaibel_solve_gdp import build_model
+
 
 
 def main():

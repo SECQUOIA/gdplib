@@ -27,30 +27,30 @@ def get_model_with_properties():
     m.hc = 4  # Heavy component, butanol
 
     #### Constant parameters
-    m.Rgas = 8.314  # Ideal gas constant in J/mol K
-    m.Tref = 298.15  # Reference temperature in K
+    m.Rgas = 8.314  # Ideal gas constant [J/mol/K]
+    m.Tref = 298.15  # Reference temperature [K]
 
     #### Product specifications
     m.xspec_lc = 0.99  # Final liquid composition for methanol (1)
     m.xspec_hc = 0.99  # Fnal liquid composition for butanol (4)
     m.xspec_inter2 = 0.99  # Final liquid composition for ethanol (2)
     m.xspec_inter3 = 0.99  # Final liquid composition for propanol (3)
-    m.Ddes = 50  # Final flowrate in distillate in mol/s
-    m.Bdes = 50  # Final flowrate in bottoms in mol/s
-    m.Sdes = 50  # Final flowrate in side product streams in mol/s
+    m.Ddes = 50  # Final flowrate in distillate [mol/s]
+    m.Bdes = 50  # Final flowrate in bottoms [mol/s]
+    m.Sdes = 50  # Final flowrate in side product streams [mol/s]
 
     # #### Known initial values
-    m.Fi = m.Ddes + m.Bdes + 2 * m.Sdes  # Side feed flowrate in mol/s
-    m.Vi = 400  # Initial value for vapor flowrate in mol/s
-    m.Li = 400  # Initial value for liquid flowrate in mol/s
+    m.Fi = m.Ddes + m.Bdes + 2 * m.Sdes  # Side feed flowrate [mol/s]
+    m.Vi = 400  # Initial value for vapor flowrate [mol/s]
+    m.Li = 400  # Initial value for liquid flowrate [mol/s]
 
-    m.Tf = 358  # Side feed temperature in K
+    m.Tf = 358  # Side feed temperature [K]
 
-    m.Preb = 1.2  # Reboiler pressure in bar
-    m.Pbot = 1.12  # Bottom-most tray pressure in bar
-    m.Ptop = 1.08  # Top-most tray pressure in bar
-    m.Pcon = 1.05  # Condenser pressure in bar
-    m.Pf = 1.02  # Column pressure in bar
+    m.Preb = 1.2  # Reboiler pressure [bar]
+    m.Pbot = 1.12  # Bottom-most tray pressure [bar]
+    m.Ptop = 1.08  # Top-most tray pressure [bar]
+    m.Pcon = 1.05  # Condenser pressure [bar]
+    m.Pf = 1.02  # Column pressure [bar]
 
     m.rr0 = 0.893  # Internal reflux ratio initial value
     m.bu0 = 0.871  # Internal reflux ratio initial value
@@ -73,15 +73,15 @@ def get_model_with_properties():
     #                          Physical Properties
     #
     # Notation:
-    # MW ........................ molecular weight in g/gmol
-    # TB ........................ boiling point temperature in K
-    # TC ........................ critical temperature in K
-    # PC ........................ critical pressure in bar
+    # MW ........................ molecular weight [g/mol]
+    # TB ........................ boiling point temperature [K]
+    # TC ........................ critical temperature [K]
+    # PC ........................ critical pressure [bar]
     # w  ........................ acentric factor
-    # lden ...................... liquid density g/m3,
-    # dHvap ..................... heat of vaporization in J/mol.
+    # lden ...................... liquid density [g/m3],
+    # dHvap ..................... heat of vaporization [J/mol].
     # vpA, vpB, vpC, and vpD .... vapor pressure constants
-    # cpA, cpB, cpC, and cpD .... heat capacity constants J/mol:
+    # cpA, cpB, cpC, and cpD .... heat capacity constants [J/mol]:
     #                             1 for liq and 2 for vapor phase
     #
     # Reference A: R.C. Reid, J.M. Prausnitz and B.E. Poling,

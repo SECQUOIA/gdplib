@@ -25,6 +25,7 @@ from pyomo.gdp import Disjunct
 from gdplib.kaibel.kaibel_init import initialize_kaibel
 
 from gdplib.kaibel.kaibel_side_flash import calc_side_feed_flash
+# from .kaibel_side_flash import calc_side_feed_flash
 
 
 def build_model():
@@ -47,10 +48,10 @@ def build_model():
     m.name = "GDP Kaibel Column"
 
     #### Calculated initial values
-    m.Treb = m.TB0 + 5  # Reboiler temperature in K
-    m.Tbot = m.TB0  # Bottom-most tray temperature in K
-    m.Ttop = m.TD0  # Top-most tray temperature in K
-    m.Tcon = m.TD0 - 5  # Condenser temperature in K
+    m.Treb = m.TB0 + 5  # Reboiler temperature [K]
+    m.Tbot = m.TB0  # Bottom-most tray temperature [K]
+    m.Ttop = m.TD0  # Top-most tray temperature [K]
+    m.Tcon = m.TD0 - 5  # Condenser temperature [K]
 
     m.dv0 = {}  # Initial vapor distributor value
     m.dl0 = {}  # Initial liquid distributor value
@@ -64,8 +65,8 @@ def build_model():
     m.Tlo = m.Tcon - 20  # Temperature lower bound
     m.Tup = m.Treb + 20  # Temperature upper bound
 
-    m.flow_max = 1e3  # Flowrates upper bound in mol/s
-    m.Qmax = 60  # Heat loads upper bound in J/s
+    m.flow_max = 1e3  # Flowrates upper bound [mol/s]
+    m.Qmax = 60  # Heat loads upper bound [J/s]
 
     #### Column tray details
     m.num_trays = m.np  # Trays per section. np = 25
@@ -120,18 +121,18 @@ def build_model():
 
     m.P0 = {}  # Initial pressure [bar]
     m.T0 = {}  # Initial temperature [K]
-    m.L0 = {}  # Initial individual liquid flowrate in mol/s
-    m.V0 = {}  # Initial individual vapor flowrate in mol/s
-    m.Vtotal0 = {}  # Initial total vapor flowrate in mol/s
-    m.Ltotal0 = {}  # Initial liquid flowrate in mol/s
+    m.L0 = {}  # Initial individual liquid flowrate [mol/s]
+    m.V0 = {}  # Initial individual vapor flowrate [mol/s]
+    m.Vtotal0 = {}  # Initial total vapor flowrate [mol/s]
+    m.Ltotal0 = {}  # Initial liquid flowrate [mol/s]
     m.x0 = {}  # Initial liquid composition
     m.y0 = {}  # Initial vapor composition
     m.actv0 = {}  # Initial activity coefficients
-    m.cpdT0 = {}  # Initial heat capacity for liquid and vapor phases in J/mol K
-    m.hl0 = {}  # Initial liquid enthalpy in J/mol
-    m.hv0 = {}  # Initial vapor enthalpy in J/mol
-    m.Pi = m.Preb  # Initial given pressure value in bar
-    m.Ti = {}  # Initial known temperature values in K
+    m.cpdT0 = {}  # Initial heat capacity for liquid and vapor phases [J/mol/K]
+    m.hl0 = {}  # Initial liquid enthalpy [J/mol]
+    m.hv0 = {}  # Initial vapor enthalpy [J/mol]
+    m.Pi = m.Preb  # Initial given pressure value [bar]
+    m.Ti = {}  # Initial known temperature values [K]
 
     ## Initial values for pressure, temperature, flowrates, composition, and enthalpy
     for sec in m.section:
@@ -175,14 +176,14 @@ def build_model():
                 m.y0[sec, n_tray, comp] = m.xfi[comp]
 
     ## Assigns the enthalpy boundary values, heat capacity, heat of vaporization calculation, temperature bounds, and light and heavy key components.
-    hlb = {}  # Liquid enthalpy in J/mol
-    hvb = {}  # Vapor enthalpy  in J/mol
-    cpb = {}  # Heact capacity in J/mol K
-    dHvapb = {}  # Heat of vaporization in J/mol
-    Tbounds = {}  # Temperature bounds in K
+    hlb = {}  # Liquid enthalpy [J/mol]
+    hvb = {}  # Vapor enthalpy  [J/mol]
+    cpb = {}  # Heact capacity [J/mol/K]
+    dHvapb = {}  # Heat of vaporization [J/mol]
+    Tbounds = {}  # Temperature bounds [K]
     kc = {}  # Light and heavy key components
-    Tbounds[1] = m.Tcon  # Condenser temperature in K
-    Tbounds[2] = m.Treb  # Reboiler temperature in K
+    Tbounds[1] = m.Tcon  # Condenser temperature [K]
+    Tbounds[2] = m.Treb  # Reboiler temperature [K]
     kc[1] = m.lc
     kc[2] = m.hc
 
@@ -323,7 +324,7 @@ def build_model():
     m.T = Var(
         m.section,
         m.tray,
-        doc="Temperature at each potential tray in K",
+        doc="Temperature at each potential tray [K]",
         domain=NonNegativeReals,
         bounds=(m.Tlo, m.Tup),
         initialize=m.T0,
@@ -366,7 +367,7 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc="Vapor flowrate in mol/s",
+        doc="Vapor flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.V0,
@@ -375,7 +376,7 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc="Liquid flowrate in mol/s",
+        doc="Liquid flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.L0,
@@ -383,7 +384,7 @@ def build_model():
     m.Vtotal = Var(
         m.section,
         m.tray,
-        doc="Total vapor flowrate in mol/s",
+        doc="Total vapor flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Vtotal0,
@@ -391,7 +392,7 @@ def build_model():
     m.Ltotal = Var(
         m.section,
         m.tray,
-        doc="Total liquid flowrate in mol/s",
+        doc="Total liquid flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Ltotal0,
@@ -399,14 +400,14 @@ def build_model():
 
     m.D = Var(
         m.comp,
-        doc="Distillate flowrate in mol/s",
+        doc="Distillate flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Ddes,
     )
     m.B = Var(
         m.comp,
-        doc="Bottoms flowrate in mol/s",
+        doc="Bottoms flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Bdes,
@@ -414,26 +415,26 @@ def build_model():
     m.S = Var(
         m.so,
         m.comp,
-        doc="Product 2 and 3 flowrates in mol/s",
+        doc="Product 2 and 3 flowrates [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Sdes,
     )
     m.Dtotal = Var(
-        doc="Distillate flowrate in mol/s",
+        doc="Distillate flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Ddes,
     )
     m.Btotal = Var(
-        doc="Bottoms flowrate in mol/s",
+        doc="Bottoms flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Bdes,
     )
     m.Stotal = Var(
         m.so,
-        doc="Total product 2 and 3 side flowrate in mol/s",
+        doc="Total product 2 and 3 side flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, m.flow_max),
         initialize=m.Sdes,
@@ -443,7 +444,7 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc='Liquid enthalpy in J/mol',
+        doc='Liquid enthalpy [J/mol]',
         bounds=(m.hllo, m.hlup),
         initialize=m.hl0,
     )
@@ -451,18 +452,18 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc='Vapor enthalpy in J/mol',
+        doc='Vapor enthalpy [J/mol]',
         bounds=(m.hvlo, m.hvup),
         initialize=m.hv0,
     )
     m.Qreb = Var(
-        doc="Reboiler heat duty in J/s",
+        doc="Reboiler heat duty [J/s]",
         domain=NonNegativeReals,
         bounds=(0, m.Qmax),
         initialize=1,
     )
     m.Qcon = Var(
-        doc="Condenser heat duty in J/s",
+        doc="Condenser heat duty [J/s]",
         domain=NonNegativeReals,
         bounds=(0, m.Qmax),
         initialize=1,
@@ -483,7 +484,7 @@ def build_model():
 
     m.F = Var(
         m.comp,
-        doc="Side feed flowrate in mol/s",
+        doc="Side feed flowrate [mol/s]",
         domain=NonNegativeReals,
         bounds=(0, 50),
         initialize=m.F0,
