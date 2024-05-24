@@ -1,0 +1,43 @@
+cff-version: 1.0.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Bernal Neira
+    given-names: David E.
+    orcid: https://orcid.org/0000-0002-8308-5016
+  - family-names: Peng
+    given-names: Zedong
+    orcid: https://orcid.org/0000-0001-6001-1738
+  - family-names: Chen
+    given-names: Qi
+    orcid: https://orcid.org/0000-0002-2389-2238
+  - family-names: Liu
+    given-names: Yunshan
+  - family-names: Johnson
+    given-names: Emma
+    orcid: https://orcid.org/0000-0002-4285-5184
+title: "GDPLib: an open library of Generalized Disjunctive Programming (GDP) models"
+version: 1.0.0
+url: https://github.com/SECQUOIA/gdplib
+license-url: https://github.com/SECQUOIA/gdplib/blob/master/LICENSE
+preferred-citation:
+  type: incollection
+  booktitle: "Computer Aided Chemical Engineering"
+  volume: 49
+  start: 1285
+  end: 1290
+  title: "Advances in Generalized Disjunctive and Mixed-Integer Nonlinear Programming Algorithms and Software for Superstructure Optimization"
+  year:2022
+  publisher: "Elsevier"
+  authors: 
+  - family-names: "Bernal Neira"
+    given-names: "David E."
+  - family-names: "Liu"
+    given-names: "Yunshan"
+  - family-names: "Bynum"
+    given-names: "Michael L"
+  - family-names: "Laird"
+    given-names: "Carl D"
+  - family-names: "Siirola"
+    given-names: "John D"
+  - family-names: "Grossmann"
+    given-names: "Ignacio E"

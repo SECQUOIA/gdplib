@@ -25,7 +25,19 @@
    Figure 2. Sequence of columns for the separation of a quaternary mixture
 """
 
-from pyomo.environ import (exp, log10, minimize, NonNegativeReals, Objective, RangeSet, SolverFactory, value, Var)
+from __future__ import division
+
+from pyomo.environ import (
+    exp,
+    log10,
+    minimize,
+    NonNegativeReals,
+    Objective,
+    RangeSet,
+    SolverFactory,
+    value,
+    Var,
+)
 
 from gdplib.kaibel.kaibel_prop import get_model_with_properties
 # from .kaibel_prop import get_model_with_properties
@@ -44,27 +56,27 @@ def initialize_kaibel():
 
     ## Get the model with properties from kaibel_prop.py 
     m = get_model_with_properties()
-  
+
     ## Operating conditions
-    m.Preb = 1.2                # Reboiler pressure in bar
-    m.Pcon = 1.05               # Condenser pressure in bar
-    m.Pf = 1.02                 # Column pressure in bar
+    m.Preb = 1.2  # Reboiler pressure in bar
+    m.Pcon = 1.05  # Condenser pressure in bar
+    m.Pf = 1.02
 
-    Pnmin = {}                  # Pressure in bars
-    Pnmin[1] = m.Preb           # Reboiler pressure in bars
-    Pnmin[3] = m.Pcon           # Distillate pressure in bars
-    Pnmin[2] = m.Pf             # Side feed pressure in bars
+    Pnmin = {}  # Pressure in bars
+    Pnmin[1] = m.Preb  # Reboiler pressure in bars
+    Pnmin[3] = m.Pcon  # Distillate pressure in bars
+    Pnmin[2] = m.Pf  # Side feed pressure in bars
 
-    xi_nmin = {}                # Initial liquid composition: first number = column and
-                                # second number = 1 reboiler, 2 side feed, and
-                                # 3 for condenser
+    xi_nmin = {}  # Initial liquid composition: first number = column and
+    # second number = 1 reboiler, 2 side feed, and
+    # 3 for condenser
 
     ## Column 1
-    c_c1 = 4                    # Components in Column 1
-    lc_c1 = 3                   # Ligh component in Column 1
-    hc_c1 = 4                   # Heavy component in Column 1
-    inter1_c1 = 1               # Intermediate component in Column 1
-    inter2_c1 = 2               # Intermediate component in Column 1
+    c_c1 = 4  # Components in Column 1
+    lc_c1 = 3  # Light component in Column 1
+    hc_c1 = 4  # Heavy component in Column 1
+    inter1_c1 = 1  # Intermediate component in Column 1
+    inter2_c1 = 2  # Intermediate component in Column 1
 
     xi_nmin[1, 1, hc_c1] = 0.999
     xi_nmin[1, 1, lc_c1] = (1 - xi_nmin[1, 1, hc_c1]) / (c_c1 - 1)
@@ -73,18 +85,19 @@ def initialize_kaibel():
     xi_nmin[1, 3, lc_c1] = 0.33
     xi_nmin[1, 3, inter1_c1] = 0.33
     xi_nmin[1, 3, inter2_c1] = 0.33
-    xi_nmin[1, 3, hc_c1] = 1 - (xi_nmin[1, 3, lc_c1] + xi_nmin[1, 3, inter1_c1] +
-                                xi_nmin[1, 3, inter2_c1])
+    xi_nmin[1, 3, hc_c1] = 1 - (
+        xi_nmin[1, 3, lc_c1] + xi_nmin[1, 3, inter1_c1] + xi_nmin[1, 3, inter2_c1]
+    )
     xi_nmin[1, 2, lc_c1] = 1 / c_c1
     xi_nmin[1, 2, inter1_c1] = 1 / c_c1
     xi_nmin[1, 2, inter2_c1] = 1 / c_c1
     xi_nmin[1, 2, hc_c1] = 1 / c_c1
 
     ## Column 2
-    c_c2 = 3                    # Light components in Column 2
-    lc_c2 = 2                   # Light component in Column 2
-    hc_c2 = 3                   # Heavy component in Column 2
-    inter_c2 = 1                # Intermediate component in Column 2
+    c_c2 = 3  # Light components in Column 2
+    lc_c2 = 2  # Light component in Column 2
+    hc_c2 = 3  # Heavy component in Column 2
+    inter_c2 = 1  # Intermediate component in Column 2
 
     xi_nmin[2, 1, hc_c2] = 0.999
     xi_nmin[2, 1, lc_c2] = (1 - xi_nmin[2, 1, hc_c2]) / (c_c2 - 1)
@@ -96,11 +109,10 @@ def initialize_kaibel():
     xi_nmin[2, 2, inter_c2] = 1 / c_c2
     xi_nmin[2, 2, hc_c2] = 1 / c_c2
 
-
     ## Column 3
-    c_c3 = 2                    # Components in Column 3
-    lc_c3 = 1                   # Light component in Column 3
-    hc_c3 = 2                   # Heavy component in Column 3
+    c_c3 = 2  # Components in Column 3
+    lc_c3 = 1  # Light component in Column 3
+    hc_c3 = 2  # Heavy component in Column 3
 
     xi_nmin[3, 1, hc_c3] = 0.999
     xi_nmin[3, 1, lc_c3] = 1 - xi_nmin[3, 1, hc_c3]
@@ -109,44 +121,51 @@ def initialize_kaibel():
     xi_nmin[3, 2, lc_c3] = 0.50
     xi_nmin[3, 2, hc_c3] = 0.50
 
-
-
     ####
 
     mn = m.clone() # Clone the model to add the initialization code
 
     mn.name = "Initialization Code"
 
-    mn.cols = RangeSet(3,
-                       doc='Number of columns ')
-    mn.sec = RangeSet(3,
-                      doc='Sections in column: 1 reb, 2 side feed, 3 cond')
-    mn.nc1 = RangeSet(c_c1,
-                      doc='Number of components in Column 1')
-    mn.nc2 = RangeSet(c_c2,
-                      doc='Number of components in Column 2')
-    mn.nc3 = RangeSet(c_c3,
-                      doc='Number of components in Column 3')
+    mn.cols = RangeSet(3, doc='Number of columns ')
+    mn.sec = RangeSet(3, doc='Sections in column: 1 reb, 2 side feed, 3 cond')
+    mn.nc1 = RangeSet(c_c1, doc='Number of components in Column 1')
+    mn.nc2 = RangeSet(c_c2, doc='Number of components in Column 2')
+    mn.nc3 = RangeSet(c_c3, doc='Number of components in Column 3')
 
-    mn.Tnmin = Var(mn.cols, mn.sec,
-                   doc='Temperature in K', bounds=(0, 500),
-                   domain=NonNegativeReals)
-    mn.Tr1nmin = Var(mn.cols, mn.sec, mn.nc1,
-                     doc='Temperature term for vapor pressure column 1',
-                     domain=NonNegativeReals,
-                     bounds=(0, None))
-    mn.Tr2nmin = Var(mn.cols, mn.sec, mn.nc2,
-                     doc='Temperature term for vapor pressure column 2',
-                     domain=NonNegativeReals,
-                     bounds=(0, None))
-    mn.Tr3nmin = Var(mn.cols, mn.sec, mn.nc3,
-                     doc='Temperature term for vapor pressure column 3',
-                     domain=NonNegativeReals,
-                     bounds=(0, None))
+    mn.Tnmin = Var(
+        mn.cols,
+        mn.sec,
+        doc='Temperature in K',
+        bounds=(0, 500),
+        domain=NonNegativeReals,
+    )
+    mn.Tr1nmin = Var(
+        mn.cols,
+        mn.sec,
+        mn.nc1,
+        doc='Temperature term for vapor pressure',
+        domain=NonNegativeReals,
+        bounds=(0, None),
+    )
+    mn.Tr2nmin = Var(
+        mn.cols,
+        mn.sec,
+        mn.nc2,
+        doc='Temperature term for vapor pressure',
+        domain=NonNegativeReals,
+        bounds=(0, None),
+    )
+    mn.Tr3nmin = Var(
+        mn.cols,
+        mn.sec,
+        mn.nc3,
+        doc='Temperature term for vapor pressure',
+        domain=NonNegativeReals,
+        bounds=(0, None),
+    )
 
-
-    @mn.Constraint(mn.cols, mn.sec, mn.nc1,
-                   doc="Temperature term for vapor pressure column 1")
+    @mn.Constraint(mn.cols, mn.sec, mn.nc1, doc="Temperature term for vapor pressure")
     def _column1_reduced_temperature(mn, col, sec, nc):
         """Calculate the reduced temperature for column 1.
 
@@ -170,9 +189,7 @@ def initialize_kaibel():
         """
         return mn.Tr1nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
 
-    
-    @mn.Constraint(mn.cols, mn.sec, mn.nc2,
-                   doc="Temperature term for vapor pressure column 2")
+    @mn.Constraint(mn.cols, mn.sec, mn.nc2, doc="Temperature term for vapor pressure")
     def _column2_reduced_temperature(mn, col, sec, nc):
         """Calculate the reduced temperature for column 2.
 
@@ -196,9 +213,7 @@ def initialize_kaibel():
         """        
         return mn.Tr2nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
 
-    
-    @mn.Constraint(mn.cols, mn.sec, mn.nc3,
-                   doc="Temperature term for vapor pressure column 3")
+    @mn.Constraint(mn.cols, mn.sec, mn.nc3, doc="Temperature term for vapor pressure")
     def _column3_reduced_temperature(mn, col, sec, nc):
         """Calculate the reduced temperature for column 3.
 
@@ -222,7 +237,6 @@ def initialize_kaibel():
         """        
         return mn.Tr3nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
 
-    
     @mn.Constraint(mn.cols, mn.sec, doc="Boiling point temperature")
     def _equilibrium_equation(mn, col, sec):
         """Equilibrium equations for a given column and section.
@@ -250,46 +264,51 @@ def initialize_kaibel():
         elif col == 3:
             a = mn.Tr3nmin
             b = mn.nc3
-        return sum(
-            xi_nmin[col, sec, nc] * mn.prop[nc, 'PC'] * exp(
-                a[col, sec, nc] * (
-                    mn.prop[nc, 'vpA'] * \
-                    (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC'])
-                    + mn.prop[nc, 'vpB'] * \
-                    (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC'])**1.5
-                    + mn.prop[nc, 'vpC'] * \
-                    (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC'])**3
-                    + mn.prop[nc, 'vpD'] * \
-                    (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC'])**6
+        return (
+            sum(
+                xi_nmin[col, sec, nc]
+                * mn.prop[nc, 'PC']
+                * exp(
+                    a[col, sec, nc]
+                    * (
+                        mn.prop[nc, 'vpA']
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC'])
+                        + mn.prop[nc, 'vpB']
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC']) ** 1.5
+                        + mn.prop[nc, 'vpC']
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC']) ** 3
+                        + mn.prop[nc, 'vpD']
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC']) ** 6
+                    )
                 )
-            ) / Pnmin[sec] for nc in b
-        ) == 1
+                / Pnmin[sec]
+                for nc in b
+            )
+            == 1
+        )
 
-    
     mn.OBJ = Objective(expr=1, sense=minimize)
-
 
     ####
 
     SolverFactory('ipopt').solve(mn)
 
-
-    yc = {}                     # Vapor composition
-    kl = {}                     # Light key component 
-    kh = {}                     # Heavy key component 
-    alpha = {}                  # Relative volatility of kl
-    ter = {}                    # Term to calculate the minimum number of trays
-    Nmin = {}                   # Minimum number of stages 
-    Nminopt = {}                # Total optimal minimum number of trays 
-    Nfeed = {}                  # Side feed optimal location using Kirkbride's method:
-                                # 1 = number of trays in rectifying section and
-                                # 2 = number of trays in stripping section
-    side_feed = {}              # Side feed location
-    av_alpha = {}               # Average relative volatilities
-    xi_lhc = {}                 # Liquid composition in columns
-    rel = mn.Bdes / mn.Ddes     # Ratio between products flowrates
-    ln = {}                     # Light component for the different columns
-    hn = {}                     # Heavy component for the different columns
+    yc = {}  # Vapor composition
+    kl = {}  # Light key component
+    kh = {}  # Heavy key component
+    alpha = {}  # Relative volatility of kl
+    ter = {}  # Term to calculate the minimum number of trays
+    Nmin = {}  # Minimum number of stages
+    Nminopt = {}  # Total optimal minimum number of trays
+    Nfeed = {}  # Side feed optimal location using Kirkbride's method:
+    # 1 = number of trays in rectifying section and
+    # 2 = number of trays in stripping section
+    side_feed = {}  # Side feed location
+    av_alpha = {}  # Average relative volatilities
+    xi_lhc = {}  # Liquid composition in columns
+    rel = mn.Bdes / mn.Ddes  # Ratio between products flowrates
+    ln = {}  # Light component for the different columns
+    hn = {}  # Heavy component for the different columns
     ln[1] = lc_c1
     ln[2] = lc_c2
     ln[3] = lc_c3
@@ -297,7 +316,6 @@ def initialize_kaibel():
     hn[2] = hc_c2
     hn[3] = hc_c3
 
-    
     for col in mn.cols:
         if col == 1:
             b = mn.nc1
@@ -308,16 +326,22 @@ def initialize_kaibel():
         # For each component in the column and section calculate the vapor composition with the Peng-Robinson equation of state
         for sec in mn.sec:
             for nc in b:
-                yc[col, sec, nc] = xi_nmin[col, sec, nc] * mn.prop[nc, 'PC'] * exp(
-                    mn.prop[nc, 'TC'] / value(mn.Tnmin[col, sec]) * (
-                        mn.prop[nc, 'vpA'] * \
-                        (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC'])
-                        + mn.prop[nc, 'vpB'] * \
-                        (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC'])**1.5
-                        + mn.prop[nc, 'vpC'] * \
-                        (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC'])**3
-                        + mn.prop[nc, 'vpD'] * \
-                        (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC'])**6
+                yc[col, sec, nc] = (
+                    xi_nmin[col, sec, nc]
+                    * mn.prop[nc, 'PC']
+                    * exp(
+                        mn.prop[nc, 'TC']
+                        / value(mn.Tnmin[col, sec])
+                        * (
+                            mn.prop[nc, 'vpA']
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC'])
+                            + mn.prop[nc, 'vpB']
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 1.5
+                            + mn.prop[nc, 'vpC']
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 3
+                            + mn.prop[nc, 'vpD']
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 6
+                        )
                     )
                 ) / Pnmin[sec] # Vapor composition in the different sections for the different components in the columns
 
@@ -352,7 +376,6 @@ def initialize_kaibel():
     m.TB0 = value(mn.Tnmin[1, 1]) # Reboiler temperature in K in column 1
     m.Tf0 = value(mn.Tnmin[1, 2]) # Side feed temperature in K in column 1
     m.TD0 = value(mn.Tnmin[2, 3]) # Distillate temperature in K in column 2
-
 
     return m
 
