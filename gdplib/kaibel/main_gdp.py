@@ -61,7 +61,6 @@ from pyomo.environ import *
 from gdplib.kaibel.kaibel_solve_gdp import build_model
 
 
-
 def main():
     """
     This is the main function that executes the optimization process.
