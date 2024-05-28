@@ -7,7 +7,8 @@ The objective of the model is to maximize profit by minimizing costs and maximiz
 
 References:
     [1] Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. Computers and Chemical Engineering, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
-
+    [2] Vecchietti, A., 2011. LOGMIP. URL HTTP://WWW.LOGMIP.CERIDE.GOV.AR/ 
+    [3] Pedrozo et al. Hybrid Model Generation For Superstructure Optimization with Generalized Disjunctive Programming, Comp. and Chem. Eng., 107473, 2021
 """
 
 import pyomo.environ as pe
@@ -72,13 +73,13 @@ class MethanolModel(object):
         gamma : float
             Ratio of constant pressure heat capacity to constant volume heat capacity.
         cp : float
-            Heat capacity.
+            Heat capacity. [kj per kgmole-k]
         heat_of_reaction : float
-            Heat of reaction.
+            Heat of reaction. [kj per kgmole]
         volume_conversion : dict
             Conversion factors for different reactor volumes.
         reactor_volume : float
-            Volume of the reactor.
+            Volume of the reactor. [m^3]
         electricity_cost : float
             Cost of electricity.  [$/10kWh]
         cooling_cost : float    
@@ -90,13 +91,13 @@ class MethanolModel(object):
         demand : float
             Flowrate restriction on product flow.
         flow_feed_lb : float
-            Lower bound on feed flowrate.
+            Lower bound on feed flowrate. [kg-mol/sec]
         flow_feed_ub : float
-            Upper bound on feed flowrate.
+            Upper bound on feed flowrate. [kg-mol/sec]
         flow_feed_temp : float
-            Feed temperature.
+            Feed temperature. [100 k]
         flow_feed_pressure : float
-            Feed pressure.
+            Feed pressure. [MPa]
         cost_flow_1 : float
             Cost of feed 1. [$/ton of methanol]
         cost_flow_2 : float
