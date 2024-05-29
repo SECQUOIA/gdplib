@@ -827,6 +827,20 @@ def enumerate_solutions():
 
     return m
 
+def build_model():
+    m = MethanolModel().model
+    for _d in m.component_data_objects(
+        gdp.Disjunct, descend_into=True, active=True, sort=True
+    ):
+        _d.BigM = pe.Suffix()
+        for _c in _d.component_data_objects(
+            pe.Constraint, descend_into=True, active=True, sort=True
+        ):
+            lb, ub = compute_bounds_on_expr(_c.body)
+            _d.BigM[_c] = max(abs(lb), abs(ub))
+
+    return m
+
 
 def solve_with_gdp_opt():
     m = MethanolModel().model
