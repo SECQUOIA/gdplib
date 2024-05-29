@@ -23,6 +23,7 @@ def build_model():
 
     m.BigM = Suffix(direction=Suffix.LOCAL)
     m.BigM[None] = 100
+    return m
 
 
 __all__ = ['build_model']
