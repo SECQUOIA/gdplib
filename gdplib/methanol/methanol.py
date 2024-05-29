@@ -827,6 +827,7 @@ def enumerate_solutions():
 
     return m
 
+
 def build_model():
     m = MethanolModel().model
     for _d in m.component_data_objects(
