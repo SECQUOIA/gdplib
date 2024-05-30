@@ -1,0 +1,5 @@
+[default.extend-words]
+# Ignore HDA
+hda = "hda"
+HDA = "HDA"
+equil = "equil"

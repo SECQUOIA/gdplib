@@ -33,7 +33,7 @@ kwargs = dict(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
-        "Topic :: Software Development :: Libraries :: Python Modules"
+        "Topic :: Software Development :: Libraries :: Python Modules",
     ],
 )
 
@@ -41,7 +41,9 @@ try:
     setup(setup_requires=['setuptools_scm'], use_scm_version=True, **kwargs)
 except (ImportError, LookupError):
     default_version = '1.0.0'
-    warning('Cannot use .git version: package setuptools_scm not installed '
-            'or .git directory not present.')
+    warning(
+        'Cannot use .git version: package setuptools_scm not installed '
+        'or .git directory not present.'
+    )
     print('Defaulting to version: {}'.format(default_version))
     setup(**kwargs)

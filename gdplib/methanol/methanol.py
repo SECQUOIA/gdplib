@@ -59,6 +59,11 @@ def fix_vars_with_equal_bounds(m, tol=1e-8):
                     v.name, lb, ub
                 )
             )
+            raise InfeasibleError(
+                'Variable lb is larger than ub: {0}    lb: {1}    ub: {2}'.format(
+                    v.name, lb, ub
+                )
+            )
         elif abs(ub - lb) <= tol:
             v.fix(0.5 * (lb + ub))
 
@@ -337,6 +342,7 @@ class MethanolModel(object):
         m.cheap_feed_disjunct.feed_cons = c = pe.ConstraintList()
         c.add(m.component_flows[1, 'H2'] == m.flow_1_composition['H2'] * m.flows[1])
         c.add(m.component_flows[1, 'CO'] == m.flow_1_composition['CO'] * m.flows[1])
+        c.add(m.component_flows[1, 'CO'] == m.flow_1_composition['CO'] * m.flows[1])
         c.add(m.component_flows[1, 'CH4'] == m.flow_1_composition['CH4'] * m.flows[1])
         c.add(m.flows[1] >= self.flow_feed_lb)
         c.add(m.flows[1] <= self.flow_feed_ub)
@@ -473,6 +479,18 @@ class MethanolModel(object):
         self.build_stream_doesnt_exist_con(
             m.single_stage_recycle_compressor_disjunct, 32
         )
+        self.build_stream_doesnt_exist_con(
+            m.single_stage_recycle_compressor_disjunct, 28
+        )
+        self.build_stream_doesnt_exist_con(
+            m.single_stage_recycle_compressor_disjunct, 30
+        )
+        self.build_stream_doesnt_exist_con(
+            m.single_stage_recycle_compressor_disjunct, 31
+        )
+        self.build_stream_doesnt_exist_con(
+            m.single_stage_recycle_compressor_disjunct, 32
+        )
         self.build_compressor(m.single_stage_recycle_compressor_disjunct, 16)
 
         m.two_stage_recycle_compressor_disjunct = gdp.Disjunct()
@@ -521,13 +539,27 @@ class MethanolModel(object):
             * self.reactor_volume
             * m.cheap_reactor.exists
         )
+        e -= (
+            self.cheap_reactor_variable_cost
+            * self.reactor_volume
+            * m.cheap_reactor.exists
+        )
         e -= self.cheap_reactor_fixed_cost * m.cheap_reactor.exists
         e -= (
             self.expensive_reactor_variable_cost
             * self.reactor_volume
             * m.expensive_reactor.exists
         )
+        e -= (
+            self.expensive_reactor_variable_cost
+            * self.reactor_volume
+            * m.expensive_reactor.exists
+        )
         e -= self.expensive_reactor_fixed_cost * m.expensive_reactor.exists
+        e -= (
+            (self.fix_electricity_cost + self.electricity_cost)
+            * m.single_stage_feed_compressor_disjunct.compressor_3.electricity_requirement
+        )
         e -= (
             (self.fix_electricity_cost + self.electricity_cost)
             * m.single_stage_feed_compressor_disjunct.compressor_3.electricity_requirement
@@ -541,12 +573,36 @@ class MethanolModel(object):
             (self.fix_electricity_cost + self.electricity_cost)
             * m.two_stage_feed_compressor_disjunct.compressor_6.electricity_requirement
         )
+        e -= (
+            (self.fix_electricity_cost + self.electricity_cost)
+            * m.two_stage_feed_compressor_disjunct.compressor_4.electricity_requirement
+        )
+        e -= (
+            (self.fix_electricity_cost + self.electricity_cost)
+            * m.two_stage_feed_compressor_disjunct.compressor_6.electricity_requirement
+        )
         e -= self.cooling_cost * m.two_stage_feed_compressor_disjunct.cooler_5.heat_duty
         e -= (
             (self.fix_electricity_cost + self.electricity_cost)
             * m.single_stage_recycle_compressor_disjunct.compressor_16.electricity_requirement
         )
+        e -= (
+            (self.fix_electricity_cost + self.electricity_cost)
+            * m.single_stage_recycle_compressor_disjunct.compressor_16.electricity_requirement
+        )
         e -= self.two_stage_fix_cost * m.two_stage_recycle_compressor_disjunct.exists
+        e -= (
+            (self.fix_electricity_cost + self.electricity_cost)
+            * m.two_stage_recycle_compressor_disjunct.compressor_17.electricity_requirement
+        )
+        e -= (
+            (self.fix_electricity_cost + self.electricity_cost)
+            * m.two_stage_recycle_compressor_disjunct.compressor_19.electricity_requirement
+        )
+        e -= (
+            self.cooling_cost
+            * m.two_stage_recycle_compressor_disjunct.cooler_18.heat_duty
+        )
         e -= (
             (self.fix_electricity_cost + self.electricity_cost)
             * m.two_stage_recycle_compressor_disjunct.compressor_17.electricity_requirement
@@ -644,6 +700,7 @@ class MethanolModel(object):
         in_stream = self.inlet_streams[u]
         out_stream = self.outlet_streams[u]
         b = pe.Block()
+        setattr(block, 'expansion_valve_' + str(u), b)
         setattr(block, 'expansion_valve_' + str(u), b)
 
         def _component_balances(_b, _c):
@@ -771,6 +828,7 @@ class MethanolModel(object):
         in_stream1, in_stream2 = self.inlet_streams[u]
         out_stream = self.outlet_streams[u]
         b = pe.Block()
+        setattr(block, 'mixer_' + str(u), b)
         setattr(block, 'mixer_' + str(u), b)
 
         def _component_balances(_b, _c):
