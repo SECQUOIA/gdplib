@@ -62,13 +62,13 @@ def HDA_model():
     furnpdrop : float
         pressure drop of furnace
     heatvap : float
-        heat of vaporization [kj per kg-mol]
+        heat of vaporization [kJ/kg-mol]
     cppure : float
-        pure component heat capacities [kj per kg-mol-k]
+        pure component heat capacities [kJ/kg-mol-K]
     gcomp : float
         guess composition values
     cp : float
-        heat capacities [kj per kg-mol-k]
+        heat capacities [kJ/kg-mol-K]
     anta : float
         antoine coefficient A
     antb : float
@@ -76,15 +76,15 @@ def HDA_model():
     antc : float
         antoine coefficient C
     perm : float
-        permeability [kg-mole/m**2-min-mpa]
+        permeability [kg-mol/m**2-min-MPa]
     cbeta : float
         constant values (exp(beta)) in absorber
     aabs : float
         absorption factors
     eps1 : float
-        small number to avoid div. by zero
+        small number to avoid division by zero
     heatrxn : float
-        heat of reaction [kj per kg-mol]
+        heat of reaction [kJ/kg-mol]
     f1comp : float
         feedstock compositions (h2 feed)
     f66comp : float
@@ -216,7 +216,7 @@ def HDA_model():
         m.compon,
         initialize=Heatvap,
         default=0,
-        doc="heat of vaporization [kj per kg-mol]",
+        doc="heat of vaporization [kJ/kg-mol]",
     )
     Cppure = {}
     # h2 'hydrogen', ch4 'methane', ben 'benzene', tol 'toluene', dip 'diphenyl'
@@ -229,7 +229,7 @@ def HDA_model():
         m.compon,
         initialize=Cppure,
         default=0,
-        doc="pure component heat capacities [kj per kg-mol-k]",
+        doc="pure component heat capacities [kJ/kg-mol-K]",
     )
     Gcomp = {}
     Gcomp[7, "h2"] = 0.95
@@ -337,13 +337,13 @@ def HDA_model():
 
     def cppara(compon, stream):
         """
-        heat capacities [kj per kg-mol-k]
+        heat capacities [kJ/kg-mol-K]
         sum of heat capacities of all components in a stream, weighted by their composition
         """
         return sum(m.cppure[compon] * m.gcomp[stream, compon] for compon in m.compon)
 
     m.cp = Param(
-        m.str, initialize=cppara, default=0, doc="heat capacities [kj per kg-mol-k]"
+        m.str, initialize=cppara, default=0, doc="heat capacities [kJ/kg-mol-K]"
     )
 
     Anta = {}
@@ -378,8 +378,8 @@ def HDA_model():
 
     def Permset(m, compon):
         """
-        permeability [kg-mole/m**2-min-mpa]
-        converting unit for permeability from cc/cm**2-sec-cmHg to kg-mole/m**2-min-mpa
+        permeability [kg-mol/m**2-min-MPa]
+        converting unit for permeability from cc/cm**2-sec-cmHg to kg-mol/m**2-min-MPa
         """
         return Perm[compon] * (1.0 / 22400.0) * 1.0e4 * 750.062 * 60.0 / 1000.0
 
@@ -387,7 +387,7 @@ def HDA_model():
         m.compon,
         initialize=Permset,
         default=0,
-        doc="permeability [kg-mole/m**2-min-mpa]",
+        doc="permeability [kg-mol/m**2-min-MPa]",
     )
 
     Cbeta = {}
@@ -411,7 +411,7 @@ def HDA_model():
     Heatrxn[1] = 50100.0
     Heatrxn[2] = 50100.0
     m.heatrxn = Param(
-        m.rct, initialize=Heatrxn, default=0, doc="heat of reaction [kj per kg-mol]"
+        m.rct, initialize=Heatrxn, default=0, doc="heat of reaction [kJ/kg-mol]"
     )
 
     F1comp = {}
@@ -488,13 +488,13 @@ def HDA_model():
     )
     m.dh = Set(
         initialize=[(1, "tol"), (1, "dip"), (2, "dip")],
-        doc="dist-key component matches",
+        doc="dist-Key component matches",
     )
 
     i = list(m.dlkey)
     q = list(m.dhkey)
     dkeyset = i + q
-    m.dkey = Set(initialize=dkeyset, doc="dist-key component matches")
+    m.dkey = Set(initialize=dkeyset, doc="dist-Key component matches")
 
     m.iflsh = Set(
         initialize=[(1, 17), (2, 46), (3, 39)], doc="flsh-stream (inlet) matches"
@@ -507,7 +507,7 @@ def HDA_model():
     )
     m.fkey = Set(
         initialize=[(1, "ch4"), (2, "ch4"), (3, "tol")],
-        doc="flash-key component matches",
+        doc="flash-Key component matches",
     )
 
     m.ifurn = Set(initialize=[(1, 70)], doc="furn-stream (inlet) matches")
@@ -615,7 +615,7 @@ def HDA_model():
     m.irct = Set(initialize=[(1, 10), (2, 12)], doc="reactor-stream (inlet) matches")
     m.orct = Set(initialize=[(1, 11), (2, 13)], doc="reactor-stream (outlet) matches")
     m.rkey = Set(
-        initialize=[(1, "tol"), (2, "tol")], doc="reactor-key component matches"
+        initialize=[(1, "tol"), (2, "tol")], doc="reactor-Key component matches"
     )
 
     m.ispl1 = Set(
@@ -676,7 +676,7 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(0, 100),
         initialize=1,
-        doc="electricity requirement [kw]",
+        doc="electricity requirement [kW]",
     )
     m.presrat = Var(
         m.comp,
@@ -705,7 +705,7 @@ def HDA_model():
         within=NonNegativeReals,
         initialize=1,
         bounds=(0.1, 4.0),
-        doc="column pressure [mega-pascal]",
+        doc="column pressure [MPa]",
     )
     m.avevlt = Var(
         m.dist, within=NonNegativeReals, initialize=1, doc="average volatility"
@@ -713,13 +713,13 @@ def HDA_model():
 
     # flash
     m.flsht = Var(
-        m.flsh, within=NonNegativeReals, initialize=1, doc="flash temperature [100 k]"
+        m.flsh, within=NonNegativeReals, initialize=1, doc="flash temperature [100 K]"
     )
     m.flshp = Var(
         m.flsh,
         within=NonNegativeReals,
         initialize=1,
-        doc="flash pressure [mega-pascal]",
+        doc="flash pressure [MPa]",
     )
     m.eflsh = Var(
         m.flsh,
@@ -736,7 +736,7 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(None, 10),
         initialize=1,
-        doc="heating required [1.e+12 kj per yr]",
+        doc="heating required [1.e+12 kJ/yr]",
     )
     # cooler
     m.qc = Var(
@@ -744,7 +744,7 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(None, 10),
         initialize=1,
-        doc="utility requirement [1.e+12 kj per yr]",
+        doc="utility requirement [1.e+12 kJ/yr]",
     )
     # heater
     m.qh = Var(
@@ -752,7 +752,7 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(None, 10),
         initialize=1,
-        doc="utility requirement [1.e+12 kj per yr]",
+        doc="utility requirement [1.e+12 kJ/yr]",
     )
     # exchanger
     m.qexch = Var(
@@ -760,7 +760,7 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(None, 10),
         initialize=1,
-        doc="heat exchanged [1.e+12 kj per yr]",
+        doc="heat exchanged [1.e+12 kJ/yr]",
     )
     # membrane
     m.a = Var(
@@ -776,14 +776,14 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(0.1, 4),
         initialize=0,
-        doc="mixer temperature [100 k]",
+        doc="mixer temperature [100 K]",
     )
     m.mxr1t = Var(
         m.mxr1,
         within=NonNegativeReals,
         bounds=(3, 10),
         initialize=0,
-        doc="mixer pressure [mega-pascal]",
+        doc="mixer pressure [MPa]",
     )
     # mixer
     m.mxrt = Var(
@@ -791,33 +791,33 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(3.0, 10),
         initialize=3,
-        doc="mixer temperature [100 k]",
+        doc="mixer temperature [100 K]",
     )
     m.mxrp = Var(
         m.mxr,
         within=NonNegativeReals,
         bounds=(0.1, 4.0),
         initialize=3,
-        doc="mixer pressure [mega-pascal]",
+        doc="mixer pressure [MPa]",
     )
     # reactor
     m.rctt = Var(
         m.rct,
         within=NonNegativeReals,
         bounds=(8.9427, 9.7760),
-        doc="reactor temperature [100 k]",
+        doc="reactor temperature [100 K]",
     )
     m.rctp = Var(
         m.rct,
         within=NonNegativeReals,
         bounds=(3.4474, 3.4474),
-        doc="reactor pressure [mega-pascal]",
+        doc="reactor pressure [MPa]",
     )
     m.rctvol = Var(
         m.rct,
         within=NonNegativeReals,
         bounds=(None, 200),
-        doc="reactor volume [cubic meter]",
+        doc="reactor volume [m**3]",
     )
     m.krct = Var(
         m.rct,
@@ -851,27 +851,27 @@ def HDA_model():
         m.rct,
         within=NonNegativeReals,
         bounds=(0, 10000000000),
-        doc="heat removed [1.e+9  kj per yr]",
+        doc="heat removed [1.e+9  kJ/yr]",
     )
     # splitter (1 output)
     m.spl1t = Var(
         m.spl1,
         within=PositiveReals,
         bounds=(3.00, 10.00),
-        doc="splitter temperature [100 k]",
+        doc="splitter temperature [100 K]",
     )
     m.spl1p = Var(
         m.spl1,
         within=PositiveReals,
         bounds=(0.1, 4.0),
-        doc="splitter pressure [mega-pascal]",
+        doc="splitter pressure [MPa]",
     )
     # splitter
     m.splp = Var(
-        m.spl, within=Reals, bounds=(0.1, 4.0), doc="splitter pressure [mega-pascal]"
+        m.spl, within=Reals, bounds=(0.1, 4.0), doc="splitter pressure [MPa]"
     )
     m.splt = Var(
-        m.spl, within=Reals, bounds=(3.0, 10.0), doc="splitter temperature [100 k]"
+        m.spl, within=Reals, bounds=(3.0, 10.0), doc="splitter temperature [100 K]"
     )
 
     # stream
@@ -892,7 +892,7 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=bound_f,
         initialize=1,
-        doc="stream flowrates [kg-mole per min]",
+        doc="stream flowrates [kg-mol/min]",
     )
 
     def bound_fc(m, stream, compon):
@@ -910,21 +910,21 @@ def HDA_model():
         within=Reals,
         bounds=bound_fc,
         initialize=1,
-        doc="component flowrates [kg-mole per min]",
+        doc="component flowrates [kg-mol/min]",
     )
     m.p = Var(
         m.str,
         within=NonNegativeReals,
         bounds=(0.1, 4.0),
         initialize=3.0,
-        doc="stream pressure [mega-pascal]",
+        doc="stream pressure [MPa]",
     )
     m.t = Var(
         m.str,
         within=NonNegativeReals,
         bounds=(3.0, 10.0),
         initialize=3.0,
-        doc="stream temperature [100 k]",
+        doc="stream temperature [100 K]",
     )
     m.vp = Var(
         m.str,
@@ -932,7 +932,7 @@ def HDA_model():
         within=NonNegativeReals,
         initialize=1,
         bounds=(0, 10),
-        doc="vapor pressure [mega-pascal]",
+        doc="vapor pressure [MPa]",
     )
 
     def boundsofe(m):
@@ -1596,7 +1596,7 @@ def HDA_model():
             m.str,
             m.compon,
             rule=Antdistb,
-            doc="vapor pressure correlation (bot)",
+            doc="vapor pressure correlation (bottom)",
         )
 
         def Antdistt(_m, dist_, stream, compon):
@@ -1704,7 +1704,7 @@ def HDA_model():
         b.fenske = Constraint([dist], rule=Fenske, doc="minimum number of trays")
 
         def Acttray(_m, dist_):
-            # actual number of trays (gillilands approximation)
+            # actual number of trays (Gilliland approximation)
             if dist == dist_:
                 return m.ndist[dist_] == m.nmin[dist_] * 2.0 / m.disteff
             return Constraint.Skip
@@ -1957,7 +1957,7 @@ def HDA_model():
                 return m.flsht[flsh_] == m.t[stream]
             return Constraint.Skip
 
-        b.flshti = Constraint([flsh], m.str, rule=Flshti, doc="inlet temp. relation")
+        b.flshti = Constraint([flsh], m.str, rule=Flshti, doc="inlet temperature relation")
 
         def Flshtl(_m, flsh_, stream):
             if (flsh_, stream) in m.lflsh and flsh_ == flsh:
@@ -1965,7 +1965,7 @@ def HDA_model():
             return Constraint.Skip
 
         b.flshtl = Constraint(
-            [flsh], m.str, rule=Flshtl, doc="outlet temp. relation (liquid)"
+            [flsh], m.str, rule=Flshtl, doc="outlet temperature relation (liquid)"
         )
 
         def Flshtv(_m, flsh_, stream):
@@ -1974,11 +1974,11 @@ def HDA_model():
             return Constraint.Skip
 
         b.flshtv = Constraint(
-            [flsh], m.str, rule=Flshtv, doc="outlet temp. relation (vapor)"
+            [flsh], m.str, rule=Flshtv, doc="outlet temperature relation (vapor)"
         )
 
     m.heat_unit_match = Param(
-        initialize=3600.0 * 8500.0 * 1.0e-12 / 60.0, doc="unit change on temp"
+        initialize=3600.0 * 8500.0 * 1.0e-12 / 60.0, doc="unit change on heat balance from [kJ/min] to [1e12kJ/yr]"
     )
 
     def build_furnace(b, furnace):
@@ -2365,7 +2365,7 @@ def HDA_model():
             return Constraint.Skip
 
         b.memtp = Constraint(
-            [membrane], m.str, rule=Memtp, doc="temp relation for permeate"
+            [membrane], m.str, rule=Memtp, doc="temperature relation for permeate"
         )
 
         def Mempp(_m, memb, stream):
@@ -2387,7 +2387,7 @@ def HDA_model():
             return Constraint.Skip
 
         b.Memtn = Constraint(
-            [membrane], m.str, rule=Memtn, doc="temp relation for non-permeate"
+            [membrane], m.str, rule=Memtn, doc="temperature relation for non-permeate"
         )
 
         def Mempn(_m, memb, stream):
@@ -2689,7 +2689,7 @@ def HDA_model():
             return Constraint.Skip
 
         b.Rctspec = Constraint(
-            [rct], m.str, rule=rctspec, doc="spec. on reactor feed stream"
+            [rct], m.str, rule=rctspec, doc="specification on reactor feed stream"
         )
 
         def rxnrate(_m, rct):
@@ -2737,7 +2737,7 @@ def HDA_model():
             return Constraint.Skip
 
         b.Rctcns = Constraint(
-            [rct], m.str, m.compon, rule=rctcns, doc="consumption rate of key comp."
+            [rct], m.str, m.compon, rule=rctcns, doc="consumption rate of key components"
         )
 
         def rctmbtol(_m, rct):
@@ -2855,7 +2855,7 @@ def HDA_model():
                 )
             return Constraint.Skip
 
-        b.rcthbiso = Constraint([rct], rule=Rcthbiso, doc="temp relation (isothermal)")
+        b.rcthbiso = Constraint([rct], rule=Rcthbiso, doc="temperature relation (isothermal)")
 
         def Rctisot(_m, rct):
             if rct == 2:
@@ -2864,7 +2864,7 @@ def HDA_model():
                 ) == sum(m.t[stream] for (rct_, stream) in m.orct if rct_ == rct)
             return Constraint.Skip
 
-        b.rctisot = Constraint([rct], rule=Rctisot, doc="temp relation (isothermal)")
+        b.rctisot = Constraint([rct], rule=Rctisot, doc="temperature relation (isothermal)")
 
     def build_single_mixer(b, mixer):
         """
@@ -2985,7 +2985,7 @@ def HDA_model():
     m.multi_mixer_1 = Block(m.one, rule=build_multiple_mixer)
     m.furnace_1 = Block(m.one, rule=build_furnace)
 
-    # Second disjunction: Adiabatic or isothermal reactor
+    # second disjunction: adiabatic or isothermal reactor
     @m.Disjunct()
     def adiabatic_reactor(disj):
         disj.Adiabatic_reactor = Block(m.one, rule=build_reactor)
@@ -3147,93 +3147,93 @@ def HDA_model():
     )
     m.electricity_cost = Param(
         initialize=0.04 * 24 * 365 / 1000,
-        doc="electricity cost, value is 0.04 with the unit of [kw/h], now is [kw/yr/k$]",
+        doc="electricity cost, value is 0.04 with the unit of [kW/h], now is [kW/yr/$1e3]",
     )
-    m.meathane_purge_value = Param(
-        initialize=3.37, doc="heating value of meathane purge"
+    m.methane_purge_value = Param(
+        initialize=3.37, doc="heating value of methane purge"
     )
     m.heating_cost = Param(
-        initialize=8000.0, doc="Heating cost (steam) with unit [1e6 kj]"
+        initialize=8000.0, doc="heating cost (steam) with unit [1e6 kJ]"
     )
     m.cooling_cost = Param(
-        initialize=700.0, doc="heating cost (water) with unit [1e6 kj]"
+        initialize=700.0, doc="heating cost (water) with unit [1e6 kJ]"
     )
-    m.fuel_cost = Param(initialize=4000.0, doc="fuel cost with unit [1e6 kj]")
-    m.abs_fixed_cost = Param(initialize=13, doc="fixed cost of absober [$1e3 per year]")
+    m.fuel_cost = Param(initialize=4000.0, doc="fuel cost with unit [1e6 kJ]")
+    m.abs_fixed_cost = Param(initialize=13, doc="fixed cost of absober [$1e3/yr]")
     m.abs_linear_coefficient = Param(
         initialize=1.2,
-        doc="linear coefficient of absorber (times tray number) [$1e3 per year]",
+        doc="linear coefficient of absorber (times tray number) [$1e3/yr]",
     )
     m.compressor_fixed_cost = Param(
-        initialize=7.155, doc="compressor fixed cost [$1e3 per year]"
+        initialize=7.155, doc="compressor fixed cost [$1e3/yr]"
     )
     m.compressor_fixed_cost_4 = Param(
-        initialize=4.866, doc="compressor fixed cost for compressor 4 [$1e3 per year]"
+        initialize=4.866, doc="compressor fixed cost for compressor 4 [$1e3/yr]"
     )
     m.compressor_linear_coefficient = Param(
         initialize=0.815,
-        doc="compressor linear coefficient (vaporflow rate) [$1e3 per year]",
+        doc="compressor linear coefficient (vapor flow rate) [$1e3/yr]",
     )
     m.compressor_linear_coefficient_4 = Param(
         initialize=0.887,
-        doc="compressor linear coefficient (vaporflow rate) [$1e3 per year]",
+        doc="compressor linear coefficient (vapor flow rate) [$1e3/yr]",
     )
     m.stabilizing_column_fixed_cost = Param(
-        initialize=1.126, doc="stabilizing column fixed cost [$1e3 per year]"
+        initialize=1.126, doc="stabilizing column fixed cost [$1e3/yr]"
     )
     m.stabilizing_column_linear_coefficient = Param(
         initialize=0.375,
-        doc="stabilizing column linear coefficient (times number of trays) [$1e3 per year]",
+        doc="stabilizing column linear coefficient (times number of trays) [$1e3/yr]",
     )
     m.benzene_column_fixed_cost = Param(
-        initialize=16.3, doc="benzene column fixed cost [$1e3 per year]"
+        initialize=16.3, doc="benzene column fixed cost [$1e3/yr]"
     )
     m.benzene_column_linear_coefficient = Param(
         initialize=1.55,
-        doc="benzene column linear coefficient (times number of trays) [$1e3 per year]",
+        doc="benzene column linear coefficient (times number of trays) [$1e3/yr]",
     )
     m.toluene_column_fixed_cost = Param(
-        initialize=3.9, doc="toluene column fixed cost [$1e3 per year]"
+        initialize=3.9, doc="toluene column fixed cost [$1e3/yr]"
     )
     m.toluene_column_linear_coefficient = Param(
         initialize=1.12,
-        doc="toluene column linear coefficient (times number of trays) [$1e3 per year]",
+        doc="toluene column linear coefficient (times number of trays) [$1e3/yr]",
     )
     m.furnace_fixed_cost = Param(
-        initialize=6.20, doc="toluene column fixed cost [$1e3 per year]"
+        initialize=6.20, doc="toluene column fixed cost [$1e3/yr]"
     )
     m.furnace_linear_coefficient = Param(
         initialize=1171.7,
-        doc="furnace column linear coefficient [1e9kj/yr] [$1e3 per year]",
+        doc="furnace column linear coefficient [$1e3/(1e12 kJ/yr)]",
     )
     m.membrane_separator_fixed_cost = Param(
-        initialize=43.24, doc="membrane separator fixed cost [$1e3 per year]"
+        initialize=43.24, doc="membrane separator fixed cost [$1e3/yr]"
     )
     m.membrane_separator_linear_coefficient = Param(
         initialize=49.0,
-        doc="furnace column linear coefficient (times inlet flowrate) [$1e3 per year]",
+        doc="furnace column linear coefficient (times inlet flowrate) [$1e3/yr]",
     )
     m.adiabtic_reactor_fixed_cost = Param(
-        initialize=74.3, doc="adiabatic reactor fixed cost [$1e3 per year]"
+        initialize=74.3, doc="adiabatic reactor fixed cost [$1e3/yr]"
     )
     m.adiabtic_reactor_linear_coefficient = Param(
         initialize=1.257,
-        doc="adiabatic reactor linear coefficient (times reactor volume) [$1e3 per year]",
+        doc="adiabatic reactor linear coefficient (times reactor volume) [$1e3/yr]",
     )
     m.isothermal_reactor_fixed_cost = Param(
-        initialize=92.875, doc="isothermal reactor fixed cost [$1e3 per year]"
+        initialize=92.875, doc="isothermal reactor fixed cost [$1e3/yr]"
     )
     m.isothermal_reactor_linear_coefficient = Param(
         initialize=1.57125,
-        doc="isothermal reactor linear coefficient (times reactor volume) [$1e3 per year]",
+        doc="isothermal reactor linear coefficient (times reactor volume) [$1e3/yr]",
     )
     m.h2_feed_cost = Param(initialize=2.5, doc="h2 feed cost (95% h2,5% Ch4)")
     m.toluene_feed_cost = Param(initialize=14.0, doc="toluene feed cost (100% toluene)")
     m.benzene_product = Param(
-        initialize=19.9, doc="benzene product profit(benzene >= 99.97%)"
+        initialize=19.9, doc="benzene product profit (benzene >= 99.97%)"
     )
     m.diphenyl_product = Param(
-        initialize=11.84, doc="diphenyl product profit(diphenyl = 100%)"
+        initialize=11.84, doc="diphenyl product profit (diphenyl = 100%)"
     )
 
     def profits_from_paper(m):
@@ -3246,7 +3246,7 @@ def HDA_model():
                 + m.diphenyl_product * m.f[35]
                 + m.hydrogen_purge_value
                 * (m.fc[4, "h2"] + m.fc[28, "h2"] + m.fc[53, "h2"] + m.fc[55, "h2"])
-                + m.meathane_purge_value
+                + m.methane_purge_value
                 * (m.fc[4, "ch4"] + m.fc[28, "ch4"] + m.fc[53, "ch4"] + m.fc[55, "ch4"])
             )
             - m.compressor_linear_coefficient * (m.elec[1] + m.elec[2] + m.elec[3])
@@ -3307,7 +3307,7 @@ def HDA_model():
 
     #     "there are several differences between the data from GAMS file and the paper: 1. all the compressor share the same fixed and linear cost in paper but in GAMS they have different fixed and linear cost in GAMS file. 2. the fixed cost for absorber in GAMS file is 3.0 but in the paper is 13.0, but they are getting the same results 3. the electricity cost is not the same"
 
-    #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.meathane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coefficient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coefficient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.binary_indicator_var + m.recycle_hydrogen.binary_indicator_var + m.absorber_hydrogen.binary_indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.binary_indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var + m.adiabtic_reactor_linear_coefficient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.binary_indicator_var + m.isothermal_reactor_linear_coefficient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.binary_indicator_var +m.stabilizing_column_linear_coefficient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coefficient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.binary_indicator_var + m.toluene_column_linear_coefficient * m.ndist[3]) - (m.membrane_separator_fixed_cost * m.purify_H2.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[3]) - (m.membrane_separator_fixed_cost * m.recycle_methane_membrane.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[54]) - (3.0 * m.absorber_hydrogen.binary_indicator_var + m.abs_linear_coefficient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coefficient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
+    #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.methane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coefficient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coefficient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.binary_indicator_var + m.recycle_hydrogen.binary_indicator_var + m.absorber_hydrogen.binary_indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.binary_indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var + m.adiabtic_reactor_linear_coefficient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.binary_indicator_var + m.isothermal_reactor_linear_coefficient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.binary_indicator_var +m.stabilizing_column_linear_coefficient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coefficient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.binary_indicator_var + m.toluene_column_linear_coefficient * m.ndist[3]) - (m.membrane_separator_fixed_cost * m.purify_H2.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[3]) - (m.membrane_separator_fixed_cost * m.recycle_methane_membrane.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[54]) - (3.0 * m.absorber_hydrogen.binary_indicator_var + m.abs_linear_coefficient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coefficient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
     # m.obj = Objective(rule=profits_GAMS_file, sense=maximize)
 
     return m
