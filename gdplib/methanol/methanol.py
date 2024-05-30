@@ -220,7 +220,10 @@ class MethanolModel(object):
         flow_1['CO'] = 0.25
         flow_1['CH4'] = 0.15
         m.flow_1_composition = pe.Param(
-            m.components, initialize=flow_1, default=0, doc='Molar composition of feed 1'
+            m.components,
+            initialize=flow_1,
+            default=0,
+            doc='Molar composition of feed 1',
         )
         flow_2 = dict()
         # Feed 2 (expensive feedstock; component molar fractions)
@@ -228,7 +231,10 @@ class MethanolModel(object):
         flow_2['CO'] = 0.30
         flow_2['CH4'] = 0.05
         m.flow_2_composition = pe.Param(
-            m.components, initialize=flow_2, default=0, doc='Molar composition of feed 2'
+            m.components,
+            initialize=flow_2,
+            default=0,
+            doc='Molar composition of feed 2',
         )
 
         # Setting operating conditions (bounds) for specific streams in the process
