@@ -213,10 +213,7 @@ def HDA_model():
     Heatvap = {}
     Heatvap["tol"] = 30890.00
     m.heatvap = Param(
-        m.compon,
-        initialize=Heatvap,
-        default=0,
-        doc="heat of vaporization [kJ/kg-mol]",
+        m.compon, initialize=Heatvap, default=0, doc="heat of vaporization [kJ/kg-mol]"
     )
     Cppure = {}
     # h2 'hydrogen', ch4 'methane', ben 'benzene', tol 'toluene', dip 'diphenyl'
@@ -716,10 +713,7 @@ def HDA_model():
         m.flsh, within=NonNegativeReals, initialize=1, doc="flash temperature [100 K]"
     )
     m.flshp = Var(
-        m.flsh,
-        within=NonNegativeReals,
-        initialize=1,
-        doc="flash pressure [MPa]",
+        m.flsh, within=NonNegativeReals, initialize=1, doc="flash pressure [MPa]"
     )
     m.eflsh = Var(
         m.flsh,
@@ -814,10 +808,7 @@ def HDA_model():
         doc="reactor pressure [MPa]",
     )
     m.rctvol = Var(
-        m.rct,
-        within=NonNegativeReals,
-        bounds=(None, 200),
-        doc="reactor volume [m**3]",
+        m.rct, within=NonNegativeReals, bounds=(None, 200), doc="reactor volume [m**3]"
     )
     m.krct = Var(
         m.rct,
@@ -861,15 +852,10 @@ def HDA_model():
         doc="splitter temperature [100 K]",
     )
     m.spl1p = Var(
-        m.spl1,
-        within=PositiveReals,
-        bounds=(0.1, 4.0),
-        doc="splitter pressure [MPa]",
+        m.spl1, within=PositiveReals, bounds=(0.1, 4.0), doc="splitter pressure [MPa]"
     )
     # splitter
-    m.splp = Var(
-        m.spl, within=Reals, bounds=(0.1, 4.0), doc="splitter pressure [MPa]"
-    )
+    m.splp = Var(m.spl, within=Reals, bounds=(0.1, 4.0), doc="splitter pressure [MPa]")
     m.splt = Var(
         m.spl, within=Reals, bounds=(3.0, 10.0), doc="splitter temperature [100 K]"
     )
@@ -1957,7 +1943,9 @@ def HDA_model():
                 return m.flsht[flsh_] == m.t[stream]
             return Constraint.Skip
 
-        b.flshti = Constraint([flsh], m.str, rule=Flshti, doc="inlet temperature relation")
+        b.flshti = Constraint(
+            [flsh], m.str, rule=Flshti, doc="inlet temperature relation"
+        )
 
         def Flshtl(_m, flsh_, stream):
             if (flsh_, stream) in m.lflsh and flsh_ == flsh:
@@ -1978,7 +1966,8 @@ def HDA_model():
         )
 
     m.heat_unit_match = Param(
-        initialize=3600.0 * 8500.0 * 1.0e-12 / 60.0, doc="unit change on heat balance from [kJ/min] to [1e12kJ/yr]"
+        initialize=3600.0 * 8500.0 * 1.0e-12 / 60.0,
+        doc="unit change on heat balance from [kJ/min] to [1e12kJ/yr]",
     )
 
     def build_furnace(b, furnace):
@@ -2737,7 +2726,11 @@ def HDA_model():
             return Constraint.Skip
 
         b.Rctcns = Constraint(
-            [rct], m.str, m.compon, rule=rctcns, doc="consumption rate of key components"
+            [rct],
+            m.str,
+            m.compon,
+            rule=rctcns,
+            doc="consumption rate of key components",
         )
 
         def rctmbtol(_m, rct):
@@ -2855,7 +2848,9 @@ def HDA_model():
                 )
             return Constraint.Skip
 
-        b.rcthbiso = Constraint([rct], rule=Rcthbiso, doc="temperature relation (isothermal)")
+        b.rcthbiso = Constraint(
+            [rct], rule=Rcthbiso, doc="temperature relation (isothermal)"
+        )
 
         def Rctisot(_m, rct):
             if rct == 2:
@@ -2864,7 +2859,9 @@ def HDA_model():
                 ) == sum(m.t[stream] for (rct_, stream) in m.orct if rct_ == rct)
             return Constraint.Skip
 
-        b.rctisot = Constraint([rct], rule=Rctisot, doc="temperature relation (isothermal)")
+        b.rctisot = Constraint(
+            [rct], rule=Rctisot, doc="temperature relation (isothermal)"
+        )
 
     def build_single_mixer(b, mixer):
         """
@@ -3149,9 +3146,7 @@ def HDA_model():
         initialize=0.04 * 24 * 365 / 1000,
         doc="electricity cost, value is 0.04 with the unit of [kW/h], now is [kW/yr/$1e3]",
     )
-    m.methane_purge_value = Param(
-        initialize=3.37, doc="heating value of methane purge"
-    )
+    m.methane_purge_value = Param(initialize=3.37, doc="heating value of methane purge")
     m.heating_cost = Param(
         initialize=8000.0, doc="heating cost (steam) with unit [1e6 kJ]"
     )
@@ -3203,8 +3198,7 @@ def HDA_model():
         initialize=6.20, doc="toluene column fixed cost [$1e3/yr]"
     )
     m.furnace_linear_coefficient = Param(
-        initialize=1171.7,
-        doc="furnace column linear coefficient [$1e3/(1e12 kJ/yr)]",
+        initialize=1171.7, doc="furnace column linear coefficient [$1e3/(1e12 kJ/yr)]"
     )
     m.membrane_separator_fixed_cost = Param(
         initialize=43.24, doc="membrane separator fixed cost [$1e3/yr]"
