@@ -66,7 +66,7 @@ def HDA_model():
     cppure : float
         pure component heat capacities [kJ/kg-mol-K]
     gcomp : float
-        guess composition values
+        guess composition values [mol/mol]
     cp : float
         heat capacities [kJ/kg-mol-K]
     anta : float
@@ -86,11 +86,11 @@ def HDA_model():
     heatrxn : float
         heat of reaction [kJ/kg-mol]
     f1comp : float
-        feedstock compositions (h2 feed)
+        feedstock compositions (h2 feed) [mol/mol]
     f66comp : float
-        feedstock compositions (tol feed)
+        feedstock compositions (tol feed) [mol/mol]
     f67comp : float
-        feedstock compositions (tol feed)
+        feedstock compositions (tol feed) [mol/mol]
 
     Sets
     ----
@@ -329,7 +329,11 @@ def HDA_model():
     Gcomp[72, "h2"] = 0.50
     Gcomp[72, "ch4"] = 0.50
     m.gcomp = Param(
-        m.str, m.compon, initialize=Gcomp, default=0, doc="guess composition values"
+        m.str,
+        m.compon,
+        initialize=Gcomp,
+        default=0,
+        doc="guess composition values [mol/mol]",
     )
 
     def cppara(compon, stream):
@@ -376,7 +380,7 @@ def HDA_model():
     def Permset(m, compon):
         """
         permeability [kg-mol/m**2-min-MPa]
-        converting unit for permeability from cc/cm**2-sec-cmHg to kg-mol/m**2-min-MPa
+        converting unit for permeability from [cc/cm**2-sec-cmHg] to [kg-mol/m**2-min-MPa]
         """
         return Perm[compon] * (1.0 / 22400.0) * 1.0e4 * 750.062 * 60.0 / 1000.0
 
@@ -402,7 +406,7 @@ def HDA_model():
     Aabs["ben"] = 1.4
     Aabs["tol"] = 4.0
     m.aabs = Param(m.compon, initialize=Aabs, default=0, doc="absorption factors")
-    m.eps1 = Param(initialize=1e-4, doc="small number to avoid div. by zero")
+    m.eps1 = Param(initialize=1e-4, doc="small number to avoid division by zero")
 
     Heatrxn = {}
     Heatrxn[1] = 50100.0
@@ -418,7 +422,10 @@ def HDA_model():
     F1comp["ben"] = 0.00
     F1comp["tol"] = 0.00
     m.f1comp = Param(
-        m.compon, initialize=F1comp, default=0, doc="feedstock compositions (h2 feed)"
+        m.compon,
+        initialize=F1comp,
+        default=0,
+        doc="feedstock compositions (h2 feed) [mol/mol]",
     )
 
     F66comp = {}
@@ -428,7 +435,10 @@ def HDA_model():
     F66comp["dip"] = 0.00
     F66comp["ben"] = 0.00
     m.f66comp = Param(
-        m.compon, initialize=F66comp, default=0, doc="feedstock compositions (tol feed)"
+        m.compon,
+        initialize=F66comp,
+        default=0,
+        doc="feedstock compositions (tol feed) [mol/mol]",
     )
 
     F67comp = {}
@@ -438,7 +448,10 @@ def HDA_model():
     F67comp["dip"] = 0.00
     F67comp["ben"] = 0.00
     m.f67comp = Param(
-        m.compon, initialize=F67comp, default=0, doc="feedstock compositions (tol feed)"
+        m.compon,
+        initialize=F67comp,
+        default=0,
+        doc="feedstock compositions (tol feed) [mol/mol]",
     )
 
     # # matching streams
@@ -485,13 +498,13 @@ def HDA_model():
     )
     m.dh = Set(
         initialize=[(1, "tol"), (1, "dip"), (2, "dip")],
-        doc="dist-Key component matches",
+        doc="dist-key component matches",
     )
 
     i = list(m.dlkey)
     q = list(m.dhkey)
     dkeyset = i + q
-    m.dkey = Set(initialize=dkeyset, doc="dist-Key component matches")
+    m.dkey = Set(initialize=dkeyset, doc="dist-key component matches")
 
     m.iflsh = Set(
         initialize=[(1, 17), (2, 46), (3, 39)], doc="flsh-stream (inlet) matches"
@@ -504,7 +517,7 @@ def HDA_model():
     )
     m.fkey = Set(
         initialize=[(1, "ch4"), (2, "ch4"), (3, "tol")],
-        doc="flash-Key component matches",
+        doc="flash-key component matches",
     )
 
     m.ifurn = Set(initialize=[(1, 70)], doc="furn-stream (inlet) matches")
@@ -612,7 +625,7 @@ def HDA_model():
     m.irct = Set(initialize=[(1, 10), (2, 12)], doc="reactor-stream (inlet) matches")
     m.orct = Set(initialize=[(1, 11), (2, 13)], doc="reactor-stream (outlet) matches")
     m.rkey = Set(
-        initialize=[(1, "tol"), (2, "tol")], doc="reactor-Key component matches"
+        initialize=[(1, "tol"), (2, "tol")], doc="reactor-key component matches"
     )
 
     m.ispl1 = Set(
@@ -842,7 +855,7 @@ def HDA_model():
         m.rct,
         within=NonNegativeReals,
         bounds=(0, 10000000000),
-        doc="heat removed [1.e+9  kJ/yr]",
+        doc="heat removed [1.e+9 kJ/yr]",
     )
     # splitter (1 output)
     m.spl1t = Var(
@@ -863,7 +876,7 @@ def HDA_model():
     # stream
     def bound_f(m, stream):
         """
-        stream flowrates [kg-mole per min]
+        stream flowrates [kg-mol/min]
         setting appropriate bounds for stream flowrates
         """
         if stream in range(8, 19):
