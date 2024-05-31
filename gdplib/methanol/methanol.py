@@ -934,7 +934,7 @@ class MethanolModel(object):
         key = 'H2'
 
         b.p_sq_inv_con = pe.Constraint(
-            expr=b.pressure ** 2 * b.p_sq_inv == 1,
+            expr=b.pressure**2 * b.p_sq_inv == 1,
             doc='Pressure squared inverse constraint',
         )
         b.t_inv_con = pe.Constraint(
