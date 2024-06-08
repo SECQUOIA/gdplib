@@ -217,7 +217,7 @@ def build_model():
         model.STAGES, bounds=get_volume_bounds, doc='Logarithmic Volume of the Units'
     )
     model.batchSize_log = Var(
-        model.PRODUCTS, model.STAGES, doc='Logarithmic Batch Size of the Products'
+        model.PRODUCTS, model.STAGES, bounds=(-10,10), doc='Logarithmic Batch Size of the Products'
     )
     model.cycleTime_log = Var(
         model.PRODUCTS, doc='Logarithmic Cycle Time of the Products'
