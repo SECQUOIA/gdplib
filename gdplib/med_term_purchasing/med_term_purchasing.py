@@ -141,7 +141,7 @@ def build_model():
     # pd1(j, t) in GAMS
     model.RegPrice_Discount = Param(
         model.Streams,
-        model.TimePeriod,
+        model.TimePeriods,
         doc='Price for quantities less than min amount under discount contract',
     )
 
