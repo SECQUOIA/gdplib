@@ -339,7 +339,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         initialize=getCostUBs,
-        DOC='Upper bound on cost of discount contract',
+        doc='Upper bound on cost of discount contract',
     )
     model.CostUB_Bulk = Param(
         model.Streams,
