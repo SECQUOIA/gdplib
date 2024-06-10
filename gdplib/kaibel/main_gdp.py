@@ -4,11 +4,12 @@
                  (written by E. Soraya Rawlings, esoraya@rwlngs.net,
                           in collaboration with Qi Chen)
 
- Case study: separation of a mixture of a quaternary mixture:
+This is a dividing wall distillation column design problem to determine the optimal minimum number of trays and the optimal location of side streams for the separation of a quaternary mixture:
  1 = methanol
  2 = ethanol
  3 = propanol
  4 = butanol
+while minimizing its capital and operating costs.
 
  The scheme of the Kaibel Column is shown in Figure 1:
                               ____
@@ -32,27 +33,55 @@
                            ---|Reb |---
                                ----
                Figure 1. Kaibel Column scheme
-"""
 
-from __future__ import division
+Permanent trays:
+- Reboiler and vapor distributor in the bottom section (sect 1)
+- Liquid distributor and condenser in the top section (sect 4)
+- Side feed tray for the feed side and dividing wall starting and and ening tray in the feed section (sect 2).
+- Side product trays and dividing wall starting and ending tray in the product section (sect 3).
+
+The trays in each section are counted from bottom to top, being tray 1 the bottom tray in each section and tray np the top tray in each section, where np is a specified upper bound for the number of possible trays for each section.
+Each section has the same number of possible trays.
+
+Six degrees of freedom: the reflux ratio, the product outlets (bottom, intermediate, and distillate product flowrates), and the liquid and vapor flowrates between the two sections of the dividing wall, controlled by a liquid and vapor distributor on the top and bottom section of the column, respectively.
+including also the vapor and liquid flowrate and the energy consumption in the reboiler and condenser.
+The vapor distributor is fixed and remain constant during the column operation.
+
+Source paper:
+Rawlings, E. S., Chen, Q., Grossmann, I. E., & Caballero, J. A. (2019). Kaibel Column: Modeling, optimization, and conceptual design of multi-product dividing wall columns. *Computers and Chemical Engineering*, 125, 31–39. https://doi.org/10.1016/j.compchemeng.2019.03.006
+
+"""
 
 from math import fabs
 
 import matplotlib.pyplot as plt
 from pyomo.environ import *
 
-from kaibel_solve_gdp import build_model
+# from kaibel_solve_gdp import build_model
+from gdplib.kaibel.kaibel_solve_gdp import build_model
 
 
 def main():
+    """
+    This is the main function that executes the optimization process.
+
+    It builds the model, fixes certain variables, sets initial values for tray existence or absence,
+    solves the model using the 'gdpopt' solver, and displays the results.
+
+    Returns:
+        None
+    """
     m = build_model()
 
-    m.F[1].fix(50)
+    # Fixing variables
+    m.F[1].fix(50)  # feed flowrate in mol/s
     m.F[2].fix(50)
     m.F[3].fix(50)
     m.F[4].fix(50)
-    m.q.fix(m.q_init)
-    m.dv[2].fix(0.394299)
+    m.q.fix(
+        m.q_init
+    )  # vapor fraction q_init from the feed set in the build_model function
+    m.dv[2].fix(0.394299)  # vapor distributor in the feed section
 
     for sec in m.section:
         for n_tray in m.tray:
@@ -100,6 +129,12 @@ def main():
 
 
 def intro_message(m):
+    """
+    Display the introduction message.
+
+
+
+    """
     print(
         """
 
@@ -115,6 +150,14 @@ DOI: https://doi.org/10.1016/j.compchemeng.2019.03.006
 
 
 def display_results(m):
+    """
+    Display the results of the optimization process.
+
+    Parameters
+    ----------
+    m : Pyomo ConcreteModel
+        The Pyomo model object containing the results of the optimization process.
+    """
     print('')
     print('Components:')
     print('1 methanol')
