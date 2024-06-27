@@ -69,9 +69,9 @@ def build_model():
 
     # Sets
 
-    model.PRODUCTS = Set(doc='Set of Products')
-    model.STAGES = Set(doc='Set of Stages', ordered=True)
-    model.PARALLELUNITS = Set(doc='Set of Parallel Units', ordered=True)
+    model.PRODUCTS = Set(doc="Set of Products")
+    model.STAGES = Set(doc="Set of Stages", ordered=True)
+    model.PARALLELUNITS = Set(doc="Set of Parallel Units", ordered=True)
 
     # TODO: this seems like an over-complicated way to accomplish this task...
     def filter_out_last(model, j):
@@ -101,27 +101,27 @@ def build_model():
 
     # Parameters
 
-    model.HorizonTime = Param(doc='Horizon Time')
-    model.Alpha1 = Param(doc='Cost Parameter of the units')
-    model.Alpha2 = Param(doc='Cost Parameter of the intermediate storage tanks')
-    model.Beta1 = Param(doc='Exponent Parameter of the units')
-    model.Beta2 = Param(doc='Exponent Parameter of the intermediate storage tanks')
+    model.HorizonTime = Param(doc="Horizon Time")
+    model.Alpha1 = Param(doc="Cost Parameter of the units")
+    model.Alpha2 = Param(doc="Cost Parameter of the intermediate storage tanks")
+    model.Beta1 = Param(doc="Exponent Parameter of the units")
+    model.Beta2 = Param(doc="Exponent Parameter of the intermediate storage tanks")
 
-    model.ProductionAmount = Param(model.PRODUCTS, doc='Production Amount')
+    model.ProductionAmount = Param(model.PRODUCTS, doc="Production Amount")
     model.ProductSizeFactor = Param(
-        model.PRODUCTS, model.STAGES, doc='Product Size Factor'
+        model.PRODUCTS, model.STAGES, doc="Product Size Factor"
     )
-    model.ProcessingTime = Param(model.PRODUCTS, model.STAGES, doc='Processing Time')
+    model.ProcessingTime = Param(model.PRODUCTS, model.STAGES, doc="Processing Time")
 
     # These are hard-coded in the GAMS file, hence the defaults
     model.StorageTankSizeFactor = Param(
-        model.STAGES, default=StorageTankSizeFactor, doc='Storage Tank Size Factor'
+        model.STAGES, default=StorageTankSizeFactor, doc="Storage Tank Size Factor"
     )
     model.StorageTankSizeFactorByProd = Param(
         model.PRODUCTS,
         model.STAGES,
         default=StorageTankSizeFactorByProd,
-        doc='Storage Tank Size Factor by Product',
+        doc="Storage Tank Size Factor by Product",
     )
 
     # TODO: bonmin wasn't happy and I think it might have something to do with this?
@@ -148,27 +148,27 @@ def build_model():
         return log(model.PARALLELUNITS.ord(k))
 
     model.LogCoeffs = Param(
-        model.PARALLELUNITS, initialize=get_log_coeffs, doc='Logarithmic Coefficients'
+        model.PARALLELUNITS, initialize=get_log_coeffs, doc="Logarithmic Coefficients"
     )
 
     # bounds
     model.volumeLB = Param(
-        model.STAGES, default=VolumeLB, doc='Lower Bound of Volume of the Units'
+        model.STAGES, default=VolumeLB, doc="Lower Bound of Volume of the Units"
     )
     model.volumeUB = Param(
-        model.STAGES, default=VolumeUB, doc='Upper Bound of Volume of the Units'
+        model.STAGES, default=VolumeUB, doc="Upper Bound of Volume of the Units"
     )
     model.storageTankSizeLB = Param(
-        model.STAGES, default=StorageTankSizeLB, doc='Lower Bound of Storage Tank Size'
+        model.STAGES, default=StorageTankSizeLB, doc="Lower Bound of Storage Tank Size"
     )
     model.storageTankSizeUB = Param(
-        model.STAGES, default=StorageTankSizeUB, doc='Upper Bound of Storage Tank Size'
+        model.STAGES, default=StorageTankSizeUB, doc="Upper Bound of Storage Tank Size"
     )
     model.unitsInPhaseUB = Param(
-        model.STAGES, default=UnitsInPhaseUB, doc='Upper Bound of Units in Phase'
+        model.STAGES, default=UnitsInPhaseUB, doc="Upper Bound of Units in Phase"
     )
     model.unitsOutOfPhaseUB = Param(
-        model.STAGES, default=UnitsOutOfPhaseUB, doc='Upper Bound of Units Out of Phase'
+        model.STAGES, default=UnitsOutOfPhaseUB, doc="Upper Bound of Units Out of Phase"
     )
 
     # Variables
@@ -214,13 +214,16 @@ def build_model():
         return (model.volumeLB[j], model.volumeUB[j])
 
     model.volume_log = Var(
-        model.STAGES, bounds=get_volume_bounds, doc='Logarithmic Volume of the Units'
+        model.STAGES, bounds=get_volume_bounds, doc="Logarithmic Volume of the Units"
     )
     model.batchSize_log = Var(
-        model.PRODUCTS, model.STAGES, bounds=(0,10), doc='Logarithmic Batch Size of the Products'
+        model.PRODUCTS,
+        model.STAGES,
+        bounds=(0, 10),
+        doc="Logarithmic Batch Size of the Products",
     )
     model.cycleTime_log = Var(
-        model.PRODUCTS, doc='Logarithmic Cycle Time of the Products'
+        model.PRODUCTS, doc="Logarithmic Cycle Time of the Products"
     )
 
     def get_unitsOutOfPhase_bounds(model, j):
@@ -244,7 +247,7 @@ def build_model():
     model.unitsOutOfPhase_log = Var(
         model.STAGES,
         bounds=get_unitsOutOfPhase_bounds,
-        doc='Logarithmic Units Out of Phase',
+        doc="Logarithmic Units Out of Phase",
     )
 
     def get_unitsInPhase_bounds(model, j):
@@ -266,7 +269,7 @@ def build_model():
         return (0, model.unitsInPhaseUB[j])
 
     model.unitsInPhase_log = Var(
-        model.STAGES, bounds=get_unitsInPhase_bounds, doc='Logarithmic Units In Phase'
+        model.STAGES, bounds=get_unitsInPhase_bounds, doc="Logarithmic Units In Phase"
     )
 
     def get_storageTankSize_bounds(model, j):
@@ -291,15 +294,15 @@ def build_model():
     model.storageTankSize_log = Var(
         model.STAGES,
         bounds=get_storageTankSize_bounds,
-        doc='Logarithmic Storage Tank Size',
+        doc="Logarithmic Storage Tank Size",
     )
 
     # binary variables for deciding number of parallel units in and out of phase
     model.outOfPhase = Var(
-        model.STAGES, model.PARALLELUNITS, within=Binary, doc='Out of Phase Units'
+        model.STAGES, model.PARALLELUNITS, within=Binary, doc="Out of Phase Units"
     )
     model.inPhase = Var(
-        model.STAGES, model.PARALLELUNITS, within=Binary, doc='In Phase Units'
+        model.STAGES, model.PARALLELUNITS, within=Binary, doc="In Phase Units"
     )
 
     # Objective
@@ -336,7 +339,7 @@ def build_model():
         )
 
     model.min_cost = Objective(
-        rule=get_cost_rule, doc='Minimize the Total Cost of the Plant Design'
+        rule=get_cost_rule, doc="Minimize the Total Cost of the Plant Design"
     )
 
     # Constraints
@@ -371,7 +374,7 @@ def build_model():
         model.STAGES,
         model.PRODUCTS,
         rule=processing_capacity_rule,
-        doc='Processing Capacity',
+        doc="Processing Capacity",
     )
 
     def processing_time_rule(model, j, i):
@@ -402,7 +405,7 @@ def build_model():
         )
 
     model.processing_time = Constraint(
-        model.STAGES, model.PRODUCTS, rule=processing_time_rule, doc='Processing Time'
+        model.STAGES, model.PRODUCTS, rule=processing_time_rule, doc="Processing Time"
     )
 
     def finish_in_time_rule(model):
@@ -424,7 +427,7 @@ def build_model():
             for i in model.PRODUCTS
         )
 
-    model.finish_in_time = Constraint(rule=finish_in_time_rule, doc='Finish in Time')
+    model.finish_in_time = Constraint(rule=finish_in_time_rule, doc="Finish in Time")
 
     # Disjunctions
 
@@ -554,7 +557,7 @@ def build_model():
         [0, 1],
         model.STAGESExceptLast,
         rule=storage_tank_selection_disjunct_rule,
-        doc='Storage Tank Selection Disjunct',
+        doc="Storage Tank Selection Disjunct",
     )
 
     def select_storage_tanks_rule(model, j):
@@ -581,7 +584,7 @@ def build_model():
     model.select_storage_tanks = Disjunction(
         model.STAGESExceptLast,
         rule=select_storage_tanks_rule,
-        doc='Select Storage Tanks',
+        doc="Select Storage Tanks",
     )
 
     # though this is a disjunction in the GAMs model, it is more efficiently formulated this way:
@@ -612,7 +615,7 @@ def build_model():
         )
 
     model.units_out_of_phase = Constraint(
-        model.STAGES, rule=units_out_of_phase_rule, doc='Units Out of Phase'
+        model.STAGES, rule=units_out_of_phase_rule, doc="Units Out of Phase"
     )
 
     def units_in_phase_rule(model, j):
@@ -641,7 +644,7 @@ def build_model():
         )
 
     model.units_in_phase = Constraint(
-        model.STAGES, rule=units_in_phase_rule, doc='Units In Phase'
+        model.STAGES, rule=units_in_phase_rule, doc="Units In Phase"
     )
 
     def units_out_of_phase_xor_rule(model, j):
@@ -665,7 +668,7 @@ def build_model():
     model.units_out_of_phase_xor = Constraint(
         model.STAGES,
         rule=units_out_of_phase_xor_rule,
-        doc='Exclusive OR for Units Out of Phase',
+        doc="Exclusive OR for Units Out of Phase",
     )
 
     def units_in_phase_xor_rule(model, j):
@@ -689,16 +692,16 @@ def build_model():
     model.units_in_phase_xor = Constraint(
         model.STAGES,
         rule=units_in_phase_xor_rule,
-        doc='Exclusive OR for Units In Phase',
+        doc="Exclusive OR for Units In Phase",
     )
 
-    return model.create_instance(join(this_file_dir(), 'batch_processing.dat'))
+    return model.create_instance(join(this_file_dir(), "batch_processing.dat"))
 
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(
-        m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
+    TransformationFactory("gdp.bigm").apply_to(m)
+    SolverFactory("gams").solve(
+        m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
     )
     m.min_cost.display()
