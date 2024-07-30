@@ -52,7 +52,7 @@ def build_model():
     [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
     """
     m = ConcreteModel('Biofuel processing network')
-    m.bigM = Suffix(direction=Suffix.LOCAL, initialize=7000)
+    m.bigM = Suffix(direction=Suffix.LOCAL)#, initialize=7000) # Removed the initialize argument
     m.time = RangeSet(0, 120, doc="months in 10 years")
     m.suppliers = RangeSet(10)  # 10 suppliers
     m.markets = RangeSet(10)  # 10 markets
