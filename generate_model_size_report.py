@@ -7,7 +7,7 @@ import pandas as pd
 if __name__ == "__main__":
     instance_list = [
         "batch_processing",
-        # "biofuel", # issue 31
+        "biofuel",
         "cstr",
         "disease_model",
         "gdp_col",
