@@ -20,16 +20,13 @@ Environmental objective at solution point: -5354.8
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| syngas | 362 | 46 | 0 | 0 | 316 | 554 | 48 | 46 | 23 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |      367 |
+| Binary variables      |       46 |
+| Integer variables     |        0 |
+| Continuous variables  |      321 |
+| Disjunctions          |       23 |
+| Disjuncts             |       46 |
+| Constraints           |      543 |
+| Nonlinear constraints |       48 |

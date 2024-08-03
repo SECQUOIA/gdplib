@@ -15,19 +15,13 @@ Best known objective value: 1583.00
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| Methanol Production | 285 | 8 | 0 | 0 | 277 | 429 | 55 | 8 | 4 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
-
-
-
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |      287 |
+| Binary variables      |        8 |
+| Integer variables     |        0 |
+| Continuous variables  |      279 |
+| Disjunctions          |        4 |
+| Disjuncts             |        8 |
+| Constraints           |      429 |
+| Nonlinear constraints |       55 |

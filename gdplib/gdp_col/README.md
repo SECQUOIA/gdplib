@@ -14,16 +14,13 @@ Best known objective value: 19,430
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| gdp_col | 433 | 28 | 0 | 0 | 405 | 603 | 255 | 28 | 15 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |      442 |
+| Binary variables      |       30 |
+| Integer variables     |        0 |
+| Continuous variables  |      412 |
+| Disjunctions          |       15 |
+| Disjuncts             |       30 |
+| Constraints           |      610 |
+| Nonlinear constraints |      262 |
