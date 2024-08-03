@@ -17,12 +17,13 @@ Adapted from:
 Optimal objective value: 4067
 
 ### Size
-- Variables: 36804
-    - Boolean: 516
-    - Binary: 0
-    - Integer: 4320
-    - Continuous: 31968
-- Constraints: 12884
-    - Nonlinear: 12
-- Disjuncts: 516
-- Disjunctions: 252
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |    36840 |
+| Binary variables      |      516 |
+| Integer variables     |     4356 |
+| Continuous variables  |    31968 |
+| Disjunctions          |      252 |
+| Disjuncts             |      516 |
+| Constraints           |    12884 |
+| Nonlinear constraints |       12 |
