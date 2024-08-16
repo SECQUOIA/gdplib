@@ -1,5 +1,5 @@
 """
-toy_problem.py
+david_linan.py
 
 The toy problem is a simple optimization problem that involves two Boolean variables, two continuous variables, and a non-linear objective function. 
 The problem is formulated as a Generalized Disjunctive Programming (GDP) model. 
