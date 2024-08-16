@@ -6,8 +6,7 @@ The Boolean variables are associated with disjuncts that define the feasible reg
 The problem also includes logical constraints that ensure that only one Boolean variable is true at a time.
 The objective function is -0.9995999999999999 when the continuous variables are alpha = 0 (Y1[2]=True) and beta=-0.7 (Y2[3]=True).
 
-The objective function of the model is orignated from Problem No. 6 of Gomez's paper and Linan introduced logic proposition, logic disjunctions and the following eqautinons as the constraints.
-
+The objective function of the model is originated from Problem No. 6 of Gomez's paper and Linan introduced logic proposition, logic disjunctions and the following eqautinons as the constraints.
 
 ### References
 
