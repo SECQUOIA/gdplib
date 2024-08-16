@@ -15,6 +15,7 @@ References
 import pyomo.environ as pyo
 from pyomo.gdp import Disjunct, Disjunction
 
+
 def build_model():
     """
     Build the toy problem model
@@ -29,18 +30,21 @@ def build_model():
     m = pyo.ConcreteModel()
 
     # Sets
-    m.set1 = pyo.RangeSet(1,5,doc= "set of first group of Boolean variables")
-    m.set2 = pyo.RangeSet(1,5,doc= "set of second group of Boolean variables")
+    m.set1 = pyo.RangeSet(1, 5, doc="set of first group of Boolean variables")
+    m.set2 = pyo.RangeSet(1, 5, doc="set of second group of Boolean variables")
 
-    m.sub1 = pyo.Set(initialize=[3],within=m.set1)
+    m.sub1 = pyo.Set(initialize=[3], within=m.set1)
 
     # Variables
-    m.Y1 = pyo.BooleanVar(m.set1,doc="Boolean variable associated to set 1")
-    m.Y2 = pyo.BooleanVar(m.set2,doc="Boolean variable associated to set 2")
-    
-    m.alpha = pyo.Var(within=pyo.Reals, bounds=(-0.1,0.4), doc="continuous variable alpha")
-    m.beta = pyo.Var(within=pyo.Reals, bounds=(-0.9,-0.5), doc="continuous variable beta")
+    m.Y1 = pyo.BooleanVar(m.set1, doc="Boolean variable associated to set 1")
+    m.Y2 = pyo.BooleanVar(m.set2, doc="Boolean variable associated to set 2")
 
+    m.alpha = pyo.Var(
+        within=pyo.Reals, bounds=(-0.1, 0.4), doc="continuous variable alpha"
+    )
+    m.beta = pyo.Var(
+        within=pyo.Reals, bounds=(-0.9, -0.5), doc="continuous variable beta"
+    )
 
     # Objective Function
     def obj_fun(m):
@@ -57,11 +61,19 @@ def build_model():
         Pyomo.Objective
             Build the objective function of the toy problem
         """
-        return 4*(pow(m.alpha,2))-2.1*(pow(m.alpha,4))+(1/3)*(pow(m.alpha,6))+m.alpha*m.beta-4*(pow(m.beta,2))+4*(pow(m.beta,4))
-    m.obj=pyo.Objective(rule=obj_fun,sense=pyo.minimize, doc="Objective function")
+        return (
+            4 * (pow(m.alpha, 2))
+            - 2.1 * (pow(m.alpha, 4))
+            + (1 / 3) * (pow(m.alpha, 6))
+            + m.alpha * m.beta
+            - 4 * (pow(m.beta, 2))
+            + 4 * (pow(m.beta, 4))
+        )
+
+    m.obj = pyo.Objective(rule=obj_fun, sense=pyo.minimize, doc="Objective function")
 
     # First Disjunction
-    def build_disjuncts1(m,set1):  #Disjuncts for first Boolean variable
+    def build_disjuncts1(m, set1):  # Disjuncts for first Boolean variable
         """
         Build disjuncts for the first Boolean variable
 
@@ -72,6 +84,7 @@ def build_model():
         set1 : RangeSet
             Set of first group of Boolean variables
         """
+
         def constraint1(m):
             """_summary_
 
@@ -85,13 +98,17 @@ def build_model():
             Pyomo.Constraint
                 Constraint that defines the value of alpha for each disjunct
             """
-            return m.model().alpha==-0.1+0.1*(set1-1) #.model() is required when writing constraints inside disjuncts
-        m.constraint1=pyo.Constraint(rule=constraint1)
-    
-    m.Y1_disjunct=Disjunct(m.set1,rule=build_disjuncts1, doc="each disjunct is defined over set 1")
+            return m.model().alpha == -0.1 + 0.1 * (
+                set1 - 1
+            )  # .model() is required when writing constraints inside disjuncts
 
+        m.constraint1 = pyo.Constraint(rule=constraint1)
 
-    def Disjunction1(m):    # Disjunction for first Boolean variable
+    m.Y1_disjunct = Disjunct(
+        m.set1, rule=build_disjuncts1, doc="each disjunct is defined over set 1"
+    )
+
+    def Disjunction1(m):  # Disjunction for first Boolean variable
         """
         Disjunction for first Boolean variable
 
@@ -106,14 +123,15 @@ def build_model():
             Build the disjunction for the first Boolean variable set
         """
         return [m.Y1_disjunct[j] for j in m.set1]
-    m.Disjunction1=Disjunction(rule=Disjunction1,xor=False)
+
+    m.Disjunction1 = Disjunction(rule=Disjunction1, xor=False)
 
     # Associate boolean variables to disjuncts
     for n1 in m.set1:
         m.Y1[n1].associate_binary_var(m.Y1_disjunct[n1].indicator_var)
 
     # Second disjunction
-    def build_disjuncts2(m,set2):  # Disjuncts for second Boolean variable
+    def build_disjuncts2(m, set2):  # Disjuncts for second Boolean variable
         """
         Build disjuncts for the second Boolean variable
 
@@ -124,6 +142,7 @@ def build_model():
         set2 : RangeSet
             Set of second group of Boolean variables
         """
+
         def constraint2(m):
             """_summary_
 
@@ -137,13 +156,17 @@ def build_model():
             Pyomo.Constraint
                 Constraint that defines the value of beta for each disjunct
             """
-            return m.model().beta==-0.9+0.1*(set2-1) #.model() is required when writing constraints inside disjuncts
-        m.constraint2=pyo.Constraint(rule=constraint2)
-    
-    m.Y2_disjunct=Disjunct(m.set2,rule=build_disjuncts2,doc="each disjunct is defined over set 2")
+            return m.model().beta == -0.9 + 0.1 * (
+                set2 - 1
+            )  # .model() is required when writing constraints inside disjuncts
 
+        m.constraint2 = pyo.Constraint(rule=constraint2)
 
-    def Disjunction2(m):    # Disjunction for first Boolean variable
+    m.Y2_disjunct = Disjunct(
+        m.set2, rule=build_disjuncts2, doc="each disjunct is defined over set 2"
+    )
+
+    def Disjunction2(m):  # Disjunction for first Boolean variable
         """
         Disjunction for second Boolean variable
 
@@ -158,13 +181,12 @@ def build_model():
             Build the disjunction for the second Boolean variable set
         """
         return [m.Y2_disjunct[j] for j in m.set2]
-    m.Disjunction2=Disjunction(rule=Disjunction2,xor=False)
 
+    m.Disjunction2 = Disjunction(rule=Disjunction2, xor=False)
 
-    #Associate boolean variables to disjuncts
+    # Associate boolean variables to disjuncts
     for n2 in m.set2:
         m.Y2[n2].associate_binary_var(m.Y2_disjunct[n2].indicator_var)
-
 
     # Logical constraints
 
@@ -183,8 +205,9 @@ def build_model():
         Pyomo.LogicalConstraint
             Logical constraint that make Y1 to be true for only one element
         """
-        return pyo.exactly(1,m.Y1)
-    m.oneY1=pyo.LogicalConstraint(rule=select_one_Y1)
+        return pyo.exactly(1, m.Y1)
+
+    m.oneY1 = pyo.LogicalConstraint(rule=select_one_Y1)
 
     # Constraint that allow to apply the reformulation over Y2
     def select_one_Y2(m):
@@ -201,8 +224,9 @@ def build_model():
         Pyomo.LogicalConstraint
             Logical constraint that make Y2 to be true for only one element
         """
-        return pyo.exactly(1,m.Y2)
-    m.oneY2=pyo.LogicalConstraint(rule=select_one_Y2)
+        return pyo.exactly(1, m.Y2)
+
+    m.oneY2 = pyo.LogicalConstraint(rule=select_one_Y2)
 
     # Constraint that define an infeasible region with respect to Boolean variables
 
@@ -221,14 +245,16 @@ def build_model():
             Logical constraint that defines an infeasible region on Y1[3]
         """
         return pyo.land([pyo.lnot(m.Y1[j]) for j in m.sub1])
-    m.infeasR=pyo.LogicalConstraint(rule=infeasR_rule)
+
+    m.infeasR = pyo.LogicalConstraint(rule=infeasR_rule)
 
     return m
+
 
 if __name__ == "__main__":
     m = build_model()
     pyo.TransformationFactory('gdp.bigm').apply_to(m)
     solver = pyo.SolverFactory('gams')
     solver.solve(m, solver='baron', tee=True)
-    print("Solution: alpha=",pyo.value(m.alpha)," beta=",pyo.value(m.beta))
-    print("Objective function value: ",pyo.value(m.obj))
+    print("Solution: alpha=", pyo.value(m.alpha), " beta=", pyo.value(m.beta))
+    print("Objective function value: ", pyo.value(m.obj))
