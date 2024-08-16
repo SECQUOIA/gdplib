@@ -253,8 +253,8 @@ def build_model():
 
 if __name__ == "__main__":
     m = build_model()
-    pyo.TransformationFactory('gdp.bigm').apply_to(m)
-    solver = pyo.SolverFactory('gams')
-    solver.solve(m, solver='baron', tee=True)
+    pyo.TransformationFactory("gdp.bigm").apply_to(m)
+    solver = pyo.SolverFactory("gams")
+    solver.solve(m, solver="baron", tee=True)
     print("Solution: alpha=", pyo.value(m.alpha), " beta=", pyo.value(m.beta))
     print("Objective function value: ", pyo.value(m.obj))
