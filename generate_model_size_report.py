@@ -25,7 +25,7 @@ if __name__ == "__main__":
             "multiple_module_discrete",
             "mixed_discrete",
         ],
-        "modprodnet": [],
+        "modprodnet": ["Growth", "Dip", "Decay", "Distributed", "QuarterDistributed"],
         "positioning": [],
         "spectralog": [],
         "stranded_gas": [],
