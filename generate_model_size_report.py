@@ -13,7 +13,7 @@ if __name__ == "__main__":
         "gdp_col": [],
         "hda": [],
         "jobshop": [],
-        # "kaibel", # next step
+        "kaibel": [],
         "med_term_purchasing": [],
         "methanol": [],
         "mod_hens": [
