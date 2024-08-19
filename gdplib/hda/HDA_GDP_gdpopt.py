@@ -1547,9 +1547,13 @@ def HDA_model():
 
         def Ratio(_m, comp_):
             if comp == comp_:
-                return m.presrat[comp_] ** (m.cp_cv_ratio / (m.cp_cv_ratio - 1.0)) == sum(
+                return m.presrat[comp_] ** (
+                    m.cp_cv_ratio / (m.cp_cv_ratio - 1.0)
+                ) == sum(
                     m.p[stream] for (comp1, stream) in m.ocomp if comp_ == comp1
-                ) / sum(m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_)
+                ) / sum(
+                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
+                )
             return Constraint.Skip
 
         b.ratio = Constraint(
