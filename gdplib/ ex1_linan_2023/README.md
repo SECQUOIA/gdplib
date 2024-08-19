@@ -1,6 +1,6 @@
-## ex1_linan.py
+## Example 1 Problem of Liñán (2023)
 
-The `ex1_linan.py` file is a simple optimization problem that involves two Boolean variables, two continuous variables, and a nonlinear objective function. The problem is formulated as a Generalized Disjunctive Programming (GDP) model.
+The Example 1 Problem of Liñán (2023) is a simple optimization problem that involves two Boolean variables, two continuous variables, and a nonlinear objective function. The problem is formulated as a Generalized Disjunctive Programming (GDP) model.
 
 The Boolean variables are associated with disjuncts that define the feasible regions of the continuous variables. The problem also includes logical constraints that ensure that only one Boolean variable is true at a time. Additionally, there are two disjunctions, one for each Boolean variable, where only one disjunct in each disjunction must be true. A specific logical constraint also enforces that `Y1[3]` must be false, making this particular disjunct infeasible.
 
