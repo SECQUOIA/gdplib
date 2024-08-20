@@ -20,7 +20,7 @@ from pyomo.gdp import Disjunct, Disjunction
 from pyomo.opt.base.solvers import SolverFactory
 
 
-def build_small_batch():
+def build_model():
     """
     Build the GDP model for the small batch problem.
 
@@ -32,6 +32,7 @@ def build_small_batch():
     References
     ----------
     [1] Kocis, G. R.; Grossmann, I. E. (1988). Global Optimization of Nonconvex Mixed-Integer Nonlinear Programming (MINLP) Problems in Process Synthesis. Ind. Eng. Chem. Res., 27(8), 1407-1421. https://doi.org/10.1021/ie00080a013
+    
     [2] Ovalle, D., Liñán, D. A., Lee, A., Gómez, J. M., Ricardez-Sandoval, L., Grossmann, I. E., & Neira, D. E. B. (2024). Logic-Based Discrete-Steepest Descent: A Solution Method for Process Synthesis Generalized Disjunctive Programs. arXiv preprint arXiv:2405.05358. https://doi.org/10.48550/arXiv.2405.05358
     """
     NK = 3
@@ -426,7 +427,7 @@ def build_small_batch():
 
 
 if __name__ == "__main__":
-    m = build_small_batch()
+    m = build_model()
     pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
     pyo.TransformationFactory("gdp.bigm").apply_to(m)
     pyo.SolverFactory("gams").solve(
