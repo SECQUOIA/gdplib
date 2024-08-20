@@ -12,6 +12,4 @@ The objective function originates from Problem No. 6 of Gomez's paper, and Liñ�
 
 [1] Liñán, D. A., & Ricardez-Sandoval, L. A. (2023). A Benders decomposition framework for the optimization of disjunctive superstructures with ordered discrete decisions. AIChE Journal, 69(5), e18008. https://doi.org/10.1002/aic.18008
 
-
-
 [2] Gomez, S., & Levy, A. V. (1982). The tunnelling method for solving the constrained global optimization problem with several non-connected feasible regions. In Numerical Analysis: Proceedings of the Third IIMAS Workshop Held at Cocoyoc, Mexico, January 1981 (pp. 34-47). Springer Berlin Heidelberg. https://doi.org/10.1007/BFb0092958
