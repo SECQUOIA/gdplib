@@ -7,6 +7,8 @@ The optimal solution should yield NT reactors with a recycle before reactor NT.
 Reference:
 > Linan, D. A., Bernal, D. E., Gomez, J. M., & Ricardez-Sandoval, L. A. (2021). Optimal synthesis and design of catalytic distillation columns: A rate-based modeling approach. Chemical Engineering Science, 231, 116294. https://doi.org/10.1016/j.ces.2020.116294
 
+## Problem Details
+
 ### Optimal Solution
 
 Best known objective value: 3.06181298849707
