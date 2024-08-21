@@ -90,12 +90,6 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
     # Unreacted feed in reactor n
     m.YF = pyo.BooleanVar(m.N, doc="Unreacted feed in reactor n")
 
-    # Existence of recycle flow in unit n
-    m.YR = pyo.BooleanVar(m.N, doc="Existence of recycle flow in unit n")
-
-    # Unit operation in n (True if unit n is a CSTR, False if unit n is a bypass)
-    m.YP = pyo.BooleanVar(m.N, doc="Unit operation in n")
-
     # REAL VARIABLES
 
     # Network Variables
@@ -784,11 +778,6 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
         """
         return [m.YR_is_recycle[n], m.YR_is_not_recycle[n]]
 
-    # Associate Boolean variables with with disjunctions
-    for n in m.N:
-        m.YP[n].associate_binary_var(m.YP_is_cstr[n].indicator_var)
-        m.YR[n].associate_binary_var(m.YR_is_recycle[n].indicator_var)
-
     # Logic Constraints
     # Unit must be a CSTR to include a recycle
 
@@ -809,7 +798,7 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
         Pyomo.LogicalConstraint
             Logical constraint for the unit to be a CSTR to include a recycle.
         """
-        return m.YR[n].implies(m.YP[n])
+        return m.YR_is_recycle[n].indicator_var.implies(m.YP_is_cstr[n].indicator_var)
 
     m.cstr_if_recycle = pyo.LogicalConstraint(
         m.N, rule=cstr_if_recycle_rule, doc="Unit must be a CSTR to include a recycle"
@@ -853,7 +842,9 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
         Pyomo.LogicalConstraint
             Logical constraint for the existence of only one recycle stream.
         """
-        return pyo.exactly(1, m.YR)
+        return pyo.exactly(
+            1, [m.YR_is_recycle[n].indicator_var for n in range(1, NT + 1)]
+        )
 
     m.one_recycle = pyo.LogicalConstraint(
         rule=one_recycle_rule, doc="There is only one recycle stream"
@@ -881,9 +872,9 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
             Logical constraint for the unit operation in n.
         """
         if n == 1:
-            return m.YP[n].equivalent_to(True)
+            return m.YP_is_cstr[n].indicator_var.equivalent_to(True)
         else:
-            return m.YP[n].equivalent_to(
+            return m.YP_is_cstr[n].indicator_var.equivalent_to(
                 pyo.lor(pyo.land(~m.YF[n2] for n2 in range(1, n)), m.YF[n])
             )
 
@@ -915,7 +906,7 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
 
 if __name__ == "__main__":
-    m = build_model()
+    m = build_model(NT=5)
     pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
     pyo.TransformationFactory("gdp.bigm").apply_to(m)
     pyo.SolverFactory("gams").solve(
