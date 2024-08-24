@@ -217,7 +217,7 @@ def build_model():
         Pyomo.LogicalConstraint
             Logical constraint that make Y2 to be true for only one element
         """
-        return pyo.exactly(1,[m.Y2_disjunct[n].indicator_var for n in m.set2])
+        return pyo.exactly(1, [m.Y2_disjunct[n].indicator_var for n in m.set2])
 
     m.oneY2 = pyo.LogicalConstraint(rule=select_one_Y2)
 
