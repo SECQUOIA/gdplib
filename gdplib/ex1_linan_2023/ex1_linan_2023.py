@@ -130,9 +130,9 @@ def build_model():
 
     m.Disjunction1 = Disjunction(rule=Disjunction1, xor=False)
 
-    # Associate boolean variables to disjuncts
-    for n1 in m.set1:
-        m.Y1[n1].associate_binary_var(m.Y1_disjunct[n1].indicator_var)
+    # # Associate boolean variables to disjuncts
+    # for n1 in m.set1:
+    #     m.Y1[n1].associate_binary_var(m.Y1_disjunct[n1].indicator_var)
 
     # Second disjunction
     def build_disjuncts2(m, set2):  # Disjuncts for second Boolean variable
@@ -188,9 +188,9 @@ def build_model():
 
     m.Disjunction2 = Disjunction(rule=Disjunction2, xor=False)
 
-    # Associate boolean variables to disjuncts
-    for n2 in m.set2:
-        m.Y2[n2].associate_binary_var(m.Y2_disjunct[n2].indicator_var)
+    # # Associate boolean variables to disjuncts
+    # for n2 in m.set2:
+    #     m.Y2[n2].associate_binary_var(m.Y2_disjunct[n2].indicator_var)
 
     # Logical constraints
 
