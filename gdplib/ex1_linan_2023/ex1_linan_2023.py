@@ -40,9 +40,6 @@ def build_model():
     m.sub1 = pyo.Set(initialize=[3], within=m.set1)
 
     # Variables
-    m.Y1 = pyo.BooleanVar(m.set1, doc="Boolean variable associated to set 1")
-    m.Y2 = pyo.BooleanVar(m.set2, doc="Boolean variable associated to set 2")
-
     m.alpha = pyo.Var(
         within=pyo.Reals, bounds=(-0.1, 0.4), doc="continuous variable alpha"
     )
@@ -209,7 +206,7 @@ def build_model():
         Pyomo.LogicalConstraint
             Logical constraint that make Y1 to be true for only one element
         """
-        return pyo.exactly(1, m.Y1)
+        return pyo.exactly(1, [m.Y1_disjunct[n].indicator_var for n in m.set1])
 
     m.oneY1 = pyo.LogicalConstraint(rule=select_one_Y1)
 
@@ -228,7 +225,7 @@ def build_model():
         Pyomo.LogicalConstraint
             Logical constraint that make Y2 to be true for only one element
         """
-        return pyo.exactly(1, m.Y2)
+        return pyo.exactly(1,[m.Y2_disjunct[n].indicator_var for n in m.set2])
 
     m.oneY2 = pyo.LogicalConstraint(rule=select_one_Y2)
 
@@ -248,7 +245,7 @@ def build_model():
         Pyomo.LogicalConstraint
             Logical constraint that defines an infeasible region on Y1[3]
         """
-        return pyo.land([pyo.lnot(m.Y1[j]) for j in m.sub1])
+        return pyo.land([pyo.lnot(m.Y1_disjunct[j].indicator_var) for j in m.sub1])
 
     m.infeasR = pyo.LogicalConstraint(rule=infeasR_rule)
 
