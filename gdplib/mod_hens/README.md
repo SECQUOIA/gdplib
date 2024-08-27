@@ -12,13 +12,13 @@ The objective is minimization of total annualized cost (TAC).
 
 Seven model variants are described:
 
-- ``build_conventional`` - Conventional HENS
-- ``build_integer_single_module`` - Modular HENS - single module type allowed, integer formulation
-- ``build_integer_require_modular`` - Modular HENS - multiple module types allowed, integer formulation
-- ``build_integer_modular_option`` - Modular HENS - mixed modular and conventional exchangers allowed, integer formulation
-- ``build_discrete_single_module`` - Modular HENS - single module type allowed, discretized formulation
-- ``build_discrete_require_modular`` - Modular HENS - multiple module types allowed, discretized formulation
-- ``build_discrete_modular_option`` - Modular HENS - mixed modular and conventional exchangers allowed, discretized formulation
+- ``build_model('conventional')`` - Conventional HENS
+- ``build_model('single_module_integer')`` - Modular HENS - single module type allowed, integer formulation
+- ``build_model('multiple_module_integer')`` - Modular HENS - multiple module types allowed, integer formulation
+- ``build_model('mixed_integer')`` - Modular HENS - mixed modular and conventional exchangers allowed, integer formulation
+- ``build_model('single_module_discrete')`` - Modular HENS - single module type allowed, discretized formulation
+- ``build_model('multiple_module_discrete')`` - Modular HENS - multiple module types allowed, discretized formulation
+- ``build_model('mixed_discrete')`` - Modular HENS - mixed modular and conventional exchangers allowed, discretized formulation
 
 The discretized formulations use the ``induced linearity`` reformulation described in the (Chen & Grossmann, 2019) source paper.
 
@@ -27,32 +27,23 @@ The discretized formulations use the ``induced linearity`` reformulation describ
 ### Solution
 
 Best known objective values:
-- ``build_conventional``: 106767 (optimal)
-- ``build_integer_single_module``, ``build_discrete_single_module``: 134522
-- ``build_integer_require_modular``, ``build_discrete_require_modular``: 111520
-- ``build_integer_modular_option``, ``build_discrete_modular_option``: 101505
+- ``conventional``: 106767 (optimal)
+- ``single_module_integer``, ``single_module_discrete``: 134522
+- ``multiple_module_integer``, ``multiple_module_discrete``: 111520
+- ``mixed_integer``, ``mixed_discrete``: 101505
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| conv      | 214  | 24   | 0   | 0   | 190  | 250  | 36 | 24   | 32     |
-| int_sing  | 313  | 27   | 0   | 96  | 190 | 265  |  24  |  27  |       45 |
-| int_req | 313 | 27 | 0 | 96 | 190 | 265 | 24 | 27 | 45 |
-| int_opt | 274 | 48 | 0 | 36 | 190 | 322 | 36 | 48 | 44 |
-| disc_sing | 3077 | 27 | 2080 | 0 | 970 | 6006 | 12 | 27 | 33 |
-| disc_req | 1114 | 24 | 300 | 0 | 790 | 1486 | 12 | 24 | 44 |
-| disc_opt | 1138 | 48 | 300 | 0 | 790 | 2122 | 36 | 48 | 44 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             |   conventional |   single_module_integer |   multiple_module_integer |   mixed_integer |   single_module_discrete |   multiple_module_discrete |   mixed_discrete |
+|:----------------------|---------------:|------------------------:|--------------------------:|----------------:|-------------------------:|---------------------------:|-----------------:|
+| Variables             |            338 |                     501 |                       498 |             498 |                     4761 |                       3802 |             3802 |
+| Binary variables      |             64 |                     131 |                       128 |             128 |                     2147 |                       1728 |             1728 |
+| Integer variables     |              0 |                      96 |                        96 |              96 |                        0 |                          0 |                0 |
+| Continuous variables  |            274 |                     274 |                       274 |             274 |                     2614 |                       2074 |             2074 |
+| Disjunctions          |             32 |                      65 |                        64 |              64 |                       33 |                         64 |               64 |
+| Disjuncts             |             64 |                     131 |                       128 |             128 |                       67 |                        128 |              128 |
+| Constraints           |            370 |                     565 |                       562 |             562 |                     8786 |                       5362 |             5362 |
+| Nonlinear constraints |             96 |                      96 |                        96 |              96 |                       32 |                         96 |               96 |
 
 ## References
 

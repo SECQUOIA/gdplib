@@ -132,3 +132,4 @@ dmypy.json
 .idea/
 
 gdplib/*/benchmark_result/
+gdplib/*/model_size_report.md

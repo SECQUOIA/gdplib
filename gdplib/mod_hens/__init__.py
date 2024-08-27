@@ -17,15 +17,15 @@ def build_model(case="conventional", cafaro_approx=True, num_stages=4):
         return _conv(cafaro_approx, num_stages)
     elif case == "single_module_integer":
         return _int_sing(cafaro_approx, num_stages)
-    elif case == "require_modular_integer":
+    elif case == "multiple_module_integer":
         return _int_mod(cafaro_approx, num_stages)
-    elif case == "modular_option_integer":
+    elif case == "mixed_integer":
         return _int_opt(cafaro_approx, num_stages)
     elif case == "single_module_discrete":
         return _disc_sing(cafaro_approx, num_stages)
-    elif case == "require_modular_discrete":
+    elif case == "multiple_module_discrete":
         return _disc_mod(cafaro_approx, num_stages)
-    elif case == "modular_option_discrete":
+    elif case == "mixed_discrete":
         return _disc_opt(cafaro_approx, num_stages)
 
 
