@@ -131,4 +131,4 @@ dmypy.json
 # Pycharm
 .idea/
 
-gdplib/*/benchmark_result/
+gdplib/*/benchmark_result/*.log
