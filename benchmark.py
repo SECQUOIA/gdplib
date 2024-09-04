@@ -86,6 +86,7 @@ if __name__ == "__main__":
         # "modprodnet",
         # "stranded_gas",
         # "syngas",
+        # "water_network",
     ]
     strategy_list = [
         "gdp.bigm",
