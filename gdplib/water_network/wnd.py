@@ -50,14 +50,14 @@ Ruiz, J. P., & Grossmann, I. E. (2011). Using redundancy to strengthen the relax
 import pyomo.environ as pyo
 import pandas as pd
 import numpy as np
+import os
+import re
 from scipy.optimize import curve_fit
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
 Q_ = ureg.Quantity
 
-import os
-import re
 
 # from pyomo.contrib.preprocessing.plugins import init_vars
 
