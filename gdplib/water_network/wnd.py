@@ -58,9 +58,6 @@ from pint import UnitRegistry
 ureg = UnitRegistry()
 Q_ = ureg.Quantity
 
-
-# from pyomo.contrib.preprocessing.plugins import init_vars
-
 from pyomo.core.expr.logical_expr import *
 
 wnd_dir = os.path.dirname(os.path.realpath(__file__))
@@ -109,16 +106,12 @@ def build_model(approximation='quadratic'):
 
     m.inTU = pyo.Set(
         doc="Inlet TU Port",
-        initialize=[
-            'mt' + str(ntu) for ntu in pyo.RangeSet(len(m.TU))
-        ],  # pyo.RangeSet(m.nr)]
+        initialize=['mt' + str(ntu) for ntu in pyo.RangeSet(len(m.TU))],
     )
 
     m.outTU = pyo.Set(
         doc="Outlet TU Port",
-        initialize=[
-            'st' + str(ntu) for ntu in pyo.RangeSet(len(m.TU))
-        ],  # pyo.RangeSet(m.nr)]
+        initialize=['st' + str(ntu) for ntu in pyo.RangeSet(len(m.TU))],
     )
 
     m.TUport = pyo.Set(doc="Inlet and Outlet TU Ports", initialize=m.inTU | m.outTU)
@@ -165,7 +158,6 @@ def build_model(approximation='quadratic'):
         | m.TU_streams
         | m.outTU * ['dm']
         | [('dm', 'sink')],
-        # initialize=m.feed_streams|m.FSU*['dm']|m.FSU*m.inTU|m.outTU*m.inTU|m.outTU*['dm']|[('dm','sink')]
     )
 
     m.from_splitters = pyo.Set(
@@ -222,7 +214,6 @@ def build_model(approximation='quadratic'):
         doc="Concentration",
         domain=pyo.NonNegativeReals,
         bounds=(0, 100),
-        # bounds=lambda _, j, i, k: (feed[j].min(),feed[j].max()),
         initialize=lambda _, j, i, k: feed.loc[i, j] if i in m.FSU else None,
     )
 
@@ -241,7 +232,7 @@ def build_model(approximation='quadratic'):
         bounds=lambda _, i, k: (
             (None, feed.loc[i, 'flow_rate'])
             if i in m.FSU
-            # else (None,100),
+            # else (None,100), # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
             else (0, feed['flow_rate'].sum())
         ),
     )
@@ -255,15 +246,12 @@ def build_model(approximation='quadratic'):
         m.TU,
         domain=pyo.NonNegativeReals,
         doc='CTUk cost of TU',
-        # bounds=lambda _,tu: (0, m.beta[tu] * feed['flow_rate'].sum() + m.gamma[tu] + m.theta[tu] * 41) # Q = optimal flow t1
-        # bounds=lambda _,tu: (0, m.beta[tu] * feed['flow_rate'].sum() + m.gamma[tu] + m.theta[tu] * feed['flow_rate'].sum())
         bounds=lambda _, tu: (
             0,
             m.beta[tu] * feed['flow_rate'].sum()
             + m.gamma[tu]
             + m.theta[tu] * feed['flow_rate'].sum() ** 0.7,
         ),
-        # initialize=lambda _,tu: m.beta[tu] * m.flow_into[mt] + m.gamma[tu] + m.theta[tu] * m.flow_into[mt]**0.7 for mt,t in m.MU_TU_streams if tu==t
     )
 
     # =============================================================================
@@ -290,7 +278,6 @@ def build_model(approximation='quadratic'):
         """
         return sum(m.flow[src, sink] for src, sink in m.streams if sink == option)
 
-    # @m.Expression(m.units, m.contaminant)
     @m.Expression(m.units - m.TU - m.outTU, m.contaminant)
     def _conc_into(m, option, j):
         """
@@ -318,7 +305,6 @@ def build_model(approximation='quadratic'):
             )
         return pyo.Expression.Skip
 
-    # @m.Expression(m.units)
     @m.Expression(m.units - m.TU - m.inTU)
     def _flow_out_from(m, option):
         """
@@ -338,7 +324,6 @@ def build_model(approximation='quadratic'):
         """
         return sum(m.flow[src, sink] for src, sink in m.streams if src == option)
 
-    # @m.Expression(m.units, m.contaminant)
     @m.Expression(m.units - m.inTU, m.contaminant)
     def _conc_out_from(m, option, j):
         """The mass balance of the contaminant in the unit to compute the concentration out of the unit.
@@ -378,7 +363,6 @@ def build_model(approximation='quadratic'):
             m.mixer_balances.add(m._conc_into[mu, j] == m._conc_out_from[mu, j])
             for j in m.contaminant
         ]
-    #         m.mixer_balances_global.add(sum(m._conc_into[mu,sol] for sol in m.SOL) == sum(m._conc_out_from[mu,sol] for sol in m.SOL))
 
     m.splitter_balances = pyo.ConstraintList()
 
@@ -504,10 +488,8 @@ def build_model(approximation='quadratic'):
             filter=lambda _, x, y: x == unit or y == unit,
         )
         ue.MU_TU_streams = pyo.Set(
-            # doc='Mixer to treatment unit streams',
             doc="MU to TU 1-1 port pairing",
             initialize=m.inTU * m.TU,
-            # within=ue.streams,
             filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y)
             and y == unit,
         )
@@ -516,9 +498,8 @@ def build_model(approximation='quadratic'):
             ue.streams,
             doc="TU streams flowrate",
             domain=pyo.NonNegativeReals,
-            # bounds=lambda _,i,k:(TU.loc[unit,'L'],100)
+            # bounds=lambda _,i,k:(TU.loc[unit,'L'],100) # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
             bounds=lambda _, i, k: (TU.loc[unit, 'L'], feed['flow_rate'].sum()),
-            # initialize=lambda _,i,k:
         )
 
         ue.conc = pyo.Var(
@@ -684,7 +665,7 @@ def build_model(approximation='quadratic'):
                     TU.loc[unit, 'L'] ** 0.7,
                     feed['flow_rate'].sum() ** 0.7,
                 ),
-                # bounds= lambda _,mt,unit: (TU.loc[unit,'L']**0.7,100**0.7),
+                # bounds= lambda _,mt,unit: (TU.loc[unit,'L']**0.7,100**0.7), # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
                 doc="New var for potential term in capital cost",
             )
 
@@ -696,13 +677,6 @@ def build_model(approximation='quadratic'):
                     Topx = ue.flow[mt, unit].ub
             for i in range(PieceCnt + 2):
                 bpts.append(float((i * Topx) / PieceCnt))
-
-            # def _breakpoints(lb, ub):
-            #     x = np.linspace(lb, ub, 100)
-            #     my_pwlf = pwlf.PiecewiseLinFit(x, x**0.7, degree=1)
-            #     # my_pwlf.fit(8)
-            #     my_pwlf.fitfast(10, pop=100)
-            #     return my_pwlf.fit_breaks.tolist()
 
             def _func(model, i, j, xp):
                 """This function provides the expression for the piecewise linear approximation of the capital cost using the Picewise class.
@@ -733,13 +707,8 @@ def build_model(approximation='quadratic'):
                 pw_pts=bpts,
                 pw_constr_type='EQ',
                 f_rule=_func,
-                # ue.MU_TU_streams, ue.cost_var, ue.flow, pw_pts=_breakpoints(0,Topx), pw_constr_type='EQ', f_rule=func,
-                # pw_repn='BIGM_BIN'
                 pw_repn='INC',
             )
-
-            # for i,j in ue.MU_TU_streams:
-            #     ue.ComputeObj[i,j].SOS2_y.setub(1.)
 
             # Setting bounds for the INC_delta variable which is a binary variable that indicates the piecewise linear segment.
             for i, j in ue.MU_TU_streams:
@@ -780,7 +749,3 @@ def build_model(approximation='quadratic'):
     # init_vars.InitMidpoint().apply_to(m)
 
     return m
-
-
-# if __name__ == "__main__":
-#     build_model()
