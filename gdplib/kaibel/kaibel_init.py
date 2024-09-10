@@ -41,8 +41,21 @@ from pyomo.environ import (
 
 from gdplib.kaibel.kaibel_prop import get_model_with_properties
 
+# from .kaibel_prop import get_model_with_properties
+
 
 def initialize_kaibel():
+    """Initialize the Kaibel optimization model.
+
+    This function initializes the Kaibel optimization model by setting up the operating conditions,
+    initial liquid compositions, and creating the necessary variables and constraints.
+
+    Returns
+    -------
+    None
+    """
+
+    ## Get the model with properties from kaibel_prop.py
     m = get_model_with_properties()
 
     ## Operating conditions
@@ -111,7 +124,7 @@ def initialize_kaibel():
 
     ####
 
-    mn = m.clone()
+    mn = m.clone()  # Clone the model to add the initialization code
 
     mn.name = "Initialization Code"
 
@@ -155,18 +168,94 @@ def initialize_kaibel():
 
     @mn.Constraint(mn.cols, mn.sec, mn.nc1, doc="Temperature term for vapor pressure")
     def _column1_reduced_temperature(mn, col, sec, nc):
+        """Calculate the reduced temperature for column 1.
+
+        This function calculates the reduced temperature for column 1 based on the given parameters using the Peng-Robinson equation of state.
+
+        Parameters
+        ----------
+        mn : Pyomo ConcreteModel
+            The optimization model
+        col : int
+            The column index
+        sec : int
+            The section index
+        nc : int
+            The component index in column 1
+
+        Returns
+        -------
+        Constraint
+            The constraint statement to calculate the reduced temperature.
+        """
         return mn.Tr1nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
 
     @mn.Constraint(mn.cols, mn.sec, mn.nc2, doc="Temperature term for vapor pressure")
     def _column2_reduced_temperature(mn, col, sec, nc):
+        """Calculate the reduced temperature for column 2.
+
+        This function calculates the reduced temperature for column 2 based on the given parameters using the Peng-Robinson equation of state.
+
+        Parameters
+        ----------
+        mn : Pyomo ConcreteModel
+            The optimization model
+        col : int
+            The column index
+        sec : int
+            The section index
+        nc : int
+            The component index in column 2
+
+        Returns
+        -------
+        Constraint
+            The constraint equation to calculate the reduced temperature
+        """
         return mn.Tr2nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
 
     @mn.Constraint(mn.cols, mn.sec, mn.nc3, doc="Temperature term for vapor pressure")
     def _column3_reduced_temperature(mn, col, sec, nc):
+        """Calculate the reduced temperature for column 3.
+
+        This function calculates the reduced temperature for column 3 based on the given parameters.
+
+        Parameters
+        ----------
+        mn : Pyomo ConcreteModel
+            The optimization model
+        col : int
+            The column index
+        sec : int
+            The section index
+        nc : int
+            The component index in column 3
+
+        Returns
+        -------
+        Constraint
+            The constraint equation to calculate the reduced temperature in column 3
+        """
         return mn.Tr3nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
 
     @mn.Constraint(mn.cols, mn.sec, doc="Boiling point temperature")
     def _equilibrium_equation(mn, col, sec):
+        """Equilibrium equations for a given column and section.
+
+        Parameters
+        ----------
+        mn : Pyomo ConcreteModel
+            The optimization model object with properties
+        col : int
+            The column index
+        sec : int
+            The section index
+
+        Returns
+        -------
+        Constraint
+            The constraint equation to calculate the boiling point temperature using the Peng-Robinson equation of state
+        """
         if col == 1:
             a = mn.Tr1nmin
             b = mn.nc1
@@ -235,6 +324,7 @@ def initialize_kaibel():
             b = mn.nc2
         else:
             b = mn.nc3
+        # For each component in the column and section calculate the vapor composition with the Peng-Robinson equation of state
         for sec in mn.sec:
             for nc in b:
                 yc[col, sec, nc] = (
@@ -254,31 +344,53 @@ def initialize_kaibel():
                             * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 6
                         )
                     )
-                    / Pnmin[sec]
-                )
+                ) / Pnmin[
+                    sec
+                ]  # Vapor composition in the different sections for the different components in the columns
 
     for col in mn.cols:
-        xi_lhc[col, 4] = xi_nmin[col, 1, ln[col]] / xi_nmin[col, 3, hn[col]]
+        # Calculate the relative volatility of the light and heavy components in the different sections for the different columns
+        xi_lhc[col, 4] = (
+            xi_nmin[col, 1, ln[col]] / xi_nmin[col, 3, hn[col]]
+        )  # Liquid composition in the different sections with the initial liquid composition of the components in the different sections and columns and ln and hn which are the light and heavy components in the different columns
         for sec in mn.sec:
-            kl[col, sec] = yc[col, sec, ln[col]] / xi_nmin[col, sec, ln[col]]
-            kh[col, sec] = yc[col, sec, hn[col]] / xi_nmin[col, sec, hn[col]]
-            xi_lhc[col, sec] = xi_nmin[col, sec, hn[col]] / xi_nmin[col, sec, ln[col]]
-            alpha[col, sec] = kl[col, sec] / kh[col, sec]
+            kl[col, sec] = (
+                yc[col, sec, ln[col]] / xi_nmin[col, sec, ln[col]]
+            )  # Light component in the different sections
+            kh[col, sec] = (
+                yc[col, sec, hn[col]] / xi_nmin[col, sec, hn[col]]
+            )  # Heavy component in the different sections
+            xi_lhc[col, sec] = (
+                xi_nmin[col, sec, hn[col]] / xi_nmin[col, sec, ln[col]]
+            )  # Liquid composition in the different sections
+            alpha[col, sec] = (
+                kl[col, sec] / kh[col, sec]
+            )  # Relative volatility in the different sections
 
     for col in mn.cols:
-        av_alpha[col] = (alpha[col, 1] * alpha[col, 2] * alpha[col, 3]) ** (1 / 3)
-        Nmin[col] = log10((1 / xi_lhc[col, 3]) * xi_lhc[col, 1]) / log10(av_alpha[col])
-        ter[col] = (rel * xi_lhc[col, 2] * (xi_lhc[col, 4] ** 2)) ** 0.206
-        Nfeed[1, col] = ter[col] * Nmin[col] / (1 + ter[col])
-        Nfeed[2, col] = Nfeed[1, col] / ter[col]
-        side_feed[col] = Nfeed[2, col]
+        # Calculate the average relative volatilities and the minimum number of trays with Fenske's and Kirkbride's method
+        av_alpha[col] = (alpha[col, 1] * alpha[col, 2] * alpha[col, 3]) ** (
+            1 / 3
+        )  # Average relative volatilities calculated with the relative volatilities of the components in the three sections
+        Nmin[col] = log10((1 / xi_lhc[col, 3]) * xi_lhc[col, 1]) / log10(
+            av_alpha[col]
+        )  # Minimum number of trays calculated with Fenske's method
+        ter[col] = (
+            rel * xi_lhc[col, 2] * (xi_lhc[col, 4] ** 2)
+        ) ** 0.206  # Term to calculate the minimum number of trays with Kirkbride's method
+        # Side feed optimal location using Kirkbride's method
+        Nfeed[1, col] = (
+            ter[col] * Nmin[col] / (1 + ter[col])
+        )  # Number of trays in rectifying section
+        Nfeed[2, col] = Nfeed[1, col] / ter[col]  # Number of trays in stripping section
+        side_feed[col] = Nfeed[2, col]  # Side feed location
 
-    m.Nmintot = sum(Nmin[col] for col in mn.cols)
-    m.Knmin = int(m.Nmintot) + 1
+    m.Nmintot = sum(Nmin[col] for col in mn.cols)  # Total minimum number of trays
+    m.Knmin = int(m.Nmintot) + 1  # Total optimal minimum number of trays
 
-    m.TB0 = value(mn.Tnmin[1, 1])
-    m.Tf0 = value(mn.Tnmin[1, 2])
-    m.TD0 = value(mn.Tnmin[2, 3])
+    m.TB0 = value(mn.Tnmin[1, 1])  # Reboiler temperature in K in column 1
+    m.Tf0 = value(mn.Tnmin[1, 2])  # Side feed temperature in K in column 1
+    m.TD0 = value(mn.Tnmin[2, 3])  # Distillate temperature in K in column 2
 
     return m
 

@@ -1,3 +1,3 @@
-from .methanol import MethanolModel
+from .methanol import build_model
 
-__all__ = ['MethanolModel']
+__all__ = ['build_model']

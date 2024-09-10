@@ -1,5 +1,3 @@
-from functools import partial
-
 from .conventional import build_conventional as _conv
 from .modular_discrete import (
     build_modular_option as _disc_opt,
@@ -12,21 +10,23 @@ from .modular_integer import (
     build_single_module as _int_sing,
 )
 
-# These are the functions that we want to expose as public
-build_conventional = partial(_conv, cafaro_approx=True, num_stages=4)
-build_integer_single_module = partial(_int_sing, cafaro_approx=True, num_stages=4)
-build_integer_require_modular = partial(_int_mod, cafaro_approx=True, num_stages=4)
-build_integer_modular_option = partial(_int_opt, cafaro_approx=True, num_stages=4)
-build_discrete_single_module = partial(_disc_sing, cafaro_approx=True, num_stages=4)
-build_discrete_require_modular = partial(_disc_mod, cafaro_approx=True, num_stages=4)
-build_discrete_modular_option = partial(_disc_opt, cafaro_approx=True, num_stages=4)
 
-__all__ = [
-    'build_conventional',
-    'build_integer_single_module',
-    'build_integer_require_modular',
-    'build_integer_modular_option',
-    'build_discrete_single_module',
-    'build_discrete_require_modular',
-    'build_discrete_modular_option',
-]
+def build_model(case="conventional", cafaro_approx=True, num_stages=4):
+    # TODO: we might need to come up with better names for these cases.
+    if case == "conventional":
+        return _conv(cafaro_approx, num_stages)
+    elif case == "single_module_integer":
+        return _int_sing(cafaro_approx, num_stages)
+    elif case == "require_modular_integer":
+        return _int_mod(cafaro_approx, num_stages)
+    elif case == "modular_option_integer":
+        return _int_opt(cafaro_approx, num_stages)
+    elif case == "single_module_discrete":
+        return _disc_sing(cafaro_approx, num_stages)
+    elif case == "require_modular_discrete":
+        return _disc_mod(cafaro_approx, num_stages)
+    elif case == "modular_option_discrete":
+        return _disc_opt(cafaro_approx, num_stages)
+
+
+__all__ = ['build_model']

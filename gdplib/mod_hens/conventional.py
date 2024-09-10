@@ -68,10 +68,8 @@ def build_model(use_cafaro_approximation, num_stages):
                 >= m.exchanger_area_cost_factor[hot, cold]
                 * 1e-3
                 * m.cafaro_k
-                * log(
-                    m.cafaro_b * m.exchanger_area[stg, hot, cold] + 1,
-                    doc="Applies Cafaro's logarithmic cost scaling to area cost.",
-                )
+                * log(m.cafaro_b * m.exchanger_area[stg, hot, cold] + 1),
+                doc="Applies Cafaro's logarithmic cost scaling to area cost.",
             )
         m.BigM[disj.exchanger_area_cost] = 100
 
