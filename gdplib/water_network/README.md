@@ -9,6 +9,12 @@ The mass balances are defined in terms of total flows and contaminants concentra
 Nonconvexities arise from bilinear terms “flows times concentration” in the mixers mass balances and concave investment cost functions of treatment units.
 
 The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the GDP model into a bilinear quadratic one.
+The user can create each instance like this:
+
+```
+build_model(approximation='quadratic')
+build_model(approximation='piecewise')
+```
 
 The general model description can be summarized as follows:
 Min Cost of Treatment Units
