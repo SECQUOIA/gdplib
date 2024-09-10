@@ -56,7 +56,6 @@ from pint import UnitRegistry
 ureg = UnitRegistry()
 Q_ = ureg.Quantity
 
-# import pyomo.gdp as gdp
 import os
 import re
 
