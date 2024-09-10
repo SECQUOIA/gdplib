@@ -35,25 +35,20 @@ The contaminant concentration and flow rate of the feed streams, contaminant rec
 
 ### Solution
 
-Best known objective value: 348,340
+Best known objective value: $ 348,340
 
 ### Size
 
-Number of reactors in series is 5.
-
-| Problem           | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-| ----------------- | ---- | ---- | --- | --- | ---- | ---- | -- | ---- | ------ |
-| `water_network` |      |      |     |     |      |      |    |      |        |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             | pwl | quadratic |
+| :-------------------- | :--: | :-------: |
+| variables             | 1405 |    420    |
+| binary_variables      | 510 |    10    |
+| integer_variables     |  0  |     0     |
+| continuous_variables  | 895 |    410    |
+| disjunctions          |  5  |     5     |
+| disjuncts             |  10  |    10    |
+| constraints           | 1339 |    334    |
+| nonlinear_constraints |  28  |    33    |
 
 ### References
 
