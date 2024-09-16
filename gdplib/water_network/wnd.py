@@ -12,7 +12,12 @@ The fouled feed waters can be allocated to one or more treatment units or dispos
 The mass balances are defined in terms of total flows and contaminants concentration.
 Nonconvexities arise from bilinear terms “flows times concentration” in the mixers mass balances and concave investment cost functions of treatment units.
 
-The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the GDP model into a bilinear quadratic one.
+The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the GDP model (approximation = 'none') into a bilinear quadratic one.
+The user can create each instance like this:
+
+build_model(approximation='none')
+build_model(approximation='quadratic')
+build_model(approximation='piecewise')
 
 The general model description can be summarized as follows:
 Min Cost of Treatment Units
@@ -87,6 +92,7 @@ def build_model(approximation='quadratic'):
         A Pyomo ConcreteModel object for the water network design.
 
     """
+    print(f"Using {approximation} approximation for the capital cost term.")
     m = pyo.ConcreteModel('Water Network Design')
 
     # ============================================================================
@@ -574,6 +580,8 @@ def build_model(approximation='quadratic'):
             if t == unit
         ]
 
+        # Approximation of the concave capital cost term for the active treatment units in the objective function.
+
         if approximation == 'quadratic':
             # New variable for potential term in capital cost.  Z = sum(Q)**0.7, Z >= 0
             ue.cost_var = pyo.Var(
@@ -628,7 +636,7 @@ def build_model(approximation='quadratic'):
                 # curve_fit is used to fit the quadratic curve to the function Z^(1/0.7) given the flow rate and the quadratic expression _func.
                 popt, pcov = curve_fit(_func, z, z ** (1 / 0.7))
 
-                return popt[0] * x + popt[1] * x**2
+                return _func(x, *popt)
 
             # Z^(1/0.7)=sum(Q)
             @ue.Constraint(doc='New var potential term in capital cost cstr.')
@@ -654,6 +662,51 @@ def build_model(approximation='quadratic'):
                             )
                             == ue.flow[mt, unit]
                         )
+
+        elif approximation == "quadratic2":
+
+            def _func2(x, a, b, c):
+                """This function computes the quadratic curve fit.
+                The curve fit is a quadratic function of the form a + b*x + c*x^2 given the flow rate and the coefficients a, b, and c obtained from the curve_fit function.
+
+                Parameters
+                ----------
+                x : variable
+                    The flow rate.
+                a : float
+                    The coefficient a.
+                b : float
+                    The coefficient b.
+                c : float
+                    The coefficient c.
+
+                Returns
+                -------
+                Expression
+                    The quadratic curve fit for the function q^0.7.
+                """
+                return a + b * x + c * x**2
+
+            def _g(x):
+                """This function provides the expression for the quadratic curve fit of the capital cost using the curve_fit function.
+
+                Parameters
+                ----------
+                x : variable
+                    The flow rate.
+
+                Returns
+                -------
+                Expression
+                    The quadratic curve fit of the capital cost
+                """
+                # Equally spaced points between 0 and 100
+                q = np.linspace(0, 100, 100)
+                # curve_fit is used to fit the quadratic curve to the function q^0.7 given the flow rate and the quadratic expression func2.
+                # popt is the optimal values for the coefficients a, b, and c, pcov is the covariance matrix
+                # func is a quadratic function of the form a + b*x + c*x^2.
+                popt, pcov = curve_fit(_func2, q, q**0.7)
+                return _func2(x, *popt)
 
         elif approximation == "piecewise":
             # New variable for potential term in capital cost.  Z = sum(Q)**0.7, Z >= 0
@@ -718,7 +771,10 @@ def build_model(approximation='quadratic'):
         @ue.Constraint(doc='Cost active TU')
         def costTU(ue):
             """Constraint: Cost of active treatment unit.
-            The constraint ensures that the cost of the active treatment unit is equal to the sum of an investment cost which is proportional to the total flow to 0.7 exponent and an operating cost which is proportional to the flow
+            The constraint ensures that the cost of the active treatment unit is equal to the sum of an investment cost which is proportional to the total flow to 0.7 exponent and an operating cost which is proportional to the flow.
+            If approximation is quadratic, the investment cost is approximated by a quadratic function of the flow rate.
+            If approximation is piecewise, the investment cost is approximated by a piecewise linear function of the flow rate.
+            If approximation is none, the investment cost is equal to the flow rate to the 0.7 exponent, the original concave function.
 
             Parameters
             ----------
@@ -733,8 +789,12 @@ def build_model(approximation='quadratic'):
             for mt, t in ue.streams:
                 if approximation == 'quadratic':
                     new_var = ue.cost_var[unit]
+                elif approximation == 'quadratic2':
+                    new_var = _g(ue.flow[mt, unit])
                 elif approximation == 'piecewise':
                     new_var = ue.cost_var[mt, unit]
+                elif approximation == 'none':
+                    new_var = ue.flow[mt, unit] ** 0.7
                 if t == unit:
                     return (
                         m.costTU[unit]
