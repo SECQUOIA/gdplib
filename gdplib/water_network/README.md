@@ -8,7 +8,7 @@ The fouled feed waters can be allocated to one or more treatment units or dispos
 The mass balances are defined in terms of total flows and contaminants concentration.
 Nonconvexities arise from bilinear terms “flows times concentration” in the mixers mass balances and concave investment cost functions of treatment units.
 
-The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the orginal GDP model into a bilinear quadratic one.
+The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the original GDP model into a bilinear quadratic one.
 The user can create each instance like this:
 
 ```
