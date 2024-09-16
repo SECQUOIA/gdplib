@@ -8,10 +8,11 @@ The fouled feed waters can be allocated to one or more treatment units or dispos
 The mass balances are defined in terms of total flows and contaminants concentration.
 Nonconvexities arise from bilinear terms “flows times concentration” in the mixers mass balances and concave investment cost functions of treatment units.
 
-The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the GDP model into a bilinear quadratic one.
+The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the orginal GDP model into a bilinear quadratic one.
 The user can create each instance like this:
 
 ```
+build_model(approximation='none')
 build_model(approximation='quadratic')
 build_model(approximation='piecewise')
 ```
@@ -41,20 +42,20 @@ The contaminant concentration and flow rate of the feed streams, contaminant rec
 
 ### Solution
 
-Best known objective value: $ 348,340
+Best known objective value: $348,340
 
 ### Size
 
-| Component             | pwl | quadratic |
-| :-------------------- | :--: | :-------: |
-| variables             | 1405 |    420    |
-| binary_variables      | 510 |    10    |
-| integer_variables     |  0  |     0     |
-| continuous_variables  | 895 |    410    |
-| disjunctions          |  5  |     5     |
-| disjuncts             |  10  |    10    |
-| constraints           | 1339 |    334    |
-| nonlinear_constraints |  28  |    33    |
+| Component             | original | pwl | quadratic |
+| :-------------------- | -------- | :--: | :-------: |
+| variables             | 395      | 1405 |    420    |
+| binary_variables      | 10       | 510 |    10    |
+| integer_variables     | 0        |  0  |     0     |
+| continuous_variables  | 385      | 895 |    410    |
+| disjunctions          | 5        |  5  |     5     |
+| disjuncts             | 10       |  10  |    10    |
+| constraints           | 329      | 1339 |    334    |
+| nonlinear_constraints | 33       |  28  |    33    |
 
 ### References
 
