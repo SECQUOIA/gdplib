@@ -38,7 +38,7 @@ Assumptions:
 ### Case Study
 
 The WTN comprises five inlet streams with four contaminants and four treatment units.
-The contaminant concentration and flow rate of the feed streams, contaminant recovery rates, minimum flow rate and cost coefficients of the treatment units, and the upper limit on the molar flow of contaminant in the purified stream, are reported in [1].
+The contaminant concentration and flow rate of the feed streams, contaminant recovery rates, minimum flow rate and cost coefficients of the treatment units, and the upper limit on the molar flow of contaminant in the purified stream, are reported in [2].
 
 ### Solution
 
@@ -59,6 +59,8 @@ Best known objective value: $348,340
 
 ### References
 
-> [1] Ruiz J., Grossmann I. E. Water Treatment Network Design. 2009 Available from CyberInfrastructure for [MINLP](www.minlp.org), a collaboration of Carnegie Mellon University and IBM at: www.minlp.org/library/problem/index.php?i=24
+> [1] Tristán C., Fallanza M., Ibáñez R., Grossmann I. E., and Bernal Neira D. E. (2024). Global Optimization via Quadratic Disjunctive Programming for Water Networks Design with Energy Recovery. Computer Aided Chemical Engineering, 53, 2161–2166. https://doi.org/10.1016/B978-0-443-28824-1.50361-6
 >
-> [2] Ruiz, J., & Grossmann, I. E. (2011). Using redundancy to strengthen the relaxation for the global optimization of MINLP problems. Computers & Chemical Engineering, 35(12), 2729–2740. https://doi.org/10.1016/J.COMPCHEMENG.2011.01.035
+> [2] Ruiz J., and Grossmann I. E. Water Treatment Network Design. 2009 Available from CyberInfrastructure for [MINLP](www.minlp.org), a collaboration of Carnegie Mellon University and IBM at: www.minlp.org/library/problem/index.php?i=24
+>
+> [3] Ruiz, J., and Grossmann, I. E. (2011). Using redundancy to strengthen the relaxation for the global optimization of MINLP problems. Computers & Chemical Engineering, 35(12), 2729–2740. https://doi.org/10.1016/J.COMPCHEMENG.2011.01.035
