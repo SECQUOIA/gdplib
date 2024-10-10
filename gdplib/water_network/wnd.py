@@ -487,30 +487,30 @@ def build_model(approximation='quadratic'):
     # m.atleast_oneRU = pyo.LogicalConstraint(expr=atleast(1, m.Yunit))
 
     for unit in m.TU:
-        ue = m.unit_exists[unit]
-        ue.streams = pyo.Set(
+        unit_exists = m.unit_exists[unit]
+        unit_exists.streams = pyo.Set(
             doc="Streams in active TU",
             initialize=m.TU_streams,
             filter=lambda _, x, y: x == unit or y == unit,
         )
-        ue.MU_TU_streams = pyo.Set(
+        unit_exists.MU_TU_streams = pyo.Set(
             doc="MU to TU 1-1 port pairing",
             initialize=m.inTU * m.TU,
             filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y)
             and y == unit,
         )
 
-        ue.flow = pyo.Var(
-            ue.streams,
+        unit_exists.flow = pyo.Var(
+            unit_exists.streams,
             doc="TU streams flowrate",
             domain=pyo.NonNegativeReals,
             # bounds=lambda _,i,k:(TU.loc[unit,'L'],100) # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
             bounds=lambda _, i, k: (TU.loc[unit, 'L'], feed['flow_rate'].sum()),
         )
 
-        ue.conc = pyo.Var(
+        unit_exists.conc = pyo.Var(
             m.contaminant,
-            ue.streams,
+            unit_exists.streams,
             doc="TU streams concentration",
             domain=pyo.NonNegativeReals,
             bounds=lambda _, j, i, k: (0, 100) if i == unit else (0, 4),
@@ -518,61 +518,74 @@ def build_model(approximation='quadratic'):
         )
 
         # Adding the mass balances for the active treatment units
-        ue.balances_con = pyo.ConstraintList(doc='TU Material balances')
+        unit_exists.balances_con = pyo.ConstraintList(doc='TU Material balances')
         # The flowrate at the inlet of the treatment unit is equal to the flowrate at the outlet of the treatment unit.
         [
-            ue.balances_con.add(ue.flow[mt, unit] == ue.flow[unit, st])
-            for mt, t in ue.streams
+            unit_exists.balances_con.add(
+                unit_exists.flow[mt, unit] == unit_exists.flow[unit, st]
+            )
+            for mt, t in unit_exists.streams
             if t == unit
-            for t, st in ue.streams
+            for t, st in unit_exists.streams
             if t == unit
         ]
         # The concentration of the contaminant at the inlet of the treatment unit is equal to the concentration of the contaminant at the outlet of the treatment unit times the removal ratio.
         [
-            ue.balances_con.add(
-                ue.conc[j, unit, st]
-                == (1 - m.removal_ratio[j, t]) * ue.conc[j, mt, unit]
+            unit_exists.balances_con.add(
+                unit_exists.conc[j, unit, st]
+                == (1 - m.removal_ratio[j, t]) * unit_exists.conc[j, mt, unit]
             )
-            for mt, t in ue.streams
+            for mt, t in unit_exists.streams
             if t == unit
-            for t, st in ue.streams
+            for t, st in unit_exists.streams
             if t == unit
             for j in m.contaminant
         ]
         # Treatment unit's mixer mass balance on the flowrate.
         [
-            ue.balances_con.add(m._flow_into[mt] == ue.flow[mt, unit])
-            for mt, t in ue.streams
+            unit_exists.balances_con.add(m._flow_into[mt] == unit_exists.flow[mt, unit])
+            for mt, t in unit_exists.streams
             if t == unit
         ]
         # Treatment unit's mixer mass balance on the concentration of contaminants.
         [
-            ue.balances_con.add(
-                m._conc_into[mt, j] == ue.conc[j, mt, unit] * ue.flow[mt, unit]
+            unit_exists.balances_con.add(
+                m._conc_into[mt, j]
+                == unit_exists.conc[j, mt, unit] * unit_exists.flow[mt, unit]
             )
-            for mt, t in ue.streams
+            for mt, t in unit_exists.streams
             if t == unit
             for j in m.contaminant
         ]
         # Treatment unit's splitter mass balance on the flowrate.
         [
-            ue.balances_con.add(ue.flow[unit, st] == m._flow_out_from[st])
-            for t, st in ue.streams
+            unit_exists.balances_con.add(
+                unit_exists.flow[unit, st] == m._flow_out_from[st]
+            )
+            for t, st in unit_exists.streams
             if t == unit
         ]
         # Treatment unit's splitter mass balance on the concentration of contaminants.
         [
-            ue.balances_con.add(ue.conc[j, src2, sink2] == m.conc[j, src1, sink1])
+            unit_exists.balances_con.add(
+                unit_exists.conc[j, src2, sink2] == m.conc[j, src1, sink1]
+            )
             for src1, sink1 in m.from_splitters
-            for src2, sink2 in ue.streams
+            for src2, sink2 in unit_exists.streams
             if src2 == unit and src1 == sink2
             for j in m.contaminant
         ]
         # Setting inlet flowrate bounds for the active treatment units.
-        ue.flow_bound = pyo.ConstraintList(doc='Flowrate bounds to/from active RU')
+        unit_exists.flow_bound = pyo.ConstraintList(
+            doc='Flowrate bounds to/from active RU'
+        )
         [
-            ue.flow_bound.add(
-                (ue.flow[mt, unit].lb, m._flow_into[mt], ue.flow[mt, unit].ub)
+            unit_exists.flow_bound.add(
+                (
+                    unit_exists.flow[mt, unit].lb,
+                    m._flow_into[mt],
+                    unit_exists.flow[mt, unit].ub,
+                )
             )
             for mt, t in m.MU_TU_streams
             if t == unit
@@ -582,7 +595,7 @@ def build_model(approximation='quadratic'):
 
         if approximation == 'quadratic':
             # New variable for potential term in capital cost.  Z = sum(Q)**0.7, Z >= 0
-            ue.cost_var = pyo.Var(
+            unit_exists.cost_var = pyo.Var(
                 m.TU,
                 domain=pyo.NonNegativeReals,
                 initialize=lambda _, unit: TU.loc[unit, 'L'] ** 0.7,
@@ -637,14 +650,14 @@ def build_model(approximation='quadratic'):
                 return _func(x, *popt)
 
             # Z^(1/0.7)=sum(Q)
-            @ue.Constraint(doc='New var potential term in capital cost cstr.')
-            def _cost_nv(ue):
+            @unit_exists.Constraint(doc='New var potential term in capital cost cstr.')
+            def _cost_nv(unit_exists):
                 """Constraint: New variable potential term in capital cost.
                 The constraint ensures that the new variable potential term in the capital cost is equal to the flow rate entering the treatment unit.
 
                 Parameters
                 ----------
-                ue : Disjunct
+                unit_exists : Disjunct
                     The disjunct for the active treatment unit.
 
                 Returns
@@ -652,13 +665,15 @@ def build_model(approximation='quadratic'):
                 Constraint
                     The constraint that the new variable potential term in the capital cost is equal to the flow rate.
                 """
-                for mt, t in ue.streams:
+                for mt, t in unit_exists.streams:
                     if t == unit:
                         return (
                             _quadratic_curve_fit(
-                                0, ue.cost_var[unit].ub, ue.cost_var[unit]
+                                0,
+                                unit_exists.cost_var[unit].ub,
+                                unit_exists.cost_var[unit],
                             )
-                            == ue.flow[mt, unit]
+                            == unit_exists.flow[mt, unit]
                         )
 
         elif approximation == "quadratic2":
@@ -708,8 +723,8 @@ def build_model(approximation='quadratic'):
 
         elif approximation == "piecewise":
             # New variable for potential term in capital cost.  Z = sum(Q)**0.7, Z >= 0
-            ue.cost_var = pyo.Var(
-                ue.MU_TU_streams,
+            unit_exists.cost_var = pyo.Var(
+                unit_exists.MU_TU_streams,
                 domain=pyo.NonNegativeReals,
                 initialize=lambda _, mt, unit: TU.loc[unit, 'L'] ** 0.7,
                 bounds=lambda _, mt, unit: (
@@ -723,9 +738,9 @@ def build_model(approximation='quadratic'):
             # to avoid warnings, we set breakpoints at or beyond the bounds
             PieceCnt = 100
             bpts = []
-            for mt, t in ue.streams:
+            for mt, t in unit_exists.streams:
                 if t == unit:
-                    Topx = ue.flow[mt, unit].ub
+                    Topx = unit_exists.flow[mt, unit].ub
             for i in range(PieceCnt + 2):
                 bpts.append(float((i * Topx) / PieceCnt))
 
@@ -751,10 +766,10 @@ def build_model(approximation='quadratic'):
 
             # Piecewise is a class that provides a piecewise linear approximation of a function using the INC representation.
             # The INC representation is a piecewise linear approximation of a function using the incremental form.
-            ue.ComputeObj = pyo.Piecewise(
-                ue.MU_TU_streams,
-                ue.cost_var,
-                ue.flow,
+            unit_exists.ComputeObj = pyo.Piecewise(
+                unit_exists.MU_TU_streams,
+                unit_exists.cost_var,
+                unit_exists.flow,
                 pw_pts=bpts,
                 pw_constr_type='EQ',
                 f_rule=_func,
@@ -762,12 +777,12 @@ def build_model(approximation='quadratic'):
             )
 
             # Setting bounds for the INC_delta variable which is a binary variable that indicates the piecewise linear segment.
-            for i, j in ue.MU_TU_streams:
-                ue.ComputeObj[i, j].INC_delta.setub(1)
-                ue.ComputeObj[i, j].INC_delta.setlb(0)
+            for i, j in unit_exists.MU_TU_streams:
+                unit_exists.ComputeObj[i, j].INC_delta.setub(1)
+                unit_exists.ComputeObj[i, j].INC_delta.setlb(0)
 
-        @ue.Constraint(doc='Cost active TU')
-        def costTU(ue):
+        @unit_exists.Constraint(doc='Cost active TU')
+        def costTU(unit_exists):
             """Constraint: Cost of active treatment unit.
             The constraint ensures that the cost of the active treatment unit is equal to the sum of an investment cost which is proportional to the total flow to 0.7 exponent and an operating cost which is proportional to the flow.
             If approximation is quadratic, the investment cost is approximated by a quadratic function of the flow rate.
@@ -776,7 +791,7 @@ def build_model(approximation='quadratic'):
 
             Parameters
             ----------
-            ue : Disjunct
+            unit_exists : Disjunct
                 The disjunct for the active treatment unit.
 
             Returns
@@ -784,19 +799,19 @@ def build_model(approximation='quadratic'):
             Constraint
                 The constraint that the cost of the active treatment unit is equal to the sum of an investment cost and an operating cost.
             """
-            for mt, t in ue.streams:
+            for mt, t in unit_exists.streams:
                 if approximation == 'quadratic':
-                    new_var = ue.cost_var[unit]
+                    new_var = unit_exists.cost_var[unit]
                 elif approximation == 'quadratic2':
-                    new_var = _g(ue.flow[mt, unit])
+                    new_var = _g(unit_exists.flow[mt, unit])
                 elif approximation == 'piecewise':
-                    new_var = ue.cost_var[mt, unit]
+                    new_var = unit_exists.cost_var[mt, unit]
                 elif approximation == 'none':
-                    new_var = ue.flow[mt, unit] ** 0.7
+                    new_var = unit_exists.flow[mt, unit] ** 0.7
                 if t == unit:
                     return (
                         m.costTU[unit]
-                        == m.beta[unit] * ue.flow[mt, unit]
+                        == m.beta[unit] * unit_exists.flow[mt, unit]
                         + m.gamma[unit]
                         + m.theta[unit] * new_var
                     )
