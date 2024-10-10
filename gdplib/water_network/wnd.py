@@ -44,6 +44,8 @@ The contaminant concentration and flow rate of the feed streams, contaminant rec
 
 References
 ---------- 
+Tristán C., Fallanza M., Ibáñez R., Grossmann I. E., and Bernal Neira D. E. (2024). Global Optimization via Quadratic Disjunctive Programming for Water Networks Design with Energy Recovery. Computer Aided Chemical Engineering, 53, 2161–2166. https://doi.org/10.1016/B978-0-443-28824-1.50361-6
+
 Ruiz J., Grossmann IE. Water Treatment Network Design. 2009 Available from CyberInfrastructure for [MINLP](<www.minlp.org>), a collaboration of Carnegie Mellon University and IBM 
 at: www.minlp.org/library/problem/index.php?i=24
 
