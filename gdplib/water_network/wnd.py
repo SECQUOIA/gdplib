@@ -514,8 +514,6 @@ def build_model(approximation='quadratic'):
             doc="TU streams concentration",
             domain=pyo.NonNegativeReals,
             bounds=lambda _, j, i, k: (0, 100) if i == unit else (0, 4),
-            # bounds=lambda _, j, i, k: (feed[j].min(),100) if i==unit else (feed[j].min(),4)
-            # bounds=lambda _, j, i, k: (feed[j].min(),feed[j].max()),
             # initialize= lambda _, j, i, k: feed.loc[i,j] if i in m.FSU else None
         )
 
