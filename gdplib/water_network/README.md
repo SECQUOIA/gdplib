@@ -8,12 +8,22 @@ The fouled feed waters can be allocated to one or more treatment units or dispos
 The mass balances are defined in terms of total flows and contaminants concentration.
 Nonconvexities arise from bilinear terms “flows times concentration” in the mixers mass balances and concave investment cost functions of treatment units.
 
-The instance incorporates two approximations of the concave cost term (piecewise linear and quadratic) to reformulate the original GDP model into a bilinear quadratic one.
+The instance incorporates three approximations of the concave cost term when  the treatment unit exist, including one piecewise linear and two quadratic approximations, to reformulate the original GDP model into a bilinear quadratic problem [1].
+
+
+The quadratic reformulations are as follows:
+
+* `quadratic_zero_origin` which reads as $f(x) = a \ x + b \ x^2$. Absence of flow leads to no costs for the pump, which is what we expect. Optimal solution: $346,654 with a relative error with respect to the best known objective value of 0.5%
+* `quadratic_nonzero_origin` takes the form of $f(x) = a + b \ x + b \ x^2$. This constraint leads to a non-zero pump expense in the absence of flow. Optimal solution: $349,521 with a relative error with respect to the best known objective value of 0.3%.
+
+The two quadratic approximations are both effective in capturing pump costs, but `quadratic_nonzero_origin` provides a better fit for the active treatment unit's flowrate range.
+
 The user can create each instance like this:
 
 ```
 build_model(approximation='none')
-build_model(approximation='quadratic')
+build_model(approximation='quadratic_zero_origin')
+build_model(approximation='quadratic_nonzero_origin')
 build_model(approximation='piecewise')
 ```
 
