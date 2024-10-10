@@ -593,7 +593,7 @@ def build_model(approximation='quadratic'):
 
         # Approximation of the concave capital cost term for the active treatment units in the objective function.
 
-        if approximation == 'quadratic':
+        if approximation == 'quadratic_zero_origin':
             # New variable for potential term in capital cost.  Z = sum(Q)**0.7, Z >= 0
             unit_exists.cost_var = pyo.Var(
                 m.TU,
@@ -676,7 +676,7 @@ def build_model(approximation='quadratic'):
                             == unit_exists.flow[mt, unit]
                         )
 
-        elif approximation == "quadratic2":
+        elif approximation == "quadratic_nonzero_origin":
 
             def _func2(x, a, b, c):
                 """This function computes the quadratic curve fit.
