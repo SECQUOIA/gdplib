@@ -821,6 +821,7 @@ def build_model(approximation='quadratic'):
     # Objective function: minimize the total cost of the treatment units
     m.obj = pyo.Objective(expr=sum(m.costTU[k] for k in m.TU), sense=pyo.minimize)
 
+    # Initialization of the variables to midpoint between the bounds to avoid numerical issues if no initial values are provided.
     # init_vars.InitMidpoint().apply_to(m)
 
     return m
