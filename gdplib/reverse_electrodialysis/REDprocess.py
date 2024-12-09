@@ -111,7 +111,7 @@ def build_model():
         doc="High- and Low-concentration streams", initialize=['HC', 'LC'], ordered=True
     )
 
-    m.iem = pyo.Set(doc='Ion-excahnge membrane type', initialize=['AEM', 'CEM'])
+    m.iem = pyo.Set(doc='Ion-exchange membrane type', initialize=['AEM', 'CEM'])
 
     m.nr = pyo.Param(
         doc="Max. # of RED stacks",
@@ -367,7 +367,7 @@ def build_model():
         default=0.456,
     )
     m.L = pyo.Param(
-        doc="Channel's lenght = IEMs [m]",
+        doc="Channel's length = IEMs [m]",
         initialize=stack_param.length.values[0],
         default=0.383,
     )

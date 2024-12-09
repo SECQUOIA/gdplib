@@ -75,7 +75,7 @@ def build_REDstack():
         ordered=True,
     )
 
-    m.iem = pyo.Set(doc='Ion-excahnge membrane type', initialize=['AEM', 'CEM'])
+    m.iem = pyo.Set(doc='Ion-exchange membrane type', initialize=['AEM', 'CEM'])
 
     m.port = pyo.Set(
         doc='Inlet and Outlet RU Ports', initialize=['rm', 'rs'], ordered=True
@@ -115,7 +115,7 @@ def build_REDstack():
         #                     initialize=width,
     )
     m.L = pyo.Param(
-        doc="Channel's lenght = IEMs [m]",
+        doc="Channel's length = IEMs [m]",
         within=pyo.NonNegativeReals,
         default=0.383,
         initialize=stack_param.length.values[0],
@@ -268,7 +268,7 @@ def build_REDstack():
 
     def _int_trap_rule_sol(m, x, sol, v):
         """
-        This function computes the integral of a function using the trapezoidal rule for the hihg and low concentration channels.
+        This function computes the integral of a function using the trapezoidal rule for the high and low concentration channels.
 
         Parameters
         ----------
@@ -1044,7 +1044,7 @@ def build_REDstack():
 
     def _Jcond_b(m, x):
         """
-        This function sets the bounds of the conductive molar flux wich depends on the discretized electric current density.
+        This function sets the bounds of the conductive molar flux which depends on the discretized electric current density.
 
         Parameters
         ----------
