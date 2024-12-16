@@ -251,7 +251,7 @@ def build_model():
     )  # Filter function _to_splitters_filter as suggested in Pyomo PR #3338 (Support validate / filter for IndexedSet components using the index) that fixes the issue #2655
 
     m.aux_equipment = pyo.Set(
-        doc='Set of equipments for cost correlation. Tuple (equipment, type)',
+        doc='Set of equipment for cost correlation. Tuple (equipment, type)',
         initialize=[('Pump', 'Single Stage Centrifugal')],
     )
 
