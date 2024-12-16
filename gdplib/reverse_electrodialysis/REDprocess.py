@@ -47,11 +47,8 @@ import pyomo.environ as pyo
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
-Q_ = ureg.Quantity
 
-import scipy.constants as cst
-
-import pyomo.gdp as gdp
+from scipy.constants import physical_constants
 
 import os
 
@@ -62,7 +59,7 @@ import numpy as np
 
 from pyomo.contrib.preprocessing.plugins import init_vars
 
-from pyomo.core.expr.logical_expr import *
+from pyomo.core.expr.logical_expr import atleast, implies
 
 from .REDstack import build_REDstack
 
@@ -149,7 +146,11 @@ def build_model():
 
     def _streams_filter(m, val):
         """
-        This function filters the 1-1 port pairing
+        This function filters the 1-1 port pairing.
+        x and y are the ports of the RED units unzipped from the tuple val.
+        The expression re.findall(r'\d+', x) returns a list of all the digits in the string x.
+        The expression re.findall(r'\d+', y) returns a list of all the digits in the string y.
+        The function returns True if the ports digits are the same, False otherwise.
 
         Parameters
         ----------
@@ -253,12 +254,12 @@ def build_model():
     #     Constant parameters
     # =============================================================================
 
-    m.gas_constant = cst.physical_constants['molar gas constant'][
-        0
-    ]  # Ideal gas constant [J mol-1 K-1]
-    m.faraday_constant = cst.physical_constants['Faraday constant'][
-        0
-    ]  # Faraday’s Constant [C mol-1] [A s mol-1]
+    # Ideal gas constant [J mol-1 K-1]
+    # m.gas_constant = 8.314462618
+    m.gas_constant = physical_constants['molar gas constant'][0]
+    # Faraday’s Constant [C mol-1] [A s mol-1]
+    # m.faraday_constant = 96485.33212
+    m.faraday_constant = physical_constants['Faraday constant'][0]
     m.Tref = 298.15  # Reference temperature [K]
 
     m.T = pyo.Param(
