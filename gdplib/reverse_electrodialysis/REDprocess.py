@@ -65,8 +65,6 @@ from .REDstack import build_REDstack
 
 wnd_dir = os.path.dirname(os.path.realpath(__file__))
 
-
-# The data.xlsx file contains the financial and stack parameters, and properties of the high and low salinity feed streams.
 # The financial_param dataframe contains the financial parameters
 # The stack_param dataframe contains the stack parameters
 # The flow_conc_data dataframe contains the feed flow and concentration data
@@ -83,6 +81,11 @@ with pd.ExcelFile(os.path.join(wnd_dir, "data.xlsx")) as xls:
         dtype=object,
     )
     T = pd.read_excel(xls, sheet_name="feed_data", nrows=1, usecols="D", dtype=object)
+
+# stack_param = pd.read_csv(os.path.join(wnd_dir, "stack_param.csv"))
+# financial_param = pd.read_csv(os.path.join(wnd_dir, "financial_param.csv"))
+# flow_conc_data = pd.read_csv(os.path.join(wnd_dir, "flow_conc_data.csv"), index_col=0)
+# T = pd.read_csv(os.path.join(wnd_dir, "T.csv"))
 
 
 def build_model():
