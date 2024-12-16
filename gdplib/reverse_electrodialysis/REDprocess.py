@@ -250,6 +250,11 @@ def build_model():
         # filter=lambda _, x, y: y in m.splitters or (x, y) == ('in', 'fs'),
     )  # Filter function _to_splitters_filter as suggested in Pyomo PR #3338 (Support validate / filter for IndexedSet components using the index) that fixes the issue #2655
 
+    m.aux_equipment = pyo.Set(
+        doc='Set of equipments for cost correlation. Tuple (equipment, type)',
+        initialize=[('Pump', 'Single Stage Centrifugal')],
+    )
+
     # ============================================================================
     #     Constant parameters
     # =============================================================================
@@ -313,6 +318,27 @@ def build_model():
         initialize=financial_param.iems_price.values[0],
         mutable=True,
     )
+
+    m.stackelectrodes_cost_factor = pyo.Param(
+        doc="Stack electrodes cost [-] as a fraction of the total membrane cost",
+        default=0.517,
+        initialize=0.517,
+    )  # Papapetrou et al. (2019) Energies, 12(17), 3206. https://doi.org/10.3390/en12173206
+
+    m.pump_cap_cost_params = pyo.Param(
+        m.aux_equipment,
+        within=pyo.Any,
+        doc='Pump capital cost parameters for cost correlation of the form: CE = a + b(S)**n',
+        initialize=lambda m, eq1, eq2: {'a': 6900, 'b': 206, 'n': 0.9},
+    )
+
+    m.oandm_cost_factor = pyo.Param(
+        doc="Operation and maintenance cost factor [-]", default=0.02, initialize=0.02
+    )  # O&M = 2%–4% CAPEX [USD y-1] Bartholomew et al. (2018). Environmental Science and Technology, 52(20), 11813–11821. https://doi.org/10.1021/acs.est.8b02771
+
+    m.civil_cost_factor = pyo.Param(
+        doc="Civil and infrastructure cost [EUR/kWnet]", default=250, initialize=250
+    )  # US EIA. Capital Cost Estimates for Utility Scale Electricity Generating Plants; US Department of Energy, Energy Information Administration: Washington, DC, USA, 2016.
 
     m.CRF = pyo.Expression(
         doc="Capital Recovery Factor [years-1]",  # Given P (principal) get A (Annuity)
@@ -831,7 +857,9 @@ def build_model():
         float
             RED stack capital cost in USD
         """
-        return m.iems_cap_cost * (1 + 0.517)  # 51.7% IEMs cap. cost
+        return m.iems_cap_cost * (
+            1 + m.stackelectrodes_cost_factor
+        )  # 51.7% IEMs cap. cost
 
     m.stack_cost = pyo.Var(
         m.RU,
@@ -3132,27 +3160,31 @@ def build_model():
     # The new variable is introduced to avoid numerical issues with the concave term in the pump capital cost correlation.
     m.pump_cap_cost_var = pyo.Var(
         m.SOL,
+        m.aux_equipment,
         domain=pyo.NonNegativeReals,
-        initialize=pyo.value(
-            ureg.convert(m._flow_out_from['rsu', sol], 'm**3/hour', 'liter/sec') ** 0.9
+        initialize=lambda _, sol, eq1, eq2: pyo.value(
+            ureg.convert(m._flow_out_from['rsu', sol], 'm**3/hour', 'liter/sec')
+            ** m.pump_cap_cost_params[(eq1, eq2)]["n"]
         ),
-        bounds=lambda _, sol: (
+        bounds=lambda _, sol, eq1, eq2: (
             None,
             ureg.convert(
                 sum(m.flow_vol['rsu', ri, sol].ub for ri in m.in_RU),
                 'm**3/hour',
                 'liter/sec',
             )
-            ** 0.9,
+            ** m.pump_cap_cost_params[(eq1, eq2)]["n"],
         ),
-        doc="New var for potential term in pump capital cost correlation",
+        doc="New var for potential term in pump capital cost correlation, z = sum(Q)**0.9",
     )
 
-    # Z^(1/0.9)=sum(Q)
-    @m.Constraint(m.SOL, doc='New var potential term in pump capital cost cstr.')
-    def _pump_cap_cost_nv(m, sol):
+    @m.Constraint(
+        m.SOL, m.aux_equipment, doc='New var potential term in pump capital cost cstr.'
+    )
+    def _pump_cap_cost_nv(m, sol, eq1, eq2):
         """
         This constraint defines the potential term in the pump capital cost equation.
+        z^(1/0.9) = sum(Q)
 
         Parameters
         ----------
@@ -3166,9 +3198,9 @@ def build_model():
         Pyomo.Constraint
             Potential term in the pump capital cost correlation
         """
-        return m.pump_cap_cost_var[sol] ** (1 / 0.9) == ureg.convert(
-            m._flow_out_from['rsu', sol], 'm**3/hour', 'liter/sec'
-        )
+        return m.pump_cap_cost_var[sol, (eq1, eq2)] ** (
+            1 / m.pump_cap_cost_params[(eq1, eq2)]["n"]
+        ) == ureg.convert(m._flow_out_from['rsu', sol], 'm**3/hour', 'liter/sec')
 
     @m.Expression(doc='Pumps Capital Cost [USD]')
     def pump_cap_cost(m):
@@ -3194,7 +3226,12 @@ def build_model():
             Pumps Capital Cost [USD] as the sum of the pump capital costs for the high and low salinity streams
         """
         return (
-            sum(6900 + 206 * m.pump_cap_cost_var[sol] for sol in m.SOL)
+            sum(
+                m.pump_cap_cost_params[('Pump', 'Single Stage Centrifugal')]["a"]
+                + m.pump_cap_cost_params[('Pump', 'Single Stage Centrifugal')]["b"]
+                * m.pump_cap_cost_var[sol, ('Pump', 'Single Stage Centrifugal')]
+                for sol in m.SOL
+            )
             * m.cost_index_ratio
         )
 
@@ -3235,9 +3272,7 @@ def build_model():
         Pyomo.Expression
             Total operational expenses [USD y-1].
         """
-        return (
-            sum(m.operating_cost[ru] for ru in m.RU) + 0.02 * m.CAPEX
-        )  # O&M = 2%–4% CAPEX [USD y-1]
+        return sum(m.operating_cost[ru] for ru in m.RU) + m.oandm_cost_factor * m.CAPEX
 
     @m.Expression(doc='Total Annualized Cost [USD y-1]')
     def TAC(m):
