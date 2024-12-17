@@ -43,23 +43,18 @@ Tristán, C., Fallanza, M., Ibáñez, R., & Ortiz, I. (2020). Recovery of salini
 
 # Importing libraries
 import pyomo.environ as pyo
-
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
 
-from scipy.constants import physical_constants
-
 import os
-
 import re
 
-import pandas as pd
 import numpy as np
-
+import pandas as pd
 from pyomo.contrib.preprocessing.plugins import init_vars
-
 from pyomo.core.expr.logical_expr import atleast, implies
+from scipy.constants import physical_constants
 
 from .REDstack import build_REDstack
 
