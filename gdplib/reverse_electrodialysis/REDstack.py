@@ -14,21 +14,15 @@ Tristán, C., Fallanza, M., Ibáñez, R., & Ortiz, I. (2020). Recovery of salini
 """
 
 import pyomo.environ as pyo
-
 from pint import UnitRegistry
 
 ureg = UnitRegistry()
-Q_ = ureg.Quantity
-
-import scipy.constants as cst
 
 import os
 
 import numpy as np
-
 import pandas as pd
-
-from pathlib import Path
+from scipy.constants import physical_constants
 
 wnd_dir = os.path.dirname(os.path.realpath(__file__))
 
