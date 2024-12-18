@@ -34,7 +34,7 @@ T = pd.read_csv(os.path.join(wnd_dir, "T.csv"))
 
 def build_REDstack():
     '''
-    This function builds the RED stack model using the data from the data.xlsx file.
+    This function builds the RED stack model using the data from the stack_param.csv, flow_conc_data.csv, and T.csv files.
 
     Returns
     -------
@@ -64,10 +64,10 @@ def build_REDstack():
     #     Constant parameters
     # =============================================================================
 
-    m.gas_constant = cst.physical_constants['molar gas constant'][
+    m.gas_constant = physical_constants['molar gas constant'][
         0
     ]  # Ideal gas constant [J mol-1 K-1]
-    m.faraday_constant = cst.physical_constants['Faraday constant'][
+    m.faraday_constant = physical_constants['Faraday constant'][
         0
     ]  # Faraday’s Constant [C mol-1] [A s mol-1]
     m.Tref = 298.15  # Reference temperature [K]
@@ -76,7 +76,6 @@ def build_REDstack():
         doc='Feed streams temperature [K]',
         within=pyo.NonNegativeReals,
         initialize=T.loc[0].values[0],
-        #                     initialize=T,
         mutable=True,
     )
 
@@ -91,34 +90,29 @@ def build_REDstack():
         within=pyo.NonNegativeReals,
         default=0.456,
         initialize=stack_param.width.values[0],
-        #                     initialize=width,
     )
     m.L = pyo.Param(
         doc="Channel's length = IEMs [m]",
         within=pyo.NonNegativeReals,
         default=0.383,
         initialize=stack_param.length.values[0],
-        #                     initialize=length,
     )
     m.spacer_porosity = pyo.Param(
         m.SOL,
         doc="Spacer's porosity [-]",
         default=0.825,
         initialize=stack_param.spacer_porosity.values[0],
-        #                                   initialize=0.825
     )
     m.spacer_thickness = pyo.Param(
         m.SOL,
         doc="Channel's thickness = Spacer's thickness [m]",
         default=270e-6,
-        #                                   initialize=270e-6,
         initialize=stack_param.spacer_thickness.values[0],
     )
     m.cell_pairs = pyo.Param(
         within=pyo.NonNegativeIntegers,
         doc="Number of Cell Pairs [-]",
         default=1e3,
-        #                             initialize=1e3,
         initialize=stack_param.cell_pairs.values[0],
     )
 
@@ -146,7 +140,6 @@ def build_REDstack():
         doc="Membranes' resistance [ohm m2]",
         within=pyo.NonNegativeReals,
         default={'CEM': 1.8e-4, 'AEM': 0.6e-4},
-        #                                   initialize={'CEM':1.8E-4, 'AEM':0.6e-4},
         initialize={
             'CEM': stack_param.cem_resistance.values[0],
             'AEM': stack_param.aem_resistance.values[0],
@@ -157,7 +150,6 @@ def build_REDstack():
         doc="Membranes' permselectivity [-]",
         within=pyo.NonNegativeReals,
         default={'CEM': 0.97, 'AEM': 0.92},
-        #                                initialize=0.93,
         initialize={
             'CEM': stack_param.cem_permsel.values[0],
             'AEM': stack_param.aem_permsel.values[0],
@@ -173,7 +165,6 @@ def build_REDstack():
         doc="Membranes' thickness [m]",
         within=pyo.NonNegativeReals,
         default=50e-6,
-        #                                 initialize=50e-6,
         initialize={
             'CEM': stack_param.cem_thickness.values[0],
             'AEM': stack_param.aem_thickness.values[0],
@@ -191,10 +182,9 @@ def build_REDstack():
         m.SOL,
         doc='Max. linear crossflow velocity [cm s-1]',
         default=3.0,
-        #                          initialize=10.0,
         initialize=stack_param.vel_ub.values[0],
     )
-    # initialize=3.0)
+
     m.vel_lb = pyo.Param(
         m.SOL, doc='Min. linear crossflow velocity [cm s-1]', initialize=0.01
     )
@@ -202,10 +192,8 @@ def build_REDstack():
         m.SOL,
         doc='Min. linear crossflow velocity [cm s-1]',
         default=1.0,
-        #                           initialize=1,
         initialize=stack_param.vel_init.values[0],
     )
-    # initialize={'HC':1.36, 'LC':2.08})
 
     # =============================================================================
     #     RED Stack Model
@@ -215,9 +203,8 @@ def build_REDstack():
     nfe = 5
 
     m.length_domain = pyo.Set(
-        bounds=(0.0, 1.0),  # (0.0, pyo.value(m.L))
+        bounds=(0.0, 1.0),
         initialize=sorted(np.linspace(0.0, 1.0, nfe + 1)),
-        #                              initialize=sorted(np.linspace(0.,1.,nfe+1,dtype=np.float32)),
         doc="Normalized length domain",
     )
 
@@ -230,7 +217,7 @@ def build_REDstack():
         Parameters
         ----------
         x : int
-            Position in the length domain
+            Index of the length domain, i.e., the position in the length domain
         v : var
             Variable to be integrated
 
@@ -254,9 +241,9 @@ def build_REDstack():
         m : pyomo.ConcreteModel
             The RED stack model
         x : int
-            Position in the length domain
+            Index of the length domain, i.e., the position in the length domain
         sol : str
-            The high and low concentration compartments
+            Index of the high and low concentration compartments, i.e., 'HC' and 'LC'
         v : str
             Variable to be integrated
 
@@ -265,11 +252,11 @@ def build_REDstack():
         Expression
             Integral of the variable v in the high and low concentration compartments
         """
-        ds = sorted(x)
+        ds = sorted(x)  # Sorted list of the length domain
         return sum(
             0.5 * (ds[i + 1] - ds[i]) * (v(m, ds[i + 1], sol) + v(m, ds[i], sol))
             for i in range(len(ds) - 1)
-        )
+        )  # Trapezoidal rule
 
     def _bwd_fun(m, x, sol, v, dv):
         """
@@ -302,7 +289,7 @@ def build_REDstack():
                 / (tmp[idx] - tmp[idx - 1])
                 * (v(m, tmp[idx], sol) - v(m, tmp[idx - 1], sol))
                 == 0
-            )
+            )  # Calculate the backward finite difference
 
     def _flow_vol(m, x, sol):
         """
@@ -342,9 +329,7 @@ def build_REDstack():
         tuple
             The bounds of the volumetric flow rate
         """
-        # lb = pyo.value(36 * m.vel_lb[sol] * m._cross_area[sol])
-        ub = pyo.value(36 * m.vel_ub[sol] * m._cross_area[sol])
-        #         return (lb, ub)
+        ub = pyo.value(ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h') * m._cross_area[sol])
         return (None, ureg.convert(ub, 'm**3', 'liter'))
 
     m.flow_vol_x = pyo.Var(
@@ -416,13 +401,11 @@ def build_REDstack():
         lb = (
             m.phi.ub * flow_conc_data['feed_conc_mol']['fl1']
             + (1 - m.phi.ub) * flow_conc_data['feed_conc_mol']['fh1']
-        )  # feed_conc_mol['fh1']
+        )
         ub = (
             m.phi.lb * flow_conc_data['feed_conc_mol']['fl1']
             + (1 - m.phi.lb) * flow_conc_data['feed_conc_mol']['fh1']
-        )  # feed_conc_mol['fh1']
-        #         lb = m.phi.ub*feed_conc_mol['fl1']+(1 - m.phi.ub) * feed_conc_mol['fh1']
-        #         ub = m.phi.lb*feed_conc_mol['fl1']+(1 - m.phi.lb) * feed_conc_mol['fh1']
+        )
         return (lb, ub)
 
     def _conc_mol_eq(m):
@@ -448,6 +431,7 @@ def build_REDstack():
         doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol L-1]',
         initialize=_conc_mol_eq,
         bounds=_conc_mol_eq_b,
+        domain=pyo.NonNegativeReals,
     )
 
     def _conc_molx_b(m, x, sol):
@@ -472,8 +456,6 @@ def build_REDstack():
             return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
         return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
 
-    #         return (feed_conc_mol['fl1'], m.conc_mol_eq.ub)
-
     def _conc_molx(m, x, sol):
         """
         This function initializes the molar concentration based on the feed concentration in the high and low concentration compartments.
@@ -493,8 +475,8 @@ def build_REDstack():
             The initial molar concentration
         """
         if sol == 'HC':
-            return flow_conc_data['feed_conc_mol']['fh1']  # feed_conc_mol['fh1']
-        return flow_conc_data['feed_conc_mol']['fl1']  # feed_conc_mol['fl1']
+            return flow_conc_data['feed_conc_mol']['fh1']
+        return flow_conc_data['feed_conc_mol']['fl1']
 
     m.conc_mol_x = pyo.Var(
         m.length_domain,
@@ -571,14 +553,14 @@ def build_REDstack():
         m.length_domain,
         m.SOL,
         domain=pyo.NonNegativeReals,
-        initialize=_pressure_x,  # ureg.convert(1,'atm','mbar'),
+        initialize=_pressure_x,
         bounds=_pressure_x_b,
         doc='Discretized pressure [mbar]',
     )
 
     m.flow_vol_dx = pyo.Var(
         m.flow_vol_x.index_set(),
-        doc="Partial derivative of volumetric flow wrt to normalized length",
+        doc="Derivative of volumetric flow wrt to normalized length",
         bounds=(-1.0, 1.0),
         initialize=0,
     )
@@ -594,7 +576,6 @@ def build_REDstack():
         m.pressure_x.index_set(),
         doc="Derivative of pressure wrt to normalized length",
         domain=pyo.NonPositiveReals,
-        # [mbar]
         bounds=lambda _, x, sol: (
             ureg.convert(
                 -48
@@ -619,7 +600,7 @@ def build_REDstack():
                 'Pa',
                 'mbar',
             )
-        ),  # 0 #lambda _,x,sol: -48e-7 * m.vel[sol] / m.dh[sol]**2 * m.L
+        ),
     )
 
     m.flow_vol = pyo.Var(
@@ -656,13 +637,8 @@ def build_REDstack():
             The bounds of the molar concentration
         """
         if sol == 'HC':
-            return (
-                m.conc_mol_eq.lb,
-                flow_conc_data['feed_conc_mol']['fh1'],
-            )  # feed_conc_mol['fh1'])
+            return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
         return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
-
-    #         return (feed_conc_mol['fl1'], m.conc_mol_eq.ub)
 
     def _conc_mol(m, p, sol):
         """
@@ -683,8 +659,8 @@ def build_REDstack():
             The initial molar concentration
         """
         if sol == 'HC':
-            return flow_conc_data['feed_conc_mol']['fh1']  # feed_conc_mol['fh1']
-        return flow_conc_data['feed_conc_mol']['fl1']  # feed_conc_mol['fl1']
+            return flow_conc_data['feed_conc_mol']['fh1']
+        return flow_conc_data['feed_conc_mol']['fl1']
 
     m.conc_mol = pyo.Var(
         m.port,
@@ -749,19 +725,21 @@ def build_REDstack():
         tuple
             The bounds of the solution conductivity
         """
+        # Conductivity bounds based on the feed concentration in the high and low concentration compartments
+        # The expression is derived from the linear regression of the experimental data (Tristán et al., 2020)
         if sol == 'HC':
-            #             ub = 7.7228559 * feed_conc_mol['fh1'] + 0.5670209
             ub = 7.7228559 * flow_conc_data['feed_conc_mol']['fh1'] + 0.5670209
             lb = 7.7228559 * m.conc_mol_eq.lb + 0.5670209
             return (lb, ub)
         ub = 10.5763914 * m.conc_mol_eq.ub + 0.0087379
-        #         lb = 10.5763914 * feed_conc_mol['fl1'] + 0.0087379
         lb = 10.5763914 * flow_conc_data['feed_conc_mol']['fl1'] + 0.0087379
         return (lb, ub)
 
     def _ksol(m, x, sol):
         """
         This function initializes the solution conductivity based on the feed concentration in the high and low concentration compartments.
+        The expression is derived from the linear regression of the experimental data.
+        Tristán et al. (2020) Desalination, 496, 114699. https://doi.org/10.1016/j.desal.2020.114699
 
         Parameters
         ----------
@@ -804,7 +782,7 @@ def build_REDstack():
 
     def _Rsol_b(m, x, sol):
         """
-        This function sets the bounds of the solution resistance based on the conductivity and the thickness of the spacer in the high and low concentration compartments.
+        This function sets the bounds of the solution resistance based on the conductivity and the thickness and porosity of the spacer in the high and low concentration compartments.
 
         Parameters
         ----------
@@ -850,7 +828,7 @@ def build_REDstack():
 
     def _Rsol(m, x, sol):
         """
-        This function initializes the solution resistance based on the conductivity and the thickness of the spacer in the high and low concentration compartments.
+        This function initializes the solution resistance based on the conductivity and the thickness and porosity of the spacer in the high and low concentration compartments.
 
         Parameters
         ----------
@@ -1013,7 +991,7 @@ def build_REDstack():
 
     m.NP = pyo.Var(
         initialize=m.GP - m.PP,
-        bounds=(None, m.GP.ub - m.PP.ub),  # 1.e3),m.GP.ub),
+        bounds=(None, m.GP.ub - m.PP.ub),
         doc="Net Power output RED stack [W]",
     )
 
@@ -1024,6 +1002,8 @@ def build_REDstack():
     def _Jcond_b(m, x):
         """
         This function sets the bounds of the conductive molar flux which depends on the discretized electric current density.
+        Units:
+        Jcond [mol m-2 h-1], Idx [mA cm-2], faraday_constant [A s mol-1]
 
         Parameters
         ----------
@@ -1052,6 +1032,8 @@ def build_REDstack():
     def _Jdiff_b(ru, x):
         """
         This function sets the bounds of the diffusive molar flux.
+        Units:
+        Jdiff [mol m-2 h-1], diff_nacl [m2 s-1], iems_thickness [m], conc_mol_x [mol L-1]
 
         Parameters
         ----------
@@ -1121,7 +1103,6 @@ def build_REDstack():
                 == m.flow_vol['rs', sol]
             )
         ]  # The outlet flow rate is equally distributed among the cell pairs at the outlet.
-        #       [L h-1] * [m3 h-1] = [m3 h-1]
         [m.bound_con.add(m.conc_mol_x[0, sol] == m.conc_mol['rm', sol])]
         # The concentration at the inlet position is equal to the concentration at the inlet port.
         [
@@ -1201,6 +1182,8 @@ def build_REDstack():
     def _sol_cond(m, x, sol):
         """
         This function computes the solution conductivity per unit length based on the molar concentration in the high and low concentration compartments.
+        The expression is derived from the linear regression of the experimental data.
+        Tristán et al. (2020) Desalination, 496, 114699. https://doi.org/10.1016/j.desal.2020.114699
 
         Parameters
         ----------
@@ -1228,6 +1211,7 @@ def build_REDstack():
     def _sol_cond_T(m, x, sol):
         """
         This function computes the temperature corrected solution conductivity per unit length based on the solution conductivity.
+        Linear temperature dependence of the solution conductivity from Mehdizadeh, et al. (2019).
 
         Parameters
         ----------
@@ -1253,6 +1237,8 @@ def build_REDstack():
     def _channel_res(m, x, sol):
         """
         This function computes the channel resistance per cell pair per unit length based on the solution resistance and the spacer characteristics (thickness and porosity).
+        Units:
+        Rsol [ohm cm2 per cp], ksol_T [S m-1], spacer_thickness [m], spacer_porosity [-]
 
         Parameters
         ----------
@@ -1393,6 +1379,8 @@ def build_REDstack():
     def _cond_molar_flux(m, x):
         """
         This function computes the conductive molar flux.
+        Units:
+        Jcond [mol m-2 h-1], faraday_constant [A s mol-1], Idx [mA cm-2]
 
         Parameters
         ----------
@@ -1414,6 +1402,8 @@ def build_REDstack():
     def _diff_molar_flux(m, x):
         """
         This function computes the diffusive molar flux.
+        Units:
+        Jdiff [mol m-2 h-1], diff_nacl [m2 s-1], iems_thickness [m], conc_mol_x [mol L-1]
 
         Parameters
         ----------
@@ -1430,7 +1420,6 @@ def build_REDstack():
         return m.Jdiff[x] == 3.6e6 * 2 * m.diff_nacl / m.iems_thickness['CEM'] * (
             m.conc_mol_x[x, 'HC'] - m.conc_mol_x[x, 'LC']
         )
-        # J[mol m-2 h-1], D[m2 s-1], dm=50e-6 m, C[mol L-1]
 
     @m.Constraint(
         m.length_domain, doc='Total molar flux from HC to LC side [mol m-2 h-1]'
@@ -1621,6 +1610,8 @@ def build_REDstack():
         This function computes the molar concentration balance.
         The concentration increases in the low concetration compartment due to the ionic transfer from the high concentration compartment.
         The concentration decreases in the high concentration compartment due to the ionic transfer to the low concentration compartment.
+        Units:
+        dC/dx [mol L-1 m-1], Ji [mol m-2 h-1], L [m], b [m], flow_vol_x [L h-1]
 
         Parameters
         ----------
@@ -1641,8 +1632,6 @@ def build_REDstack():
         if sol == 'LC':
             return m.conc_mol_dx[x, sol] * m.flow_vol_x[x, sol] == m.b * m.Ji[x] * m.L
         return m.conc_mol_dx[x, sol] * m.flow_vol_x[x, sol] == -m.b * m.Ji[x] * m.L
-
-    #         #dC/dx [mol L-1 m-1] * [L h-1] = [m] [mol m-2 h-1]
 
     @m.Constraint(m.length_domain, doc='Concentration HC >= LC')
     def _conc_hc_gt_lc(m, x):
@@ -1870,12 +1859,12 @@ def build_REDstack():
         """
         return m.Rstack * m.b * m.L * 1e4 == m.cell_pairs * m.Rcp_avg
 
-    @m.Constraint(
-        doc='Electric current RED unit [A]'
-    )  # [A] [mA cm-2] 1e-3 [A mA-1] 1e4 [cm2 m-2]
+    @m.Constraint(doc='Electric current RED unit [A]')
     def _electric_current_stack(m):
         """
         This function computes the electric current of the RED stack based on the average current density, the area of the ion exchange membrane, and the number of cell pairs.
+        Units:
+        I [A], Id_avg [mA cm-2], Aiem [m2]
 
         Parameters
         ----------
@@ -1906,8 +1895,6 @@ def build_REDstack():
         """
         return m.GP == m.Istack * (m.EMF - m.Rstack * m.Istack)
 
-    # GP = Istack * Estack; max GP if Rload = Rstack; Istack = EMF/(Rload + Rstack)
-
     @m.Constraint(doc='Pumping Power Consumption RED unit [W]')
     def _pump_power(m):
         """
@@ -1932,7 +1919,6 @@ def build_REDstack():
             * ureg.convert(m.flow_vol['rm', sol], '1/hour', '1/s')
             for sol in m.SOL
         )
-        # return m.PP * m.pump_eff == sum(ureg.convert(m.pressure_x[0,sol] - m.pressure_x[m.length_domain.last(),sol],'mbar','Pa') / m.L * ureg.convert(m.flow_vol['rm',sol],'1/hour','1/s') for sol in m.SOL)
 
     @m.Constraint(doc='Net Power Output RED unit [W]')
     def _net_power(m):
