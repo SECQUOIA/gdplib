@@ -26,25 +26,10 @@ from scipy.constants import physical_constants
 
 wnd_dir = os.path.dirname(os.path.realpath(__file__))
 
-# Data file containing the stack parameters, feed concentration, and temperature.
-with pd.ExcelFile(os.path.join(wnd_dir, "data.xlsx")) as xls:
-    stack_param = pd.read_excel(
-        xls,
-        sheet_name="stack_param",
-        # index_col=[0,1],
-        header=0,
-    )
-    flow_conc_data = pd.read_excel(
-        xls, sheet_name="feed_data", index_col=0, header=[0], usecols="A:C"
-    )
-    T = pd.read_excel(
-        xls,
-        sheet_name="feed_data",
-        #                       index_col=0,
-        #                       header=[0],
-        nrows=1,
-        usecols="D",
-    )
+# Data files containing the stack parameters, feed concentration, and temperature.
+stack_param = pd.read_csv(os.path.join(wnd_dir, "stack_param.csv"))
+flow_conc_data = pd.read_csv(os.path.join(wnd_dir, "flow_conc_data.csv"), index_col=0)
+T = pd.read_csv(os.path.join(wnd_dir, "T.csv"))
 
 
 def build_REDstack():
