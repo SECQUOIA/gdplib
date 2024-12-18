@@ -79,6 +79,13 @@ def build_REDstack():
         mutable=True,
     )
 
+    m.temperature_coeff = pyo.Param(
+        doc='Temperature correction factor [-] of the solution conductivity',
+        default=0.02,
+        initialize=0.02,
+    )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
+    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02 K-1.
+
     m.pump_eff = pyo.Param(doc='Pump efficiency [-]', default=0.75, initialize=0.75)
 
     # =============================================================================
@@ -188,6 +195,7 @@ def build_REDstack():
     m.vel_lb = pyo.Param(
         m.SOL, doc='Min. linear crossflow velocity [cm s-1]', initialize=0.01
     )
+
     m.vel_init = pyo.Param(
         m.SOL,
         doc='Min. linear crossflow velocity [cm s-1]',
@@ -710,6 +718,7 @@ def build_REDstack():
         """
         This function sets the bounds of the solution conductivity based on the feed concentration in the high and low concentration compartments.
         The expression is derived from the linear regression of the experimental data.
+        Tristán et al. (2020) Desalination, 496, 114699. https://doi.org/10.1016/j.desal.2020.114699
 
         Parameters
         ----------
@@ -773,10 +782,11 @@ def build_REDstack():
         m.SOL,
         domain=pyo.NonNegativeReals,
         bounds=lambda _, x, sol: (
-            m.ksol[x, sol].lb * (1 + 0.02 * (m.T - m.Tref)),
-            m.ksol[x, sol].ub * (1 + 0.02 * (m.T - m.Tref)),
+            m.ksol[x, sol].lb * (1 + m.temperature_coeff * (m.T - m.Tref)),
+            m.ksol[x, sol].ub * (1 + m.temperature_coeff * (m.T - m.Tref)),
         ),
-        initialize=lambda _, x, sol: m.ksol[x, sol] * (1 + 0.02 * (m.T - m.Tref)),
+        initialize=lambda _, x, sol: m.ksol[x, sol]
+        * (1 + m.temperature_coeff * (m.T - m.Tref)),
         doc="Temperature corrected sol. conductivity per unit length [S m-1]",
     )
 
@@ -1227,7 +1237,9 @@ def build_REDstack():
         pyomo.Constraint
             The temperature corrected solution conductivity per unit length constraint
         """
-        return m.ksol_T[x, sol] == m.ksol[x, sol] * (1 + 0.02 * (m.T - m.Tref))
+        return m.ksol_T[x, sol] == m.ksol[x, sol] * (
+            1 + m.temperature_coeff * (m.T - m.Tref)
+        )
 
     @m.Constraint(
         m.length_domain,
