@@ -86,6 +86,10 @@ def build_REDstack():
     )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
     # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02 K-1.
 
+    m.dynamic_viscosity = pyo.Param(
+        doc='Dynamic viscosity of the solution [Pa s]', default=1e-3, initialize=1e-3
+    )
+
     m.pump_eff = pyo.Param(doc='Pump efficiency [-]', default=0.75, initialize=0.75)
 
     # =============================================================================
@@ -518,7 +522,7 @@ def build_REDstack():
         """
         delta_p = pyo.value(
             48
-            * ureg.convert(1, 'cP', 'Pa*s')
+            * m.dynamic_viscosity
             * ureg.convert(m.vel_init[sol], 'cm', 'm')
             / m.dh[sol] ** 2
             * m.L
@@ -548,7 +552,7 @@ def build_REDstack():
         """
         delta_p = pyo.value(
             48
-            * ureg.convert(1, 'cP', 'Pa*s')
+            * m.dynamic_viscosity
             * ureg.convert(m.vel_ub[sol], 'cm', 'm')
             / m.dh[sol] ** 2
             * m.L
@@ -587,7 +591,7 @@ def build_REDstack():
         bounds=lambda _, x, sol: (
             ureg.convert(
                 -48
-                * ureg.convert(1, 'cP', 'Pa*s')
+                * m.dynamic_viscosity
                 * ureg.convert(m.vel_ub[sol], 'cm', 'm')
                 / m.dh[sol] ** 2
                 * m.L,
@@ -601,7 +605,7 @@ def build_REDstack():
             if x == m.length_domain.first()
             else ureg.convert(
                 -48
-                * ureg.convert(1, 'cP', 'Pa*s')
+                * m.dynamic_viscosity
                 * ureg.convert(m.vel_init[sol], 'cm', 'm')
                 / m.dh[sol] ** 2
                 * m.L,
@@ -977,7 +981,9 @@ def build_REDstack():
     m.PP = pyo.Var(
         domain=pyo.NonNegativeReals,
         initialize=sum(
-            ureg.convert(48e-7 * m.vel_init[sol] / m.dh[sol] ** 2, 'mbar', 'Pa')
+            48
+            * m.dynamic_viscosity
+            * ureg.convert(48e-7 * m.vel_init[sol] / m.dh[sol] ** 2, 'mbar', 'Pa')
             * m.flow_vol['rm', sol]
             / 3.6e3
             / m.pump_eff
@@ -987,7 +993,7 @@ def build_REDstack():
             None,
             sum(
                 48
-                * ureg.convert(1, 'cP', 'Pa*s')
+                * m.dynamic_viscosity
                 * ureg.convert(m.vel_ub[sol], 'cm', 'm')
                 / m.dh[sol] ** 2
                 * m.flow_vol['rm', sol].ub
@@ -1688,7 +1694,7 @@ def build_REDstack():
         """
         return ureg.convert(
             48
-            * ureg.convert(1, 'cP', 'Pa*s')
+            * m.dynamic_viscosity
             * ureg.convert(m.vel[x, sol], 'cm', 'm')
             / m.dh[sol] ** 2,
             'Pa',
