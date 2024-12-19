@@ -3131,7 +3131,7 @@ def build_model():
         Pyomo.Expression
             Total Net Power Output active RU [kW] as the sum of the net power output of the RED units
         """
-        scale_factor = 1e-2
+        scale_factor = 1e2
         return ureg.convert(sum(m.NP[ru] * scale_factor for ru in m.RU), 'W', 'kW')
 
     @m.Expression(
