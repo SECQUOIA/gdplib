@@ -269,6 +269,17 @@ def build_model():
         doc='Feed streams temperature [K]', initialize=T.loc[0].values[0], mutable=True
     )
 
+    m.temperature_coeff = pyo.Param(
+        doc='Temperature correction factor [-] of the solution conductivity',
+        default=0.02,
+        initialize=0.02,
+    )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
+    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02 K-1.
+
+    m.dynamic_viscosity = pyo.Param(
+        doc='Dynamic viscosity of the solution [Pa s]', default=0.001, initialize=0.001
+    )
+
     m.pump_eff = pyo.Param(doc='Pump efficiency [-]', default=0.75, initialize=0.75)
 
     # =============================================================================
@@ -553,13 +564,6 @@ def build_model():
         default=1,
         initialize=stack_param.vel_init.values[0],
     )
-
-    m.temperature_coeff = pyo.Param(
-        doc='Temperature correction factor [-] of the solution conductivity',
-        default=0.02,
-        initialize=0.02,
-    )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
-    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02 K-1.
 
     # =============================================================================
     #     Variables
@@ -895,7 +899,7 @@ def build_model():
         hours = 8760  # hours per year
         PP = sum(
             48
-            * ureg.convert(1, 'cP', 'Pa*s')
+            * m.dynamic_viscosity
             * ureg.convert(m.vel_init[sol], 'cm', 'm')
             / m.dh[sol] ** 2
             * m.L
@@ -927,7 +931,7 @@ def build_model():
         hours = 8760  # hours per year
         PP = sum(
             48
-            * ureg.convert(1, 'cP', 'Pa*s')
+            * m.dynamic_viscosity
             * ureg.convert(m.vel_ub[sol], 'cm', 'm')
             / m.dh[sol] ** 2
             * m.L
@@ -1446,7 +1450,7 @@ def build_model():
             # Pressure drop calculation with the Darcy-Weisbach equation with spacer correction
             delta_p = pyo.value(
                 48
-                * ureg.convert(1, 'cP', 'Pa*s')
+                * m.dynamic_viscosity
                 * ureg.convert(m.vel_init[sol], 'cm', 'm')
                 / m.dh[sol] ** 2
                 * m.L
@@ -1912,7 +1916,7 @@ def build_model():
             bounds=lambda _, x, sol: (
                 ureg.convert(
                     -48
-                    * ureg.convert(1, 'cP', 'Pa*s')
+                    * m.dynamic_viscosity
                     * ureg.convert(m.vel_ub[sol], 'cm', 'm')
                     / m.dh[sol] ** 2
                     * m.L,
@@ -1926,7 +1930,7 @@ def build_model():
                 if x == ru.length_domain.first()
                 else ureg.convert(
                     -48
-                    * ureg.convert(1, 'cP', 'Pa*s')
+                    * m.dynamic_viscosity
                     * ureg.convert(m.vel_init[sol], 'cm', 'm')
                     / m.dh[sol] ** 2
                     * m.L,
@@ -1947,7 +1951,7 @@ def build_model():
             domain=pyo.NonNegativeReals,
             initialize=sum(
                 48
-                * ureg.convert(1, 'cP', 'Pa*s')
+                * m.dynamic_viscosity
                 * ureg.convert(m.vel_init[sol], 'cm', 'm')
                 / m.dh[sol] ** 2
                 * m.L
@@ -1960,7 +1964,7 @@ def build_model():
                 None,
                 sum(
                     48
-                    * ureg.convert(1, 'cP', 'Pa*s')
+                    * m.dynamic_viscosity
                     * ureg.convert(m.vel_ub[sol], 'cm', 'm')
                     / m.dh[sol] ** 2
                     * m.L
@@ -2511,7 +2515,7 @@ def build_model():
             """
             return ureg.convert(
                 48
-                * ureg.convert(1, 'cP', 'Pa*s')
+                * m.dynamic_viscosity
                 * ureg.convert(ru.vel[x, sol], 'cm', 'm')
                 / m.dh[sol] ** 2,
                 'Pa',
