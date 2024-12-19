@@ -92,7 +92,7 @@ def build_model():
     Pyomo.ConcreteModel
         RED GDP model
     """
-    # For the data from the data.xlsx file, m_stack is the solution of the RED stack model that maximizes the power output of the RED stack.
+    # m_stack stores the solution of the RED stack model that maximizes the net power output of the RED stack for a given feed flow rate, concentration, and temperature, and stack parameters.
     # The resulting gross power output is used to initialize and set the upper bound of the NP variable in the RED GDP model.
     m_stack = build_REDstack()
 
@@ -639,11 +639,6 @@ def build_model():
         The RED units upper bound flow rate is equal to the maximum flow rate within the RED unit channels, ub.
         ub is calculated as the product of the maximum velocity, the cross-sectional area, and the number of cell pairs.
         """
-        ub = pyo.value(
-            ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h')
-            * m._cross_area[sol]
-            * m.cell_pairs
-        )
         ub = pyo.value(
             ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h')
             * m._cross_area[sol]
@@ -1282,9 +1277,7 @@ def build_model():
             """
             tmp = list(ru.length_domain)  # Get the length domain
             idx = ru.length_domain.ord(x) - 1  # Get the index of the length domain
-            if (
-                idx != 0
-            ):  # idx == 0 Needed since '-1' is considered a valid index in Python
+            if idx != 0:
                 return (
                     dv(ru, tmp[idx], sol)
                     - 1
@@ -1497,12 +1490,16 @@ def build_model():
         ru.Ecpx = pyo.Var(
             ru.length_domain,
             domain=pyo.NonNegativeReals,
-            initialize=lambda _, x: 2e3
-            * m.gas_constant
-            * m.T
-            / m.faraday_constant
-            * m.iems_permsel_avg
-            * (pyo.log(ru.conc_mol_x[x, 'HC']) - pyo.log(ru.conc_mol_x[x, 'LC'])),
+            initialize=lambda _, x: ureg.convert(
+                2
+                * m.gas_constant
+                * m.T
+                / m.faraday_constant
+                * m.iems_permsel_avg
+                * (pyo.log(ru.conc_mol_x[x, 'HC']) - pyo.log(ru.conc_mol_x[x, 'LC'])),
+                'V',
+                'mV',
+            ),
             bounds=lambda ru, x: (
                 None,
                 ureg.convert(
@@ -1761,8 +1758,8 @@ def build_model():
             * ureg.convert(_int_trap_rule(ru.length_domain, ru.Rcpx), 'cm**2', 'm**2')
             / m.Aiem,
             bounds=(
-                ureg.convert(m.cell_pairs * ru.Rcpx[0].lb, 'cm**2', 'm**2') / m.Aiem,
-                ureg.convert(m.cell_pairs * ru.Rcpx[0].ub, 'cm**2', 'm**2') / m.Aiem,
+                m.cell_pairs * ureg.convert(ru.Rcpx[0].lb, 'cm**2', 'm**2') / m.Aiem,
+                m.cell_pairs * ureg.convert(ru.Rcpx[0].ub, 'cm**2', 'm**2') / m.Aiem,
             ),
             doc="RED stack Internal resistance [ohm]",
         )
@@ -1896,21 +1893,21 @@ def build_model():
 
         ru.flow_vol_dx = pyo.Var(
             ru.flow_vol_x.index_set(),
-            doc="Partial derivative of volumetric flow wrt to normalized length",
+            doc="Derivative of volumetric flow wrt to normalized length",
             bounds=(-1.0, 1.0),
             initialize=0,
         )
 
         ru.conc_mol_dx = pyo.Var(
             ru.conc_mol_x.index_set(),
-            doc="Partial derivative of molar concentration wrt to normalized length",
+            doc="Derivative of molar concentration wrt to normalized length",
             bounds=(-1.0, 1.0),
             initialize=0,
         )
 
         ru.pressure_dx = pyo.Var(
             ru.pressure_x.index_set(),
-            doc="Partial derivative of pressure wrt to normalized length",
+            doc="Derivative of pressure wrt to normalized length",
             domain=pyo.NonPositiveReals,
             # [mbar]
             bounds=lambda _, x, sol: (
@@ -2092,8 +2089,9 @@ def build_model():
                 Channel's resistance per cell pair per unit length
             """
             return (
-                ru.Rsol[x, sol] * ru.ksol_T[x, sol]
-                == m.spacer_thickness[sol] / m.spacer_porosity[sol] ** 2 * 1e4
+                ru.Rsol[x, sol] * ureg.convert(ru.ksol_T[x, sol], 'S/m', 'S/cm')
+                == ureg.convert(m.spacer_thickness[sol], 'm', 'cm')
+                / m.spacer_porosity[sol] ** 2
             )
 
         @ru.Constraint(
@@ -2116,11 +2114,8 @@ def build_model():
             Pyomo.Constraint
                 Internal resistance per cell pair per unit length
             """
-            return ru.Rcpx[x] == ureg.convert(
-                sum(ru.Rsol[x, sol] for sol in m.SOL)
-                + sum(m.iems_resistance[iem] for iem in m.iem),
-                'm',
-                'cm',
+            return ru.Rcpx[x] == sum(ru.Rsol[x, sol] for sol in m.SOL) + ureg.convert(
+                sum(m.iems_resistance[iem] for iem in m.iem), 'm**2', 'cm**2'
             )
 
         @ru.Constraint(
