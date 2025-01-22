@@ -135,16 +135,40 @@ def build_model(approximation='quadratic'):
 
     m.mixers = pyo.Set(doc="Set of mixers", within=m.units, initialize=['dm'] | m.inTU)
 
+    def _streams_filter(m, val):
+        """
+        This function filters the streams based on one-to-one port pairing.
+        The expression re.findall(r'\d+', x) returns a list of all the digits in the string x.
+        The expression re.findall(r'\d+', y) returns a list of all the digits in the string y.
+        The function returns True if the ports digits are the same, False otherwise.
+
+        Parameters
+        ----------
+        m : Pyomo concrete model
+            GDP model for water network design
+        val : tuple
+            Tuple of inlet and outlet ports, x are the source ports and y are the sink ports
+
+        Returns
+        -------
+        Boolean
+            True if the ports digits are the same, False otherwise
+        """
+        x, y = val
+        return re.findall(r'\d+', x) == re.findall(r'\d+', y)
+
     m.MU_TU_streams = pyo.Set(
         doc="MU to TU 1-1 port pairing",
         initialize=m.inTU * m.TU,
-        filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
+        filter=_streams_filter,
+        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.TU_SU_streams = pyo.Set(
         doc="TU to SU 1-1 port pairing",
         initialize=m.TU * m.outTU,
-        filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
+        filter=_streams_filter,
+        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.TU_streams = pyo.Set(
@@ -155,7 +179,8 @@ def build_model(approximation='quadratic'):
     m.feed_streams = pyo.Set(
         doc="Feed to FSU 1-1 port pairing",
         initialize=m.feed * m.FSU,
-        filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
+        filter=_streams_filter,
+        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.streams = pyo.Set(
@@ -168,17 +193,65 @@ def build_model(approximation='quadratic'):
         | [('dm', 'sink')],
     )
 
+    def _from_stream_filter(m, val):
+        """
+        This function filters the streams based on the ports.
+        The function returns True if the inlet port is a splitter or the inlet and outlet ports are the discharge mixer and the sink, respectively, False otherwise.
+
+        Parameters
+        ----------
+        m : Pyomo concrete model
+            GDP model for water network design
+        x : str
+            The source port
+        y : str
+            The sink port
+
+        Returns
+        -------
+        Boolean
+            True if the inlet port is a splitter or the inlet and outlet ports are the discharge mixer and the sink, respectively, False otherwise
+        """
+        x, y = val
+        return x in m.splitters or (x, y) == ('dm', 'sink')
+
     m.from_splitters = pyo.Set(
         doc='Streams from splitters',
         within=m.streams,
         initialize=m.streams,
-        filter=lambda _, x, y: x in m.splitters or (x, y) == ('dm', 'sink'),
-    )
+        filter=_from_stream_filter,
+        # filter=lambda _, x, y: x in m.splitters or (x, y) == ('dm', 'sink'),
+    )  # Update the 'filter=' callback to match the signature (block, value).
+
+    def _to_stream_filter(m, val):
+        """
+        This function filters the streams based on the ports.
+        The function returns True if the outlet port is a splitter or the inlet and outlet ports are part of the feed streams, False otherwise.
+        The feed streams are the streams from the feed splitters to the mixers.
+
+        Parameters
+        ----------
+        m : Pyomo concrete model
+            GDP model for water network design
+        x : str
+            The source port
+        y : str
+            The sink port
+
+        Returns
+        -------
+        Boolean
+            True if the outlet port is a splitter or the inlet and outlet ports are part of the feed streams, False otherwise
+        """
+        x, y = val
+        return y in m.splitters or (x, y) in m.feed_streams
+
     m.to_splitters = pyo.Set(
         doc='Streams to splitters',
         within=m.streams,
         initialize=m.streams,
-        filter=lambda _, x, y: y in m.splitters or (x, y) in m.feed_streams,
+        filter=_to_stream_filter,
+        # filter=lambda _, x, y: y in m.splitters or (x, y) in m.feed_streams,
     )
 
     # =============================================================================
@@ -490,16 +563,64 @@ def build_model(approximation='quadratic'):
 
     for unit in m.TU:
         unit_exists = m.unit_exists[unit]
+
+        def _unit_exists_streams_filter(unit_exists, val):
+            """
+            This function filters the streams based on the ports.
+            The function returns True if the ports are the treatment unit, False otherwise.
+
+            Parameters
+            ----------
+            unit_exists : Pyomo disjunct
+                Disjunct for the active treatment unit
+            x : str
+                The source port
+            y : str
+                The sink port
+
+            Returns
+            -------
+            Boolean
+                True if either the source or destination port is the treatment unit, False otherwise
+            """
+            x, y = val
+            return x == unit or y == unit
+
         unit_exists.streams = pyo.Set(
             doc="Streams in active TU",
             initialize=m.TU_streams,
-            filter=lambda _, x, y: x == unit or y == unit,
-        )
+            filter=_unit_exists_streams_filter,
+            # filter=lambda _, x, y: x == unit or y == unit,
+        )  # Update the 'filter=' callback to match the signature (block, value).
+
+        def _unit_exists_onetoone_filter(unit_exists, val):
+            """
+            This function filters the streams based on the ports.
+            The function returns True if the ports are the same and the destination port is the treatment unit, False otherwise.
+
+            Parameters
+            ----------
+            unit_exists : Pyomo disjunct
+                Disjunct for the active treatment unit
+            x : str
+                The source port
+            y : str
+                The sink port
+
+            Returns
+            -------
+            Boolean
+                True if the port if source and destination are the same and the destination is the treatment unit, False otherwise
+            """
+            x, y = val
+            return re.findall(r'\d+', x) == re.findall(r'\d+', y) and y == unit
+
         unit_exists.MU_TU_streams = pyo.Set(
             doc="MU to TU 1-1 port pairing",
             initialize=m.inTU * m.TU,
-            filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y)
-            and y == unit,
+            filter=_unit_exists_onetoone_filter,
+            # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y)
+            # and y == unit,
         )
 
         unit_exists.flow = pyo.Var(
