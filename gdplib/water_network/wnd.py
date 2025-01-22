@@ -16,7 +16,8 @@ The instance incorporates two approximations of the concave cost term (piecewise
 The user can create each instance like this:
 
 build_model(approximation='none')
-build_model(approximation='quadratic')
+build_model(approximation='quadratic_nonzero_origin')
+build_model(approximation='quadratic_zero_origin')
 build_model(approximation='piecewise')
 
 The general model description can be summarized as follows:
@@ -83,7 +84,7 @@ T = pd.read_csv(os.path.join(wnd_dir, "T.csv"), index_col=0)
 # TU mass balances in the disjunct.
 
 
-def build_model(approximation='quadratic'):
+def build_model(approximation='none'):
     """
     Builds a Pyomo ConcreteModel for Water Network Design.
     Generates a Pyomo model for the water network design problem with the specified approximation for the capital cost term of the active treatment units.
@@ -300,7 +301,6 @@ def build_model(approximation='quadratic'):
 
     # Concentration of component j in feedstream i
     for j, i, k in m.contaminant * (m.FSU * ['dm'] | m.FSU * m.inTU | m.feed_streams):
-        # print(j,i,k)
         if i in m.feed:
             m.conc[j, i, k].fix(feed.loc[k, j])
         else:
@@ -533,7 +533,7 @@ def build_model(approximation='quadratic'):
     @m.Disjunction(m.TU)
     def unit_exists_or_not(m, unit):
         '''Disjunction: Unit exists or not.
-        This disjunctiont specifies if the treatment unit exists or does not exist.
+        This disjunction specifies if the treatment unit exists or does not exist.
 
         Parameters
         ----------
@@ -700,7 +700,7 @@ def build_model(approximation='quadratic'):
         ]
         # Setting inlet flowrate bounds for the active treatment units.
         unit_exists.flow_bound = pyo.ConstraintList(
-            doc='Flowrate bounds to/from active RU'
+            doc='Flowrate bounds to/from active TU'
         )
         [
             unit_exists.flow_bound.add(
@@ -907,10 +907,14 @@ def build_model(approximation='quadratic'):
         @unit_exists.Constraint(doc='Cost active TU')
         def costTU(unit_exists):
             """Constraint: Cost of active treatment unit.
-            The constraint ensures that the cost of the active treatment unit is equal to the sum of an investment cost which is proportional to the total flow to 0.7 exponent and an operating cost which is proportional to the flow.
-            If approximation is quadratic, the investment cost is approximated by a quadratic function of the flow rate.
+            The constraint defines the cost of the active treatment unit as the sum of an investment cost and an operating cost.
+            The investment cost is proportional to the total flow raised to the power of 0.7 and the operating cost is proportional to the flow.
+
+            Based on the approximation given, the concave investment cost is calculated as follows:
+            If approximation is quadratic zero origin, the investment cost is approximated by a quadratic function of the flow rate with the origin at zero.
+            If approximation is quadratic nonzero origin, the investment cost is approximated by a quadratic function of the flow rate with origin different from zero. This approximation has a better fit than the quadratic zero origin.
             If approximation is piecewise, the investment cost is approximated by a piecewise linear function of the flow rate.
-            If approximation is none, the investment cost is equal to the flow rate to the 0.7 exponent, the original concave function.
+            If approximation is none, the investment cost is equal to the flow rate raised to 0.7, the original concave function.
 
             Parameters
             ----------
@@ -923,9 +927,9 @@ def build_model(approximation='quadratic'):
                 The constraint that the cost of the active treatment unit is equal to the sum of an investment cost and an operating cost.
             """
             for mt, t in unit_exists.streams:
-                if approximation == 'quadratic':
+                if approximation == 'quadratic_zero_origin':
                     new_var = unit_exists.cost_var[unit]
-                elif approximation == 'quadratic2':
+                elif approximation == 'quadratic_nonzero_origin':
                     new_var = _g(unit_exists.flow[mt, unit])
                 elif approximation == 'piecewise':
                     new_var = unit_exists.cost_var[mt, unit]
