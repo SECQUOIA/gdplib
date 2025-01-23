@@ -162,14 +162,12 @@ def build_model(approximation='none'):
         doc="MU to TU 1-1 port pairing",
         initialize=m.inTU * m.TU,
         filter=_streams_filter,
-        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.TU_SU_streams = pyo.Set(
         doc="TU to SU 1-1 port pairing",
         initialize=m.TU * m.outTU,
         filter=_streams_filter,
-        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.TU_streams = pyo.Set(
@@ -181,7 +179,6 @@ def build_model(approximation='none'):
         doc="Feed to FSU 1-1 port pairing",
         initialize=m.feed * m.FSU,
         filter=_streams_filter,
-        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.streams = pyo.Set(
@@ -221,8 +218,7 @@ def build_model(approximation='none'):
         within=m.streams,
         initialize=m.streams,
         filter=_from_stream_filter,
-        # filter=lambda _, x, y: x in m.splitters or (x, y) == ('dm', 'sink'),
-    )  # Update the 'filter=' callback to match the signature (block, value).
+    )
 
     def _to_stream_filter(m, val):
         """
@@ -252,7 +248,6 @@ def build_model(approximation='none'):
         within=m.streams,
         initialize=m.streams,
         filter=_to_stream_filter,
-        # filter=lambda _, x, y: y in m.splitters or (x, y) in m.feed_streams,
     )
 
     # =============================================================================
@@ -590,8 +585,7 @@ def build_model(approximation='none'):
             doc="Streams in active TU",
             initialize=m.TU_streams,
             filter=_unit_exists_streams_filter,
-            # filter=lambda _, x, y: x == unit or y == unit,
-        )  # Update the 'filter=' callback to match the signature (block, value).
+        )
 
         def _unit_exists_onetoone_filter(unit_exists, val):
             """
@@ -619,8 +613,6 @@ def build_model(approximation='none'):
             doc="MU to TU 1-1 port pairing",
             initialize=m.inTU * m.TU,
             filter=_unit_exists_onetoone_filter,
-            # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y)
-            # and y == unit,
         )
 
         unit_exists.flow = pyo.Var(
