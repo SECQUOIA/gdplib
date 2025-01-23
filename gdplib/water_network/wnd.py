@@ -16,7 +16,8 @@ The instance incorporates two approximations of the concave cost term (piecewise
 The user can create each instance like this:
 
 build_model(approximation='none')
-build_model(approximation='quadratic')
+build_model(approximation='quadratic_nonzero_origin')
+build_model(approximation='quadratic_zero_origin')
 build_model(approximation='piecewise')
 
 The general model description can be summarized as follows:
@@ -83,7 +84,7 @@ T = pd.read_csv(os.path.join(wnd_dir, "T.csv"), index_col=0)
 # TU mass balances in the disjunct.
 
 
-def build_model(approximation='quadratic'):
+def build_model(approximation='none'):
     """
     Builds a Pyomo ConcreteModel for Water Network Design.
     Generates a Pyomo model for the water network design problem with the specified approximation for the capital cost term of the active treatment units.
@@ -135,16 +136,38 @@ def build_model(approximation='quadratic'):
 
     m.mixers = pyo.Set(doc="Set of mixers", within=m.units, initialize=['dm'] | m.inTU)
 
+    def _streams_filter(m, val):
+        """
+        This function filters the streams based on one-to-one port pairing.
+        The expression re.findall(r'\d+', x) returns a list of all the digits in the string x.
+        The expression re.findall(r'\d+', y) returns a list of all the digits in the string y.
+        The function returns True if the ports digits are the same, False otherwise.
+
+        Parameters
+        ----------
+        m : Pyomo concrete model
+            GDP model for water network design
+        val : tuple
+            Tuple of inlet and outlet ports, x are the source ports and y are the sink ports
+
+        Returns
+        -------
+        Boolean
+            True if the ports digits are the same, False otherwise
+        """
+        x, y = val
+        return re.findall(r'\d+', x) == re.findall(r'\d+', y)
+
     m.MU_TU_streams = pyo.Set(
         doc="MU to TU 1-1 port pairing",
         initialize=m.inTU * m.TU,
-        filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
+        filter=_streams_filter,
     )
 
     m.TU_SU_streams = pyo.Set(
         doc="TU to SU 1-1 port pairing",
         initialize=m.TU * m.outTU,
-        filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
+        filter=_streams_filter,
     )
 
     m.TU_streams = pyo.Set(
@@ -155,7 +178,7 @@ def build_model(approximation='quadratic'):
     m.feed_streams = pyo.Set(
         doc="Feed to FSU 1-1 port pairing",
         initialize=m.feed * m.FSU,
-        filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
+        filter=_streams_filter,
     )
 
     m.streams = pyo.Set(
@@ -168,17 +191,63 @@ def build_model(approximation='quadratic'):
         | [('dm', 'sink')],
     )
 
+    def _from_stream_filter(m, val):
+        """
+        This function filters the streams based on the ports.
+        The function returns True if the inlet port is a splitter or the inlet and outlet ports are the discharge mixer and the sink, respectively, False otherwise.
+
+        Parameters
+        ----------
+        m : Pyomo concrete model
+            GDP model for water network design
+        x : str
+            The source port
+        y : str
+            The sink port
+
+        Returns
+        -------
+        Boolean
+            True if the inlet port is a splitter or the inlet and outlet ports are the discharge mixer and the sink, respectively, False otherwise
+        """
+        x, y = val
+        return x in m.splitters or (x, y) == ('dm', 'sink')
+
     m.from_splitters = pyo.Set(
         doc='Streams from splitters',
         within=m.streams,
         initialize=m.streams,
-        filter=lambda _, x, y: x in m.splitters or (x, y) == ('dm', 'sink'),
+        filter=_from_stream_filter,
     )
+
+    def _to_stream_filter(m, val):
+        """
+        This function filters the streams based on the ports.
+        The function returns True if the outlet port is a splitter or the inlet and outlet ports are part of the feed streams, False otherwise.
+        The feed streams are the streams from the feed splitters to the mixers.
+
+        Parameters
+        ----------
+        m : Pyomo concrete model
+            GDP model for water network design
+        x : str
+            The source port
+        y : str
+            The sink port
+
+        Returns
+        -------
+        Boolean
+            True if the outlet port is a splitter or the inlet and outlet ports are part of the feed streams, False otherwise
+        """
+        x, y = val
+        return y in m.splitters or (x, y) in m.feed_streams
+
     m.to_splitters = pyo.Set(
         doc='Streams to splitters',
         within=m.streams,
         initialize=m.streams,
-        filter=lambda _, x, y: y in m.splitters or (x, y) in m.feed_streams,
+        filter=_to_stream_filter,
     )
 
     # =============================================================================
@@ -227,7 +296,6 @@ def build_model(approximation='quadratic'):
 
     # Concentration of component j in feedstream i
     for j, i, k in m.contaminant * (m.FSU * ['dm'] | m.FSU * m.inTU | m.feed_streams):
-        # print(j,i,k)
         if i in m.feed:
             m.conc[j, i, k].fix(feed.loc[k, j])
         else:
@@ -460,7 +528,7 @@ def build_model(approximation='quadratic'):
     @m.Disjunction(m.TU)
     def unit_exists_or_not(m, unit):
         '''Disjunction: Unit exists or not.
-        This disjunctiont specifies if the treatment unit exists or does not exist.
+        This disjunction specifies if the treatment unit exists or does not exist.
 
         Parameters
         ----------
@@ -490,16 +558,61 @@ def build_model(approximation='quadratic'):
 
     for unit in m.TU:
         unit_exists = m.unit_exists[unit]
+
+        def _unit_exists_streams_filter(unit_exists, val):
+            """
+            This function filters the streams based on the ports.
+            The function returns True if the ports are the treatment unit, False otherwise.
+
+            Parameters
+            ----------
+            unit_exists : Pyomo disjunct
+                Disjunct for the active treatment unit
+            x : str
+                The source port
+            y : str
+                The sink port
+
+            Returns
+            -------
+            Boolean
+                True if either the source or destination port is the treatment unit, False otherwise
+            """
+            x, y = val
+            return x == unit or y == unit
+
         unit_exists.streams = pyo.Set(
             doc="Streams in active TU",
             initialize=m.TU_streams,
-            filter=lambda _, x, y: x == unit or y == unit,
+            filter=_unit_exists_streams_filter,
         )
+
+        def _unit_exists_onetoone_filter(unit_exists, val):
+            """
+            This function filters the streams based on the ports.
+            The function returns True if the ports are the same and the destination port is the treatment unit, False otherwise.
+
+            Parameters
+            ----------
+            unit_exists : Pyomo disjunct
+                Disjunct for the active treatment unit
+            x : str
+                The source port
+            y : str
+                The sink port
+
+            Returns
+            -------
+            Boolean
+                True if the port if source and destination are the same and the destination is the treatment unit, False otherwise
+            """
+            x, y = val
+            return re.findall(r'\d+', x) == re.findall(r'\d+', y) and y == unit
+
         unit_exists.MU_TU_streams = pyo.Set(
             doc="MU to TU 1-1 port pairing",
             initialize=m.inTU * m.TU,
-            filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y)
-            and y == unit,
+            filter=_unit_exists_onetoone_filter,
         )
 
         unit_exists.flow = pyo.Var(
@@ -579,7 +692,7 @@ def build_model(approximation='quadratic'):
         ]
         # Setting inlet flowrate bounds for the active treatment units.
         unit_exists.flow_bound = pyo.ConstraintList(
-            doc='Flowrate bounds to/from active RU'
+            doc='Flowrate bounds to/from active TU'
         )
         [
             unit_exists.flow_bound.add(
@@ -786,10 +899,14 @@ def build_model(approximation='quadratic'):
         @unit_exists.Constraint(doc='Cost active TU')
         def costTU(unit_exists):
             """Constraint: Cost of active treatment unit.
-            The constraint ensures that the cost of the active treatment unit is equal to the sum of an investment cost which is proportional to the total flow to 0.7 exponent and an operating cost which is proportional to the flow.
-            If approximation is quadratic, the investment cost is approximated by a quadratic function of the flow rate.
+            The constraint defines the cost of the active treatment unit as the sum of an investment cost and an operating cost.
+            The investment cost is proportional to the total flow raised to the power of 0.7 and the operating cost is proportional to the flow.
+
+            Based on the approximation given, the concave investment cost is calculated as follows:
+            If approximation is quadratic zero origin, the investment cost is approximated by a quadratic function of the flow rate with the origin at zero.
+            If approximation is quadratic nonzero origin, the investment cost is approximated by a quadratic function of the flow rate with origin different from zero. This approximation has a better fit than the quadratic zero origin.
             If approximation is piecewise, the investment cost is approximated by a piecewise linear function of the flow rate.
-            If approximation is none, the investment cost is equal to the flow rate to the 0.7 exponent, the original concave function.
+            If approximation is none, the investment cost is equal to the flow rate raised to 0.7, the original concave function.
 
             Parameters
             ----------
@@ -802,9 +919,9 @@ def build_model(approximation='quadratic'):
                 The constraint that the cost of the active treatment unit is equal to the sum of an investment cost and an operating cost.
             """
             for mt, t in unit_exists.streams:
-                if approximation == 'quadratic':
+                if approximation == 'quadratic_zero_origin':
                     new_var = unit_exists.cost_var[unit]
-                elif approximation == 'quadratic2':
+                elif approximation == 'quadratic_nonzero_origin':
                     new_var = _g(unit_exists.flow[mt, unit])
                 elif approximation == 'piecewise':
                     new_var = unit_exists.cost_var[mt, unit]
