@@ -1,23 +1,23 @@
 """
 HDA_GDP_gdpopt.py
-This model describes the profit maximization of a Hydrodealkylation of Toluene process, first presented in Reference [1], and later implemented as a GDP in Reference [2]. The MINLP formulation of this problem is available in GAMS, Reference [3]. 
+This model describes the profit maximization of a Hydrodealkylation of Toluene process, first presented in Reference [1], and later implemented as a GDP in Reference [2]. The MINLP formulation of this problem is available in GAMS, Reference [3].
 
-The chemical plant performed the hydro-dealkylation of toluene into benzene and methane. The flowsheet model was used to make decisions on choosing between alternative process units at various stages of the process. The resulting model is GDP model. The disjunctions in the model include: 
-    1. Inlet purify selection at feed 
-    2. Reactor operation mode selection (adiabatic / isothermal) 
+The chemical plant performed the hydro-dealkylation of toluene into benzene and methane. The flowsheet model was used to make decisions on choosing between alternative process units at various stages of the process. The resulting model is GDP model. The disjunctions in the model include:
+    1. Inlet purify selection at feed
+    2. Reactor operation mode selection (adiabatic / isothermal)
     3. Vapor recovery methane purge / recycle with membrane
-    4. Vapor recovery hydrogen recycle 
-    5. Liquid separation system methane stabilizing via column or flash drum 
+    4. Vapor recovery hydrogen recycle
+    5. Liquid separation system methane stabilizing via column or flash drum
     6. Liquid separation system toluene recovery via column or flash drum
 
-The model enforces constraints to ensure that the mass and energy balances are satisfied, the purity of the products is within the required limits, the recovery specification are met, and the temperature and pressure conditions in the process units are maintained within the operational limits. 
+The model enforces constraints to ensure that the mass and energy balances are satisfied, the purity of the products is within the required limits, the recovery specification are met, and the temperature and pressure conditions in the process units are maintained within the operational limits.
 
-The objective of the model is to maximize the profit by determining the optimal process configuration and operating conditions. The decision variables include the number of trays in the absorber and distillation column, the reflux ratio, the pressure in the distillation column, the temperature and pressure in the flash drums, the heating requirement in the furnace, the electricity requirement in the compressor, the heat exchange in the coolers and heaters, the surface area in the membrane separators, the temperature and pressure in the mixers, the temperature and pressure in the reactors, and the volume and rate constant in the reactors. 
+The objective of the model is to maximize the profit by determining the optimal process configuration and operating conditions. The decision variables include the number of trays in the absorber and distillation column, the reflux ratio, the pressure in the distillation column, the temperature and pressure in the flash drums, the heating requirement in the furnace, the electricity requirement in the compressor, the heat exchange in the coolers and heaters, the surface area in the membrane separators, the temperature and pressure in the mixers, the temperature and pressure in the reactors, and the volume and rate constant in the reactors.
 
 References:
     [1] James M Douglas (1988). Conceptual Design of Chemical Processes, McGraw-Hill. ISBN-13: 978-0070177628
     [2] G.R. Kocis, and I.E. Grossmann (1989). Computational Experience with DICOPT Solving MINLP Problems in Process Synthesis. Computers and Chemical Engineering 13, 3, 307-315. https://doi.org/10.1016/0098-1354(89)85008-2
-    [3] GAMS Development Corporation (2023). Hydrodealkylation Process. Available at: https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_hda.html 
+    [3] GAMS Development Corporation (2023). Hydrodealkylation Process. Available at: https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_hda.html
 """
 
 import math
