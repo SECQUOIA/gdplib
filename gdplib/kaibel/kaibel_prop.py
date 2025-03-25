@@ -1,4 +1,4 @@
-""" Properties of the system """
+"""Properties of the system"""
 
 from pyomo.environ import ConcreteModel
 

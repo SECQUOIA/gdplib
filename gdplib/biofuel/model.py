@@ -4,7 +4,7 @@ This model describes a cost minimization for a multi-period biofuel processing n
 
 The model enforces constraints to ensure that raw material supplies do not exceed available amounts, product shipments meet market demands exactly, and production at each site matches outgoing shipments and available resources.
 It also optimizes transportation costs by managing both variable and fixed costs associated with active transportation routes.
-The disjunctions in the model define the operational modes for facility sites (modular, conventional, or inactive) and the activity status of supply and product routes (active or inactive). 
+The disjunctions in the model define the operational modes for facility sites (modular, conventional, or inactive) and the activity status of supply and product routes (active or inactive).
 These elements allow the model to simulate different operational scenarios and strategic decisions, optimizing the network's layout and logistics based on economic and market conditions.
 The objective of the model is to optimize the network layout and production allocation to minimize total costs, which include setup and teardown of facilities, production costs, and transportation costs.
 
