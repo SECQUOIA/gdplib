@@ -1,0 +1,10 @@
+| Component             |   Number |
+|:----------------------|---------:|
+| variables             |       10 |
+| binary_variables      |        6 |
+| integer_variables     |        0 |
+| continuous_variables  |        4 |
+| disjunctions          |        3 |
+| disjuncts             |        6 |
+| constraints           |        9 |
+| nonlinear_constraints |        0 |
