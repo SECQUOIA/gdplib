@@ -1,7 +1,7 @@
-""" Kaibel Column model: GDP formulation.
+"""Kaibel Column model: GDP formulation.
 
 The solution requires the specification of certain parameters, such as the number trays, feed location, etc., and an initialization procedure, which consists of the next three steps:
-(i) a preliminary design of the separation considering a sequence of indirect continuous distillation columns (CDCs) to obtain the minimum number of stages with Fenske Equation in the function initialize_kaibel in kaibel_init.py 
+(i) a preliminary design of the separation considering a sequence of indirect continuous distillation columns (CDCs) to obtain the minimum number of stages with Fenske Equation in the function initialize_kaibel in kaibel_init.py
 (ii) flash calculation for the feed with the function calc_side_feed_flash in kaibel_side_flash.py
 (iii) calculation of variable bounds by solving the NLP problem.
 
