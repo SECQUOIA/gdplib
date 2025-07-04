@@ -66,10 +66,10 @@ def build_REDstack():
 
     m.gas_constant = physical_constants['molar gas constant'][
         0
-    ]  # Ideal gas constant [J mol-1 K-1]
+    ]  # Ideal gas constant [J/mol/K]
     m.faraday_constant = physical_constants['Faraday constant'][
         0
-    ]  # Faraday’s Constant [C mol-1] [A s mol-1]
+    ]  # Faraday’s Constant [C/mol] [A*s/mol]
     m.Tref = 298.15  # Reference temperature [K]
 
     m.T = pyo.Param(
@@ -84,7 +84,7 @@ def build_REDstack():
         default=0.02,
         initialize=0.02,
     )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
-    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02 K-1.
+    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02/K.
 
     m.dynamic_viscosity = pyo.Param(
         doc='Dynamic viscosity of the solution [Pa s]', default=1e-3, initialize=1e-3
@@ -183,7 +183,7 @@ def build_REDstack():
     )
 
     m.diff_nacl = pyo.Param(
-        doc="NaCl Membranes' diffusivity [m2 s-1]",
+        doc="NaCl Membranes' diffusivity [m2/s]",
         within=pyo.NonNegativeReals,
         default=4.52e-12,
         initialize=4.52e-12,
@@ -191,18 +191,18 @@ def build_REDstack():
 
     m.vel_ub = pyo.Param(
         m.SOL,
-        doc='Max. linear crossflow velocity [cm s-1]',
+        doc='Max. linear crossflow velocity [cm/s]',
         default=3.0,
         initialize=stack_param.vel_ub.values[0],
     )
 
     m.vel_lb = pyo.Param(
-        m.SOL, doc='Min. linear crossflow velocity [cm s-1]', initialize=0.01
+        m.SOL, doc='Min. linear crossflow velocity [cm/s]', initialize=0.01
     )
 
     m.vel_init = pyo.Param(
         m.SOL,
-        doc='Min. linear crossflow velocity [cm s-1]',
+        doc='Min. linear crossflow velocity [cm/s]',
         default=1.0,
         initialize=stack_param.vel_init.values[0],
     )
@@ -350,7 +350,7 @@ def build_REDstack():
         initialize=_flow_vol,
         bounds=_flow_vol_b,
         domain=pyo.NonNegativeReals,
-        doc="Discretized Volumetric Flow Rate [L h-1]",
+        doc="Discretized Volumetric Flow Rate [L/h]",
     )
 
     def _flowrate_ratio_b(m):
@@ -440,7 +440,7 @@ def build_REDstack():
         )
 
     m.conc_mol_eq = pyo.Var(
-        doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol L-1]',
+        doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol/L]',
         initialize=_conc_mol_eq,
         bounds=_conc_mol_eq_b,
         domain=pyo.NonNegativeReals,
@@ -495,7 +495,7 @@ def build_REDstack():
         m.SOL,
         initialize=_conc_molx,
         bounds=_conc_molx_b,
-        doc="Discretized Molar NaCl concentration [mol L-1]",
+        doc="Discretized Molar NaCl concentration [mol/L]",
         domain=pyo.NonNegativeReals,
     )
 
@@ -618,7 +618,7 @@ def build_REDstack():
     m.flow_vol = pyo.Var(
         m.port,
         m.SOL,
-        doc="Volumetric flow rate [m3 h-1]",
+        doc="Volumetric flow rate [m3/h]",
         initialize=lambda _, p, sol: m.cell_pairs
         * ureg.convert(m.vel_init[sol], 'cm/s', 'm/h')
         * m._cross_area[sol],
@@ -680,7 +680,7 @@ def build_REDstack():
     m.conc_mol = pyo.Var(
         m.port,
         m.SOL,
-        doc="Molar concentration [mol L-1]",
+        doc="Molar concentration [mol/L]",
         domain=pyo.NonNegativeReals,
         initialize=_conc_mol,
         bounds=_conc_mol_b,
@@ -790,7 +790,7 @@ def build_REDstack():
         domain=pyo.NonNegativeReals,
         bounds=_ksol_b,
         initialize=_ksol,
-        doc="Sol. conductivity per unit length [S m-1]",
+        doc="Sol. conductivity per unit length [S/m]",
     )
 
     m.ksol_T = pyo.Var(
@@ -803,7 +803,7 @@ def build_REDstack():
         ),
         initialize=lambda _, x, sol: m.ksol[x, sol]
         * (1 + m.temperature_coeff * (m.T - m.Tref)),
-        doc="Temperature corrected sol. conductivity per unit length [S m-1]",
+        doc="Temperature corrected sol. conductivity per unit length [S/m]",
     )
 
     def _Rsol_b(m, x, sol):
@@ -979,7 +979,7 @@ def build_REDstack():
         domain=pyo.NonNegativeReals,
         initialize=lambda _, x: m.Ecpx[x] / (m.Rcpx[x] + m.Rload),
         bounds=lambda _, x: (None, m.Ecpx[x].ub / (m.Rcpx[x].lb + m.Rload.lb)),
-        doc="Electric Current Density [mA cm-2]",
+        doc="Electric Current Density [mA/cm2]",
     )
 
     m.Istack = pyo.Var(
@@ -1039,7 +1039,7 @@ def build_REDstack():
         """
         This function sets the bounds of the conductive molar flux which depends on the discretized electric current density.
         Units:
-        Jcond [mol m-2 h-1], Idx [mA cm-2], faraday_constant [A s mol-1]
+        Jcond [mol/m2/h], Idx [mA/cm2], faraday_constant [A*s/mol]
 
         Parameters
         ----------
@@ -1067,14 +1067,14 @@ def build_REDstack():
         initialize=lambda _, x: ureg.convert(m.Idx[x], 'mA/cm**2', 'A/m**2')
         / ureg.convert(m.faraday_constant, 'A*s/mol', 'A*h/mol'),
         bounds=_Jcond_b,
-        doc="Conductive Molar Flux (electromigration) NaCl per unit length [mol m-2 h-1]",
+        doc="Conductive Molar Flux (electromigration) NaCl per unit length [mol/m2/h]",
     )
 
     def _Jdiff_b(ru, x):
         """
         This function sets the bounds of the diffusive molar flux.
         Units:
-        Jdiff [mol m-2 h-1], diff_nacl [m2 s-1], iems_thickness [m], conc_mol_x [mol L-1]
+        Jdiff [mol/m2/h], diff_nacl [m2/s], iems_thickness [m], conc_mol_x [mol/L]
 
         Parameters
         ----------
@@ -1120,7 +1120,7 @@ def build_REDstack():
             (m.conc_mol_x[0, 'HC'] - m.conc_mol_x[0, 'LC']), 'mol/L', 'mol/m**3'
         ),
         bounds=_Jdiff_b,
-        doc="Diffusive Molar Flux NaCl per unit length [mol m-2 h-1]",
+        doc="Diffusive Molar Flux NaCl per unit length [mol/m2/h]",
     )
 
     m.Ji = pyo.Var(
@@ -1128,7 +1128,7 @@ def build_REDstack():
         domain=pyo.NonNegativeReals,
         initialize=lambda _, x: m.Jcond[x] + m.Jdiff[x],
         bounds=(None, m.Jcond[0].ub + m.Jdiff[0].ub),
-        doc="Molar Flux NaCl per unit length [mol m-2 h-1]",
+        doc="Molar Flux NaCl per unit length [mol/m2/h]",
     )
 
     # =============================================================================
@@ -1179,7 +1179,7 @@ def build_REDstack():
         total_flow = sum(m.flow_vol['rm', sol] for sol in m.SOL)
         return m.phi * total_flow == m.flow_vol['rm', 'LC']
 
-    @m.Constraint(doc="Molar concentration reaching equilibrium [mol L-1]")
+    @m.Constraint(doc="Molar concentration reaching equilibrium [mol/L]")
     def _conc_mol_eq(m):
         """
         This function sets the concentration of the mixed stream reaching equilibrium based on the flow rate ratio.
@@ -1203,7 +1203,7 @@ def build_REDstack():
         m.length_domain,
         doc='Nernst Potential per unit length per cell pair [mV per cp]',
     )
-    def _nernst_potential_cp(m, x):  # Rg[J mol-1 K-1] , F [A s mol-1], T[K]
+    def _nernst_potential_cp(m, x):  # Rg[J/mol/K] , F [A*s/mol], T[K]
         """
         This function computes the Nernst potential per unit length per cell pair based on the molar concentration in the high and low concentration compartments.
 
@@ -1227,7 +1227,7 @@ def build_REDstack():
         )
 
     @m.Constraint(
-        m.length_domain, m.SOL, doc="Solution's Conductivity per unit length [S m-1]"
+        m.length_domain, m.SOL, doc="Solution's Conductivity per unit length [S/m]"
     )
     def _sol_cond(m, x, sol):
         """
@@ -1256,7 +1256,7 @@ def build_REDstack():
     @m.Constraint(
         m.length_domain,
         m.SOL,
-        doc="Temperature corrected Solution's Conductivity per unit length [S m-1]",
+        doc="Temperature corrected Solution's Conductivity per unit length [S/m]",
     )
     def _sol_cond_T(m, x, sol):
         """
@@ -1290,7 +1290,7 @@ def build_REDstack():
         """
         This function computes the channel resistance per cell pair per unit length based on the solution resistance and the spacer characteristics (thickness and porosity).
         Units:
-        Rsol [ohm cm2 per cp], ksol_T [S m-1], spacer_thickness [m], spacer_porosity [-]
+        Rsol [ohm cm2 per cp], ksol_T [S/m], spacer_thickness [m], spacer_porosity [-]
 
         Parameters
         ----------
@@ -1338,7 +1338,7 @@ def build_REDstack():
         )
 
     @m.Constraint(
-        m.length_domain, doc='Electric current density per unit length [mA cm-2]'
+        m.length_domain, doc='Electric current density per unit length [mA/cm2]'
     )
     def _current_dens_calc(m, x):
         """
@@ -1361,7 +1361,7 @@ def build_REDstack():
         return m.Idx[x] * (m.Rcpx[x] + m.Rload) == m.Ecpx[x]
 
     @m.Expression(
-        m.length_domain, m.SOL, doc='Crossflow velocity in channel eq. [cm s-1]'
+        m.length_domain, m.SOL, doc='Crossflow velocity in channel eq. [cm/s]'
     )
     def vel(m, x, sol):
         """
@@ -1406,7 +1406,7 @@ def build_REDstack():
         """
         return m.vel[x, sol]
 
-    @m.Expression(m.SOL, doc='Average cross-flow velocity [cm s-1]')
+    @m.Expression(m.SOL, doc='Average cross-flow velocity [cm/s]')
     def vel_avg(m, sol):
         """
         This function computes the average cross-flow velocity based on the crossflow velocity in the channel.
@@ -1431,7 +1431,7 @@ def build_REDstack():
         """
         This function computes the conductive molar flux.
         Units:
-        Jcond [mol m-2 h-1], faraday_constant [A s mol-1], Idx [mA cm-2]
+        Jcond [mol/m2/h], faraday_constant [A*s/mol], Idx [mA/cm2]
 
         Parameters
         ----------
@@ -1449,12 +1449,12 @@ def build_REDstack():
             m.faraday_constant, 'A*s/mol', 'A*h/mol'
         ) == ureg.convert(m.Idx[x], 'mA/cm**2', 'A/m**2')
 
-    @m.Constraint(m.length_domain, doc='Diffusive molar flux [mol m-2 h-1]')
+    @m.Constraint(m.length_domain, doc='Diffusive molar flux [mol/m2/h]')
     def _diff_molar_flux(m, x):
         """
         This function computes the diffusive molar flux.
         Units:
-        Jdiff [mol m-2 h-1], diff_nacl [m2 s-1], iems_thickness [m], conc_mol_x [mol L-1]
+        Jdiff [mol/m2/h], diff_nacl [m2/s], iems_thickness [m], conc_mol_x [mol/L]
 
         Parameters
         ----------
@@ -1474,9 +1474,7 @@ def build_REDstack():
             (m.conc_mol_x[x, 'HC'] - m.conc_mol_x[x, 'LC']), 'mol/L', 'mol/m**3'
         )
 
-    @m.Constraint(
-        m.length_domain, doc='Total molar flux from HC to LC side [mol m-2 h-1]'
-    )
+    @m.Constraint(m.length_domain, doc='Total molar flux from HC to LC side [mol/m2/h]')
     def _total_molar_flux(m, x):
         """
         This function computes the total molar flux from the high concentration compartment to the low concentration compartment.
@@ -1664,7 +1662,7 @@ def build_REDstack():
         The concentration increases in the low concetration compartment due to the ionic transfer from the high concentration compartment.
         The concentration decreases in the high concentration compartment due to the ionic transfer to the low concentration compartment.
         Units:
-        dC/dx [mol L-1 m-1], Ji [mol m-2 h-1], L [m], b [m], flow_vol_x [L h-1]
+        dC/dx [mol/L/m], Ji [mol/m2/h], L [m], b [m], flow_vol_x [L/h]
 
         Parameters
         ----------
@@ -1705,9 +1703,7 @@ def build_REDstack():
         """
         return m.conc_mol_x[x, 'HC'] >= m.conc_mol_x[x, 'LC']
 
-    @m.Expression(
-        m.length_domain, m.SOL, doc='Pressure drop per unit length [mbar m-1]'
-    )
+    @m.Expression(m.length_domain, m.SOL, doc='Pressure drop per unit length [mbar/m]')
     def _deltaP(m, x, sol):
         """
         This function computes the pressure drop per unit length based on the crossflow velocity and the hydraulic diameter of the channel.
@@ -1734,7 +1730,7 @@ def build_REDstack():
             / m.dh[sol] ** 2,
             'Pa',
             'mbar',
-        )  # [mbar m-1]
+        )  # [mbar/m]
 
     def _pressure_x(m, x, sol):
         """
@@ -1804,7 +1800,7 @@ def build_REDstack():
         dv = _pressure_dx
         return _bwd_fun(m, x, sol, v, dv)
 
-    @m.Constraint(m.length_domain, m.SOL, doc='Friction pressure drop [mbar m-1]')
+    @m.Constraint(m.length_domain, m.SOL, doc='Friction pressure drop [mbar/m]')
     def _pressure_drop(m, x, sol):
         """
         This function computes the friction pressure drop based on the crossflow velocity and the hydraulic diameter of the channel.
@@ -1844,7 +1840,7 @@ def build_REDstack():
         """
         return _int_trap_rule(m.length_domain, m.Rcpx)
 
-    @m.Expression(doc='Average current density [mA cm-2]')
+    @m.Expression(doc='Average current density [mA/cm2]')
     def Id_avg(m):
         """
         This function computes the average current density based on the electric current density with the trapezoidal rule.
@@ -1920,7 +1916,7 @@ def build_REDstack():
         """
         This function computes the electric current of the RED stack based on the average current density, the area of the ion exchange membrane, and the number of cell pairs.
         Units:
-        I [A], Id_avg [mA cm-2], Aiem [m2]
+        I [A], Id_avg [mA/cm2], Aiem [m2]
 
         Parameters
         ----------
