@@ -3,8 +3,8 @@ This module contains the Generalized Disjunctive Programming (GDP) model of the 
 
 The decision variables are:
 Continuous:
-- Volumetric flow rate [m3 h-1] of the high and low salinity streams
-- Molar concentration [mol L-1] of the high and low salinity streams
+- Volumetric flow rate [m3/h] of the high and low salinity streams
+- Molar concentration [mol/L] of the high and low salinity streams
 - Electric current [A] of the RED stack
 Discrete:
 - Active RED stacks
@@ -253,10 +253,10 @@ def build_model():
     #     Constant parameters
     # =============================================================================
 
-    # Ideal gas constant [J mol-1 K-1]
+    # Ideal gas constant [J/mol/K]
     # m.gas_constant = 8.314462618
     m.gas_constant = physical_constants['molar gas constant'][0]
-    # Faraday’s Constant [C mol-1] [A s mol-1]
+    # Faraday’s Constant [C/mol] [A s/mol]
     # m.faraday_constant = 96485.33212
     m.faraday_constant = physical_constants['Faraday constant'][0]
     m.Tref = 298.15  # Reference temperature [K]
@@ -270,7 +270,7 @@ def build_model():
         default=0.02,
         initialize=0.02,
     )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
-    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02 K-1.
+    # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02/K.
 
     m.dynamic_viscosity = pyo.Param(
         doc='Dynamic viscosity of the solution [Pa s]', default=0.001, initialize=0.001
@@ -283,14 +283,14 @@ def build_model():
     # =============================================================================
 
     m.electricity_price = pyo.Param(
-        doc="Electricity price [USD kWh-1]",
+        doc="Electricity price [USD kW/h]",
         initialize=financial_param.electricity_price.values[0],
         default=0.12,  # 0.07–0.12 (EIA) US 2019 annual average prices industrial costumers (https://www.eia.gov/electricity/sales_revenue_price/)
         mutable=True,
     )
 
     m.load_factor = pyo.Param(
-        doc='Working hours per year of the RU [h year-1]',
+        doc='Working hours per year of the RU [h/year]',
         default=0.9,
         initialize=0.9,
         mutable=True,
@@ -318,7 +318,7 @@ def build_model():
     )
 
     m.iems_price = pyo.Param(
-        doc="Specific membrane's price per effective area [EUR m-2]",
+        doc="Specific membrane's price per effective area [EUR/m2]",
         default=10,
         initialize=financial_param.iems_price.values[0],
         mutable=True,
@@ -339,14 +339,14 @@ def build_model():
 
     m.oandm_cost_factor = pyo.Param(
         doc="Operation and maintenance cost factor [-]", default=0.02, initialize=0.02
-    )  # O&M = 2%–4% CAPEX [USD y-1] Bartholomew et al. (2018). Environmental Science and Technology, 52(20), 11813–11821. https://doi.org/10.1021/acs.est.8b02771
+    )  # O&M = 2%–4% CAPEX [USD/y] Bartholomew et al. (2018). Environmental Science and Technology, 52(20), 11813–11821. https://doi.org/10.1021/acs.est.8b02771
 
     m.civil_cost_factor = pyo.Param(
         doc="Civil and infrastructure cost [EUR/kWnet]", default=250, initialize=250
     )  # US EIA. Capital Cost Estimates for Utility Scale Electricity Generating Plants; US Department of Energy, Energy Information Administration: Washington, DC, USA, 2016.
 
     m.CRF = pyo.Expression(
-        doc="Capital Recovery Factor [years-1]",  # Given P (principal) get A (Annuity)
+        doc="Capital Recovery Factor [1/years]",  # Given P (principal) get A (Annuity)
         expr=m.interest_rate / (1 - (1 + m.interest_rate) ** (-m.project_years)),
     )
 
@@ -384,7 +384,7 @@ def build_model():
     )
 
     m.eur2usd = pyo.Param(
-        initialize=1.12, default=1.12, doc='Market Exchange Rate [USD EUR-1]'
+        initialize=1.12, default=1.12, doc='Market Exchange Rate [USD/EUR]'
     )  # Base year 2019 ECB Data
 
     # =============================================================================
@@ -539,7 +539,7 @@ def build_model():
     )
 
     m.diff_nacl = pyo.Param(
-        doc="NaCl Membranes' diffusivity [m2 s-1]",
+        doc="NaCl Membranes' diffusivity [m2/s]",
         within=pyo.NonNegativeReals,
         default=4.52e-12,
         initialize=4.52e-12,
@@ -547,16 +547,16 @@ def build_model():
 
     m.vel_ub = pyo.Param(
         m.SOL,
-        doc='Max.linear crossflow velocity [cm s-1]',
+        doc='Max.linear crossflow velocity [cm/s]',
         default=3.0,
         initialize=stack_param.vel_ub.values[0],
     )
     m.vel_lb = pyo.Param(
-        m.SOL, doc='Min.linear crossflow velocity [cm s-1]', initialize=1.0e-3
+        m.SOL, doc='Min.linear crossflow velocity [cm/s]', initialize=1.0e-3
     )
     m.vel_init = pyo.Param(
         m.SOL,
-        doc='Initial linear crossflow velocity [cm s-1]',
+        doc='Initial linear crossflow velocity [cm/s]',
         default=1,
         initialize=stack_param.vel_init.values[0],
     )
@@ -659,7 +659,7 @@ def build_model():
     m.flow_vol = pyo.Var(
         m.streams - m.RMU_RU_streams - m.RU_RSU_streams,
         m.SOL,
-        doc="Volumetric flow rate [m3 h-1]",
+        doc="Volumetric flow rate [m3/h]",
         domain=pyo.NonNegativeReals,
         bounds=_flow_vol_b,
         initialize=_flow_vol,
@@ -760,7 +760,7 @@ def build_model():
         )
 
     m.conc_mol_eq = pyo.Var(
-        doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol L-1]',
+        doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol/L]',
         initialize=_conc_mol_eq,
         bounds=_conc_mol_eq_b,
         domain=pyo.NonNegativeReals,
@@ -797,7 +797,7 @@ def build_model():
     m.conc_mol = pyo.Var(
         m.streams - m.RMU_RU_streams - m.RU_RSU_streams,
         m.SOL,
-        doc="Molar concentration [mol L-1]",
+        doc="Molar concentration [mol/L]",
         domain=pyo.NonNegativeReals,
         bounds=_conc_mol_b,
         initialize=lambda _, i, k, sol: (
@@ -1361,7 +1361,7 @@ def build_model():
             initialize=_flow_vol,
             bounds=_flow_vol_b,
             domain=pyo.NonNegativeReals,
-            doc="Discretized Volumetric Flow Rate [L h-1]",
+            doc="Discretized Volumetric Flow Rate [L/h]",
         )
 
         def _conc_molx_b(ru, x, sol):
@@ -1414,7 +1414,7 @@ def build_model():
             m.SOL,
             initialize=_conc_molx,
             bounds=_conc_molx_b,
-            doc="Discretized Molar NaCl concentration [mol L-1]",
+            doc="Discretized Molar NaCl concentration [mol/L]",
             domain=pyo.NonNegativeReals,
         )
 
@@ -1582,7 +1582,7 @@ def build_model():
             domain=pyo.NonNegativeReals,
             bounds=_ksol_b,
             initialize=_ksol,
-            doc="Sol. conductivity per unit length [S m-1]",
+            doc="Sol. conductivity per unit length [S/m]",
         )
 
         ru.ksol_T = pyo.Var(
@@ -1595,7 +1595,7 @@ def build_model():
             ),  # 0.02 is the temperature coefficient of the conductivity from Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
             initialize=lambda _, x, sol: ru.ksol[x, sol]
             * (1 + m.temperature_coeff * (m.T - m.Tref)),
-            doc="Temperature corrected sol. conductivity per unit length [S m-1]",
+            doc="Temperature corrected sol. conductivity per unit length [S/m]",
         )
 
         def _Rsol_b(ru, x, sol):
@@ -1772,7 +1772,7 @@ def build_model():
             domain=pyo.NonNegativeReals,
             initialize=lambda _, x: ru.Ecpx[x] / (ru.Rcpx[x] + ru.Rload),
             bounds=lambda _, x: (None, ru.Ecpx[x].ub / (ru.Rcpx[x].lb + ru.Rload.lb)),
-            doc="Electric Current Density [mA cm-2]",
+            doc="Electric Current Density [mA/cm2]",
         )
 
         ru.Istack = pyo.Var(
@@ -1819,14 +1819,14 @@ def build_model():
             initialize=lambda _, x: ureg.convert(ru.Idx[x], 'mA/cm**2', 'A/m**2')
             / ureg.convert(m.faraday_constant, 's', 'h'),
             bounds=_Jcond_b,
-            doc="Conductive Molar Flux (electromigration) NaCl per unit length [mol m-2 h-1]",
+            doc="Conductive Molar Flux (electromigration) NaCl per unit length [mol/m2/h]",
         )
 
         def _Jdiff_b(ru, x):
             """
             This function bounds the diffusive molar flux per unit length.
             Units:
-            Jdiff [mol m-2 h-1], diff_nacl [m2 s-1], iems_thickness [m]
+            Jdiff [mol/m2/h], diff_nacl [m2/s], iems_thickness [m]
 
             Parameters
             ----------
@@ -1872,7 +1872,7 @@ def build_model():
                 (ru.conc_mol_x[0, 'HC'] - ru.conc_mol_x[0, 'LC']), 'mol/L', 'mol/m**3'
             ),
             bounds=_Jdiff_b,
-            doc="Diffusive Molar Flux NaCl per unit length [mol m-2 h-1]",
+            doc="Diffusive Molar Flux NaCl per unit length [mol/m2/h]",
         )
 
         ru.Ji = pyo.Var(
@@ -1880,7 +1880,7 @@ def build_model():
             domain=pyo.NonNegativeReals,
             initialize=lambda _, x: ru.Jcond[x] + ru.Jdiff[x],
             bounds=(None, ru.Jcond[0].ub + ru.Jdiff[0].ub),
-            doc="Molar Flux NaCl per unit length [mol m-2 h-1]",
+            doc="Molar Flux NaCl per unit length [mol/m2/h]",
         )
 
         # =============================================================================
@@ -1966,7 +1966,7 @@ def build_model():
                     / m.pump_eff
                     for sol in m.SOL
                 ),
-            ),  # Q [m3 h-1]; Ap [Pa]
+            ),  # Q [m3/h]; Ap [Pa]
             doc="Pumping Power loss RED stack [W]",
         )
 
@@ -1981,7 +1981,7 @@ def build_model():
             ru.length_domain,
             doc='Nernst Potential per unit length per cell pair [mV per cp]',
         )
-        def _nernst_potential_cp(ru, x):  # Rg[J mol-1 K-1] , F[A s mol-1], T[K]
+        def _nernst_potential_cp(ru, x):  # Rg[J/mol/K] , F[A*s/mol], T[K]
             """
             This function calculates the Nernst potential per unit length per cell pair.
 
@@ -2006,9 +2006,7 @@ def build_model():
             )
 
         @ru.Constraint(
-            ru.length_domain,
-            m.SOL,
-            doc="Solution's Conductivity per unit length [S m-1]",
+            ru.length_domain, m.SOL, doc="Solution's Conductivity per unit length [S/m]"
         )
         def _sol_cond(ru, x, sol):
             """
@@ -2037,7 +2035,7 @@ def build_model():
         @ru.Constraint(
             ru.length_domain,
             m.SOL,
-            doc="Temperature corrected Solution's Conductivity per unit length [S m-1]",
+            doc="Temperature corrected Solution's Conductivity per unit length [S/m]",
         )
         def _sol_cond_T(ru, x, sol):
             """
@@ -2115,7 +2113,7 @@ def build_model():
             )
 
         @ru.Constraint(
-            ru.length_domain, doc='Electric current density per unit length [mA cm-2]'
+            ru.length_domain, doc='Electric current density per unit length [mA/cm2]'
         )
         def _current_dens_calc(ru, x):
             """
@@ -2136,7 +2134,7 @@ def build_model():
             return ru.Idx[x] * (ru.Rcpx[x] + ru.Rload) == ru.Ecpx[x]
 
         @ru.Expression(
-            ru.length_domain, m.SOL, doc='Crossflow velocity in channel eq. [cm s-1]'
+            ru.length_domain, m.SOL, doc='Crossflow velocity in channel eq. [cm/s]'
         )
         def vel(ru, x, sol):
             """
@@ -2181,7 +2179,7 @@ def build_model():
             """
             return ru.vel[x, sol]
 
-        @ru.Expression(m.SOL, doc='Average cross-flow velocity [cm s-1]')
+        @ru.Expression(m.SOL, doc='Average cross-flow velocity [cm/s]')
         def vel_avg(ru, sol):
             """
             This function calculates the average cross-flow velocity in the channel.
@@ -2206,7 +2204,7 @@ def build_model():
             """
             Constraint for the conductive molar flux (electromigration).
             Units:
-            J[mol m-2 h-1], F[A s mol-1], Id[mA cm-2]
+            J[mol/m2/h], F[A*s/mol], Id[mA/cm2]
 
             Parameters
             ----------
@@ -2224,12 +2222,12 @@ def build_model():
                 m.faraday_constant, 's', 'h'
             ) == ureg.convert(ru.Idx[x], 'mA/cm**2', 'A/m**2')
 
-        @ru.Constraint(ru.length_domain, doc='Diffusive molar flux [mol m-2 h-1]')
+        @ru.Constraint(ru.length_domain, doc='Diffusive molar flux [mol/m2/h]')
         def _diff_molar_flux(ru, x):
             """
             Constraint for the diffusive molar flux.
             Units:
-            J[mol m-2 h-1], D[m2 s-1], dm=50e-6 m, C[mol L-1]
+            J[mol/m2/h], D[m2/s], dm=50e-6 m, C[mol/L]
 
             Parameters
             ----------
@@ -2250,7 +2248,7 @@ def build_model():
             )
 
         @ru.Constraint(
-            ru.length_domain, doc='Total molar flux from HC to LC side [mol m-2 h-1]'
+            ru.length_domain, doc='Total molar flux from HC to LC side [mol/m2/h]'
         )
         def _total_molar_flux(ru, x):
             """
@@ -2439,8 +2437,8 @@ def build_model():
             The concentration increases in the low-salinity channel and decreases in the high-salinity channel as ions flow from the high to the low salinity side.
 
             Units:
-            dC/dx [mol L-1 m-1], Q [L h-1], A [m2], J [mol m-2 h-1]
-            [mol L-1 m-1] * [L h-1] = [m] [mol m-2 h-1]
+            dC/dx [mol/L/m], Q [L/h], A [m2], J [mol/m2/h]
+            [mol/L/m] * [L/h] = [m] [mol/m2/h]
 
             Parameters
             ----------
@@ -2484,11 +2482,11 @@ def build_model():
             return ru.conc_mol_x[x, 'HC'] >= ru.conc_mol_x[x, 'LC']
 
         @ru.Expression(
-            ru.length_domain, m.SOL, doc='Pressure drop per unit length [mbar m-1]'
+            ru.length_domain, m.SOL, doc='Pressure drop per unit length [mbar/m]'
         )
         def _deltaP(ru, x, sol):
             """
-            This expression calculates the pressure drop per unit length [mbar m-1] with the Darcy-Weisbach equation for a spacer-filled channel.
+            This expression calculates the pressure drop per unit length [mbar/m] with the Darcy-Weisbach equation for a spacer-filled channel.
 
             Parameters
             ----------
@@ -2588,7 +2586,7 @@ def build_model():
             This constraint calculates the friction pressure drop per unit length.
 
             Units:
-            dp/dx [mbar m-1]; deltaP [mbar m-1]; L [m]
+            dp/dx [mbar/m]; deltaP [mbar/m]; L [m]
 
             Parameters
             ----------
@@ -2667,7 +2665,7 @@ def build_model():
             """
             return _int_trap_rule(ru.length_domain, ru.Rcpx)
 
-        @ru.Expression(doc='Average current density [mA cm-2]')
+        @ru.Expression(doc='Average current density [mA/cm2]')
         def Id_avg(ru):
             """
             This function calculates the average current density using the integral trapezoidal rule.
@@ -2742,7 +2740,7 @@ def build_model():
             """
             This constraint calculates the electric current of the RED unit.
             Units:
-            I [A]; Id [mA cm-2]; Aiem [m2]
+            I [A]; Id [mA/cm2]; Aiem [m2]
 
             Parameters
             ----------
@@ -2883,7 +2881,7 @@ def build_model():
         unit_exists.flow_vol = pyo.Var(
             unit_exists.streams,
             m.SOL,
-            doc="Volumetric flow rate [m3 h-1]",
+            doc="Volumetric flow rate [m3/h]",
             domain=pyo.NonNegativeReals,
             bounds=_flow_vol_b,
             initialize=_flow_vol,
@@ -2897,7 +2895,7 @@ def build_model():
         unit_exists.conc_mol = pyo.Var(
             unit_exists.streams,
             m.SOL,
-            doc="Molar concentration [mol L-1]",
+            doc="Molar concentration [mol/L]",
             domain=pyo.NonNegativeReals,
             bounds=_conc_mol_b,
             initialize=lambda _, i, k, sol: (
@@ -2946,7 +2944,7 @@ def build_model():
                 1 + m.stackelectrodes_cost_factor
             )
 
-        @unit_exists.Constraint(doc='Operating Cost RU [USD y-1]')
+        @unit_exists.Constraint(doc='Operating Cost RU [USD/y]')
         def _operating_cost(unit_exists):
             """
             This constraint calculates the operating cost of the RED unit.
@@ -2962,7 +2960,7 @@ def build_model():
             Pyomo.Constraint
                 Operating cost of the RED unit
             """
-            hours = 8760  # [h y-1]
+            hours = 8760  # [h/y]
             membrane_replacement_cost = m.iems_cap_cost * m.CRFm
             pump_operating_cost = (
                 m.electricity_price
@@ -3129,7 +3127,7 @@ def build_model():
         return ureg.convert(sum(m.NP[ru] * scale_factor for ru in m.RU), 'W', 'kW')
 
     @m.Expression(
-        doc='Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh m-3]'
+        doc='Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh/m3]'
     )
     def TNSE(m):
         """
@@ -3143,7 +3141,7 @@ def build_model():
         Returns
         -------
         Pyomo.Expression
-            Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh m-3] as the ratio between the total net power output and the total volumetric flow rate of the high and low salinity streams
+            Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh/m3] as the ratio between the total net power output and the total volumetric flow rate of the high and low salinity streams
         """
         return m.TNP / sum(m._flow_into['rsu', sol] for sol in m.SOL)
 
@@ -3199,7 +3197,7 @@ def build_model():
         This expression calculates the pumps capital cost based on the correlation from Sinnot and Towler (2012).
         CE = a + b(S)**n
         Equipment: Single Stage Centrifugal
-        S: Flow rate [0.2–126] [L s-1]; [0.72–453.6] [m3 h-1]
+        S: Flow rate [0.2–126] [L/s]; [0.72–453.6] [m3/h]
         a = 6900; b = 206; n = 0.9;
 
         Reference:
@@ -3248,7 +3246,7 @@ def build_model():
             + civil_and_infra  # Civil and infrastructure costs
         )
 
-    @m.Expression(doc='Total operational expenses [USD y-1]')
+    @m.Expression(doc='Total operational expenses [USD/y]')
     def OPEX(m):
         """
         This expression calculates the total operational expenses of the RED system as the sum of the operating costs and the 2% of the capital expenses for the operation and maintenance.
@@ -3261,11 +3259,11 @@ def build_model():
         Returns
         -------
         Pyomo.Expression
-            Total operational expenses [USD y-1].
+            Total operational expenses [USD/y].
         """
         return sum(m.operating_cost[ru] for ru in m.RU) + m.oandm_cost_factor * m.CAPEX
 
-    @m.Expression(doc='Total Annualized Cost [USD y-1]')
+    @m.Expression(doc='Total Annualized Cost [USD/y]')
     def TAC(m):
         """
         This expression calculates the total annualized cost of the RED system as the sum of the annualized capital cost and operational expenses.
@@ -3278,11 +3276,11 @@ def build_model():
         Returns
         -------
         Pyomo.Expression
-            Total Annualized Cost [USD y-1].
+            Total Annualized Cost [USD/y].
         """
         return m.CRF * m.CAPEX + m.OPEX
 
-    @m.Expression(doc='Net Energy Yield [kWh y-1]')
+    @m.Expression(doc='Net Energy Yield [kWh/y]')
     def net_energy_yield(m):
         """
         This expression defines the annual net energy yield of the RED system.
@@ -3295,9 +3293,9 @@ def build_model():
         Returns
         -------
         Pyomo.Expression
-            Net Energy Yield [kWh y-1].
+            Net Energy Yield [kWh/y].
         """
-        hours = 8760  # [h y-1]
+        hours = 8760  # [h/y]
         return hours * m.load_factor * m.TNP
 
     @m.Expression(doc='Net Present Value [kUSD]')
@@ -3319,7 +3317,7 @@ def build_model():
         """
         return (m.electricity_price * m.net_energy_yield - m.TAC) * 1e-3 / m.CRF
 
-    @m.Expression(doc='Levelized Cost of Energy [USD kWh-1]')
+    @m.Expression(doc='Levelized Cost of Energy [USD/kWh]')
     def LCOE(m):
         """
         This function calculates the Levelized Cost of Energy (LCOE) of the RED unit.
@@ -3332,7 +3330,7 @@ def build_model():
         Returns
         -------
         Pyomo.Expression
-            Levelized Cost of Energy [USD kWh-1] as the ratio between the total annualized cost and the net energy yield.
+            Levelized Cost of Energy [USD/kWh] as the ratio between the total annualized cost and the net energy yield.
         """
         return m.TAC / m.net_energy_yield
 
