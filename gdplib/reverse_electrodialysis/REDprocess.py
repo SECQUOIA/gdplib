@@ -169,14 +169,12 @@ def build_model():
         doc="RMU to RU 1-1 port pairing",
         initialize=m.in_RU * m.RU,
         filter=_streams_filter,
-        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
-    )  # Filter function _streams_filter as suggested in Pyomo PR #3338 (Support validate / filter for IndexedSet components using the index) that fixes the issue #2655
+    )
 
     m.RU_RSU_streams = pyo.Set(
         doc="RU to RSU 1-1 port pairing",
         initialize=m.RU * m.out_RU,
         filter=_streams_filter,
-        # filter=lambda _, x, y: re.findall(r'\d+', x) == re.findall(r'\d+', y),
     )
 
     m.RU_streams = pyo.Set(
@@ -218,8 +216,7 @@ def build_model():
         within=m.streams,
         initialize=m.streams,
         filter=_from_splitters_filter,
-        # filter=lambda _, x, y: x in m.splitters or (x, y) == ('dm', 'disch'),
-    )  # Filter function _from_splitters_filter as suggested in Pyomo PR #3338 (Support validate / filter for IndexedSet components using the index) that fixes the issue #2655
+    )
 
     def _to_splitters_filter(m, val):
         """
@@ -245,8 +242,7 @@ def build_model():
         within=m.streams,
         initialize=m.streams,
         filter=_to_splitters_filter,
-        # filter=lambda _, x, y: y in m.splitters or (x, y) == ('in', 'fs'),
-    )  # Filter function _to_splitters_filter as suggested in Pyomo PR #3338 (Support validate / filter for IndexedSet components using the index) that fixes the issue #2655
+    )
 
     m.aux_equipment = pyo.Set(
         doc='Set of equipment for cost correlation. Tuple (equipment, type)',
@@ -2853,9 +2849,7 @@ def build_model():
             return x == unit or y == unit
 
         unit_exists.streams = pyo.Set(
-            initialize=m.RU_streams,
-            filter=_stream_filter_unit_exists,
-            # filter=lambda _, x, y: x == unit or y == unit
+            initialize=m.RU_streams, filter=_stream_filter_unit_exists
         )
 
         def _flow_vol(unit_exists, i, k, sol):
