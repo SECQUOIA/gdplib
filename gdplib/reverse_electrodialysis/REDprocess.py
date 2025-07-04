@@ -358,7 +358,7 @@ def build_model():
     def CRFm(m):
         """IEMs replacement cost equivalent annuity
 
-        A/Fi,N = i / ((i+1)**N - 1) --> Disbursement at LTm year = LTm yearly disbursments at the end of LTm year period
+        A/Fi,N = i / ((i+1)**N - 1) --> Disbursement at LTm year = LTm yearly disbursements at the end of LTm year period
 
         Parameters
         ----------
@@ -370,7 +370,7 @@ def build_model():
         Pyomo.Expression
             IEMs replacement cost equivalent annuity
         """
-        # A/Fi,N = i / ((i+1)**N - 1) --> Disbursement at LTm year = LTm yearly disbursments at the end of LTm year period
+        # A/Fi,N = i / ((i+1)**N - 1) --> Disbursement at LTm year = LTm yearly disbursements at the end of LTm year period
         return m.interest_rate / ((m.interest_rate + 1) ** m.iem_lifetime - 1)
 
     m.CEPCI2019 = pyo.Param(
