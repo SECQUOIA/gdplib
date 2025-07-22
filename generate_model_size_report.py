@@ -72,6 +72,8 @@ if __name__ == "__main__":
 
     # Find the position to insert the table (after "## Model Size Example")
     size_example_pos = readme_content.find("## Model Size Example")
+    if size_example_pos == -1:
+        raise ValueError("The section '## Model Size Example' was not found in README.md.")
     next_section_pos = readme_content.find("##", size_example_pos + 1)
 
     # Create new README content
