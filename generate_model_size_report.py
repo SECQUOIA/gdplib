@@ -52,12 +52,15 @@ if __name__ == "__main__":
             continue
 
     # Combine all reports into a single table
-    combined_df = pd.concat([df for df in all_reports.values()], axis=1)
+    if not all_reports:
+        print("No reports were generated. Skipping combined report generation.")
+    else:
+        combined_df = pd.concat([df for df in all_reports.values()], axis=1)
 
-    # Sort columns alphabetically
-    combined_df = combined_df.sort_index(axis=1)
+        # Sort columns alphabetically
+        combined_df = combined_df.sort_index(axis=1)
 
-    # Generate the combined report
+        # Generate the combined report
     combined_report = "## Model Size Comparison\n\n"
     combined_report += "The following table shows the size metrics for all models in GDPlib:\n\n"
     combined_report += combined_df.to_markdown()
