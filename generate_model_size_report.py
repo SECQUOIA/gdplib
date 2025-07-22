@@ -74,16 +74,19 @@ if __name__ == "__main__":
     size_example_pos = readme_content.find("## Model Size Example")
     if size_example_pos == -1:
         raise ValueError("The section '## Model Size Example' was not found in README.md.")
-    next_section_pos = readme_content.find("##", size_example_pos + 1)
-
-    # Create new README content
-    new_readme = (
-        readme_content[:size_example_pos] +
-        combined_report +
-        "\n\n" +
-        readme_content[next_section_pos:]
-    )
-
+    
+    if size_example_pos == -1:
+        print("Warning: '## Model Size Example' section not found in README.md. Appending report to the end of the file.")
+        new_readme = readme_content + "\n\n" + combined_report
+    else:
+        next_section_pos = readme_content.find("##", size_example_pos + 1)
+        # Create new README content
+        new_readme = (
+            readme_content[:size_example_pos] +
+            combined_report +
+            "\n\n" +
+            readme_content[next_section_pos:]
+        )
     # Write updated README
     with open("README.md", "w") as f:
         f.write(new_readme)
