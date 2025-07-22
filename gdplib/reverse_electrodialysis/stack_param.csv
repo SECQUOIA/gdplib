@@ -1,0 +1,2 @@
+nr,width,length,spacer_porosity,spacer_thickness,cell_pairs,cem_resistance,cem_permsel,aem_resistance,aem_permsel,cem_thickness,aem_thickness,vel_ub,vel_init
+4,0.456,0.383,0.825,0.00027,1000,0.00018,0.93,6e-06,0.93,5e-05,5e-05,3,3
