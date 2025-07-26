@@ -18,7 +18,36 @@ To update GDPlib:
 pip install --upgrade gdplib
 ```
 
-For a developer install, please clone this repository, activate the correct python environment, and run `python setup.py develop` on the `setup.py` file in this directory.
+For a developer install, please clone this repository, activate the correct python environment, and run:
+
+```bash
+pip install -r requirements.txt
+pip install -e .
+```
+
+### Development Setup
+
+For development work with enhanced Copilot integration:
+
+1. **Install development dependencies:**
+   ```bash
+   pip install -r requirements-dev.txt
+   ```
+
+2. **Set up GitHub Copilot with custom instructions:**
+   - The repository includes custom Copilot instructions in `.github/copilot-instructions.md`
+   - Project-specific configurations are available in `.copilot/`
+
+3. **Run tests:**
+   ```bash
+   pytest tests/
+   ```
+
+4. **Code formatting and linting:**
+   ```bash
+   black gdplib/
+   flake8 gdplib/
+   ```
 
 ## Model descriptions
 
