@@ -14,6 +14,11 @@ syngas_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def build_model():
+    """Build a syngas production process superstructure model.
+    
+    Returns:
+        Pyomo model object for syngas production process optimization
+    """
     m = ConcreteModel()
 
     m.syngas_techs = Set(

@@ -4,6 +4,11 @@ from .column import build_column
 
 
 def build_model():
+    """Build a GDP distillation column model.
+    
+    Returns:
+        Pyomo model object for benzene-toluene distillation column
+    """
     m = build_column(min_trays=8, max_trays=17, xD=0.95, xB=0.95)
     # Fix feed conditions
     m.feed['benzene'].fix(50)

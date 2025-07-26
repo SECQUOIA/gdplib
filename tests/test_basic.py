@@ -43,7 +43,7 @@ class TestBasicFunctionality:
             import gdplib
 
             # Try to access the version if available
-            if hasattr(gdplib, '__version__'):
+            if hasattr(gdplib, "__version__"):
                 assert gdplib.__version__ is not None
         except ImportError:
             pytest.fail("gdplib could not be imported")
@@ -62,7 +62,7 @@ class TestBasicFunctionality:
             # Try to build a simple model if biofuel is available
             import gdplib.biofuel
 
-            if hasattr(gdplib.biofuel, 'build_model'):
+            if hasattr(gdplib.biofuel, "build_model"):
                 model = gdplib.biofuel.build_model()
                 assert model is not None
         except (ImportError, AttributeError):

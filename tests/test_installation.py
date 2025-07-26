@@ -17,12 +17,12 @@ class TestInstallation:
     def test_pip_installation_dependencies(self):
         """Test that all required dependencies from requirements.txt are installed."""
         required_packages = [
-            'pyomo',
-            'pandas',
-            'matplotlib',
-            'scipy',
-            'pint',
-            'openpyxl',
+            "pyomo",
+            "pandas",
+            "matplotlib",
+            "scipy",
+            "pint",
+            "openpyxl",
         ]
 
         missing_packages = []
@@ -41,7 +41,7 @@ class TestInstallation:
             import gdplib
 
             # Verify it's installed as a package
-            pkg_resources.get_distribution('gdplib')
+            pkg_resources.get_distribution("gdplib")
         except pkg_resources.DistributionNotFound:
             pytest.skip("gdplib not installed as package (development mode)")
         except ImportError:
@@ -53,20 +53,20 @@ class TestInstallation:
 
         requirements_path = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            'requirements.txt',
+            "requirements.txt",
         )
 
         if not os.path.exists(requirements_path):
             pytest.skip("requirements.txt not found")
 
-        with open(requirements_path, 'r') as f:
-            requirements = f.read().strip().split('\n')
+        with open(requirements_path, "r") as f:
+            requirements = f.read().strip().split("\n")
 
         # Filter out empty lines and comments
         requirements = [
             req.strip()
             for req in requirements
-            if req.strip() and not req.strip().startswith('#')
+            if req.strip() and not req.strip().startswith("#")
         ]
 
         assert len(requirements) > 0, "requirements.txt is empty"
@@ -74,7 +74,7 @@ class TestInstallation:
         # Check that each requirement has a valid format
         for req in requirements:
             assert (
-                '>=' in req or '==' in req or '>' in req or '<' in req
+                ">=" in req or "==" in req or ">" in req or "<" in req
             ), f"Invalid requirement format: {req}"
 
 

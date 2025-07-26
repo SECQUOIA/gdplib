@@ -829,6 +829,11 @@ def enumerate_solutions():
 
 
 def build_model():
+    """Build a methanol synthesis process model.
+    
+    Returns:
+        Pyomo model object for methanol synthesis process
+    """
     m = MethanolModel().model
     for _d in m.component_data_objects(
         gdp.Disjunct, descend_into=True, active=True, sort=True

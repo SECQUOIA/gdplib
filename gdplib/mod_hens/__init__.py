@@ -12,6 +12,16 @@ from .modular_integer import (
 
 
 def build_model(case="conventional", cafaro_approx=True, num_stages=4):
+    """Build a heat exchanger network synthesis (HENS) model.
+    
+    Args:
+        case: Model variant (conventional, single_module_integer, etc.)
+        cafaro_approx: Whether to use Cafaro approximation
+        num_stages: Number of stages in the heat exchanger network
+        
+    Returns:
+        Pyomo model object
+    """
     # TODO: we might need to come up with better names for these cases.
     if case == "conventional":
         return _conv(cafaro_approx, num_stages)
