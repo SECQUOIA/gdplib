@@ -1,5 +1,9 @@
 # GDPlib
 
+[![codecov](https://codecov.io/gh/SECQUOIA/gdplib/branch/main/graph/badge.svg)](https://codecov.io/gh/SECQUOIA/gdplib)
+[![Tests](https://github.com/SECQUOIA/gdplib/workflows/Test/badge.svg)](https://github.com/SECQUOIA/gdplib/actions?query=workflow%3ATest)
+[![Lint](https://github.com/SECQUOIA/gdplib/workflows/Lint/badge.svg)](https://github.com/SECQUOIA/gdplib/actions?query=workflow%3ALint)
+
 We envision GDPlib as an open library of GDP models to provide examples for prospective modelers, and to provide a benchmarking set for algorithm developers.
 We invite contributions to this library from the community, provided under the same BSD-3-clause or compatible license.
 
