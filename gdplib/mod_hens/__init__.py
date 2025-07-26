@@ -13,12 +13,12 @@ from .modular_integer import (
 
 def build_model(case="conventional", cafaro_approx=True, num_stages=4):
     """Build a heat exchanger network synthesis (HENS) model.
-    
+
     Args:
         case: Model variant (conventional, single_module_integer, etc.)
         cafaro_approx: Whether to use Cafaro approximation
         num_stages: Number of stages in the heat exchanger network
-        
+
     Returns:
         Pyomo model object
     """
@@ -39,4 +39,4 @@ def build_model(case="conventional", cafaro_approx=True, num_stages=4):
         return _disc_opt(cafaro_approx, num_stages)
 
 
-__all__ = ['build_model']
+__all__ = ["build_model"]

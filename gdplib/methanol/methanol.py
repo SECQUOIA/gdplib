@@ -23,7 +23,7 @@ def fix_vars_with_equal_bounds(m, tol=1e-8):
             continue
         if lb > ub + tol:
             raise InfeasibleError(
-                'Variable lb is larger than ub: {0}    lb: {1}    ub: {2}'.format(
+                "Variable lb is larger than ub: {0}    lb: {1}    ub: {2}".format(
                     v.name, lb, ub
                 )
             )
@@ -73,21 +73,21 @@ class MethanolModel(object):
         self.two_stage_fix_cost = 50
 
         m.streams = pe.Set(initialize=list(range(1, 34)), ordered=True)
-        m.components = pe.Set(initialize=['H2', 'CO', 'CH3OH', 'CH4'], ordered=True)
+        m.components = pe.Set(initialize=["H2", "CO", "CH3OH", "CH4"], ordered=True)
         m.flows = pe.Var(m.streams, bounds=(0, 20))
         m.temps = pe.Var(m.streams, bounds=(3, 9))
         m.pressures = pe.Var(m.streams, bounds=(0.1, 15))
         m.component_flows = pe.Var(m.streams, m.components, bounds=(0, 20))
 
         flow_1 = dict()
-        flow_1['H2'] = 0.6
-        flow_1['CO'] = 0.25
-        flow_1['CH4'] = 0.15
+        flow_1["H2"] = 0.6
+        flow_1["CO"] = 0.25
+        flow_1["CH4"] = 0.15
         m.flow_1_composition = pe.Param(m.components, initialize=flow_1, default=0)
         flow_2 = dict()
-        flow_2['H2'] = 0.65
-        flow_2['CO'] = 0.30
-        flow_2['CH4'] = 0.05
+        flow_2["H2"] = 0.65
+        flow_2["CO"] = 0.30
+        flow_2["CH4"] = 0.05
         m.flow_2_composition = pe.Param(m.components, initialize=flow_2, default=0)
 
         m.pressures[13].setlb(2.5)
@@ -122,15 +122,15 @@ class MethanolModel(object):
         self.inlet_streams[17] = 28
         self.inlet_streams[18] = 30
         self.inlet_streams[19] = 31
-        self.inlet_streams['feed_mixer'] = (1, 2)
-        self.inlet_streams['feed_splitter'] = 3
-        self.inlet_streams['compressed_feed_mixer'] = (6, 9)
-        self.inlet_streams['recycle_feed_mixer'] = (10, 33)
-        self.inlet_streams['reactor_feed_splitter'] = 13
-        self.inlet_streams['reactor_product_mixer'] = (16, 17)
-        self.inlet_streams['purge_splitter'] = 21
-        self.inlet_streams['recycle_compressor_splitter'] = 26
-        self.inlet_streams['recycle_compressor_mixer'] = (29, 32)
+        self.inlet_streams["feed_mixer"] = (1, 2)
+        self.inlet_streams["feed_splitter"] = 3
+        self.inlet_streams["compressed_feed_mixer"] = (6, 9)
+        self.inlet_streams["recycle_feed_mixer"] = (10, 33)
+        self.inlet_streams["reactor_feed_splitter"] = 13
+        self.inlet_streams["reactor_product_mixer"] = (16, 17)
+        self.inlet_streams["purge_splitter"] = 21
+        self.inlet_streams["recycle_compressor_splitter"] = 26
+        self.inlet_streams["recycle_compressor_mixer"] = (29, 32)
 
         self.outlet_streams[3] = 6
         self.outlet_streams[4] = 7
@@ -148,15 +148,15 @@ class MethanolModel(object):
         self.outlet_streams[17] = 30
         self.outlet_streams[18] = 31
         self.outlet_streams[19] = 32
-        self.outlet_streams['feed_mixer'] = 3
-        self.outlet_streams['feed_splitter'] = (4, 5)
-        self.outlet_streams['compressed_feed_mixer'] = 10
-        self.outlet_streams['recycle_feed_mixer'] = 11
-        self.outlet_streams['reactor_feed_splitter'] = (14, 15)
-        self.outlet_streams['reactor_product_mixer'] = 18
-        self.outlet_streams['purge_splitter'] = (26, 24)
-        self.outlet_streams['recycle_compressor_splitter'] = (27, 28)
-        self.outlet_streams['recycle_compressor_mixer'] = 33
+        self.outlet_streams["feed_mixer"] = 3
+        self.outlet_streams["feed_splitter"] = (4, 5)
+        self.outlet_streams["compressed_feed_mixer"] = 10
+        self.outlet_streams["recycle_feed_mixer"] = 11
+        self.outlet_streams["reactor_feed_splitter"] = (14, 15)
+        self.outlet_streams["reactor_product_mixer"] = 18
+        self.outlet_streams["purge_splitter"] = (26, 24)
+        self.outlet_streams["recycle_compressor_splitter"] = (27, 28)
+        self.outlet_streams["recycle_compressor_mixer"] = 33
 
         self.vapor_outlets[13] = 21
         self.liquid_outlets[13] = 22
@@ -169,7 +169,7 @@ class MethanolModel(object):
         m.total_flow_con = pe.Constraint(m.streams, rule=_total_flow)
 
         m.purity_con = pe.Constraint(
-            expr=m.component_flows[23, 'CH3OH'] >= self.purity_demand * m.flows[23]
+            expr=m.component_flows[23, "CH3OH"] >= self.purity_demand * m.flows[23]
         )
 
         # ************************************
@@ -179,9 +179,9 @@ class MethanolModel(object):
         self.build_equal_streams(m.cheap_feed_disjunct, 1, 3)
         self.build_stream_doesnt_exist_con(m.cheap_feed_disjunct, 2)
         m.cheap_feed_disjunct.feed_cons = c = pe.ConstraintList()
-        c.add(m.component_flows[1, 'H2'] == m.flow_1_composition['H2'] * m.flows[1])
-        c.add(m.component_flows[1, 'CO'] == m.flow_1_composition['CO'] * m.flows[1])
-        c.add(m.component_flows[1, 'CH4'] == m.flow_1_composition['CH4'] * m.flows[1])
+        c.add(m.component_flows[1, "H2"] == m.flow_1_composition["H2"] * m.flows[1])
+        c.add(m.component_flows[1, "CO"] == m.flow_1_composition["CO"] * m.flows[1])
+        c.add(m.component_flows[1, "CH4"] == m.flow_1_composition["CH4"] * m.flows[1])
         c.add(m.flows[1] >= self.flow_feed_lb)
         c.add(m.flows[1] <= self.flow_feed_ub)
         c.add(m.temps[1] == self.flow_feed_temp)
@@ -191,9 +191,9 @@ class MethanolModel(object):
         self.build_equal_streams(m.expensive_feed_disjunct, 2, 3)
         self.build_stream_doesnt_exist_con(m.expensive_feed_disjunct, 1)
         m.expensive_feed_disjunct.feed_cons = c = pe.ConstraintList()
-        c.add(m.component_flows[2, 'H2'] == m.flow_2_composition['H2'] * m.flows[2])
-        c.add(m.component_flows[2, 'CO'] == m.flow_2_composition['CO'] * m.flows[2])
-        c.add(m.component_flows[2, 'CH4'] == m.flow_2_composition['CH4'] * m.flows[2])
+        c.add(m.component_flows[2, "H2"] == m.flow_2_composition["H2"] * m.flows[2])
+        c.add(m.component_flows[2, "CO"] == m.flow_2_composition["CO"] * m.flows[2])
+        c.add(m.component_flows[2, "CH4"] == m.flow_2_composition["CH4"] * m.flows[2])
         c.add(m.flows[2] >= self.flow_feed_lb)
         c.add(m.flows[2] <= self.flow_feed_ub)
         c.add(m.temps[2] == self.flow_feed_temp)
@@ -239,7 +239,7 @@ class MethanolModel(object):
             ]
         )
 
-        self.build_mixer(m, 'recycle_feed_mixer')
+        self.build_mixer(m, "recycle_feed_mixer")
         self.build_cooler(m, 7)
         self.build_heater(m, 8)
 
@@ -280,7 +280,7 @@ class MethanolModel(object):
         self.build_cooler(m, 12)
         self.build_flash(m, 13)
         self.build_heater(m, 14)
-        self.build_splitter(m, 'purge_splitter')
+        self.build_splitter(m, "purge_splitter")
         self.build_heater(m, 15)
 
         # ************************************
@@ -395,7 +395,7 @@ class MethanolModel(object):
         out_stream = self.outlet_streams[u]
 
         b = pe.Block()
-        setattr(block, 'compressor_' + str(u), b)
+        setattr(block, "compressor_" + str(u), b)
         b.p_ratio = pe.Var(bounds=(0, 1.74))
         b.electricity_requirement = pe.Var(bounds=(0, 50))
 
@@ -426,7 +426,7 @@ class MethanolModel(object):
         in_stream = self.inlet_streams[u]
         out_stream = self.outlet_streams[u]
         b = pe.Block()
-        setattr(block, 'expansion_valve_' + str(u), b)
+        setattr(block, "expansion_valve_" + str(u), b)
 
         def _component_balances(_b, _c):
             return m.component_flows[out_stream, _c] == m.component_flows[in_stream, _c]
@@ -447,7 +447,7 @@ class MethanolModel(object):
         in_stream = self.inlet_streams[u]
         out_stream = self.outlet_streams[u]
         b = pe.Block()
-        setattr(block, 'cooler_' + str(u), b)
+        setattr(block, "cooler_" + str(u), b)
         b.heat_duty = pe.Var(bounds=(0, 50))
 
         def _component_balances(_b, _c):
@@ -471,7 +471,7 @@ class MethanolModel(object):
         in_stream = self.inlet_streams[u]
         out_stream = self.outlet_streams[u]
         b = pe.Block()
-        setattr(block, 'heater_' + str(u), b)
+        setattr(block, "heater_" + str(u), b)
         b.heat_duty = pe.Var(bounds=(0, 50))
 
         def _component_balances(_b, _c):
@@ -495,7 +495,7 @@ class MethanolModel(object):
         in_stream1, in_stream2 = self.inlet_streams[u]
         out_stream = self.outlet_streams[u]
         b = pe.Block()
-        setattr(block, 'mixer_' + str(u), b)
+        setattr(block, "mixer_" + str(u), b)
 
         def _component_balances(_b, _c):
             return (
@@ -521,9 +521,9 @@ class MethanolModel(object):
         in_stream = self.inlet_streams[u]
         out_stream1, out_stream2 = self.outlet_streams[u]
         b = pe.Block()
-        setattr(block, 'splitter_' + str(u), b)
+        setattr(block, "splitter_" + str(u), b)
         b.split_fraction = pe.Var(bounds=(0, 1))
-        if unit_number == 'purge_splitter':
+        if unit_number == "purge_splitter":
             b.split_fraction.setlb(0.01)
             b.split_fraction.setub(0.99)
 
@@ -553,7 +553,7 @@ class MethanolModel(object):
         t = m.temps
         p = m.pressures
         b = pe.Block()
-        setattr(block, 'equal_streams_' + str(stream1) + '_' + str(stream2), b)
+        setattr(block, "equal_streams_" + str(stream1) + "_" + str(stream2), b)
 
         def _component_balances(_b, _c):
             return m.component_flows[stream2, _c] == m.component_flows[stream1, _c]
@@ -573,7 +573,7 @@ class MethanolModel(object):
         out_stream = self.outlet_streams[u]
 
         b = pe.Block()
-        setattr(block, 'reactor_' + str(u), b)
+        setattr(block, "reactor_" + str(u), b)
         b.consumption_rate = pe.Var(bounds=(0, 5))
         b.conversion = pe.Var(bounds=(0, 0.42))
         b.equilibrium_conversion = pe.Var(bounds=(0, 0.42))
@@ -582,7 +582,7 @@ class MethanolModel(object):
         b.p_sq_inv = pe.Var()
         b.t_inv = pe.Var()
 
-        key = 'H2'
+        key = "H2"
 
         b.p_sq_inv_con = pe.Constraint(expr=b.pressure**2 * b.p_sq_inv == 1)
         b.t_inv_con = pe.Constraint(expr=b.temp * b.t_inv == 1)
@@ -596,19 +596,19 @@ class MethanolModel(object):
             == 0.01 * self.heat_of_reaction * b.consumption_rate
         )
         b.H2_balance = pe.Constraint(
-            expr=component_f[out_stream, 'H2']
-            == component_f[in_stream, 'H2'] - b.consumption_rate
+            expr=component_f[out_stream, "H2"]
+            == component_f[in_stream, "H2"] - b.consumption_rate
         )
         b.CO_balance = pe.Constraint(
-            expr=component_f[out_stream, 'CO']
-            == component_f[in_stream, 'CO'] - 0.5 * b.consumption_rate
+            expr=component_f[out_stream, "CO"]
+            == component_f[in_stream, "CO"] - 0.5 * b.consumption_rate
         )
         b.CH3OH_balance = pe.Constraint(
-            expr=component_f[out_stream, 'CH3OH']
-            == component_f[in_stream, 'CH3OH'] + 0.5 * b.consumption_rate
+            expr=component_f[out_stream, "CH3OH"]
+            == component_f[in_stream, "CH3OH"] + 0.5 * b.consumption_rate
         )
         b.CH4_balance = pe.Constraint(
-            expr=component_f[out_stream, 'CH4'] == component_f[in_stream, 'CH4']
+            expr=component_f[out_stream, "CH4"] == component_f[in_stream, "CH4"]
         )
         b.eq_conversion_con = pe.Constraint(
             expr=b.equilibrium_conversion
@@ -619,9 +619,9 @@ class MethanolModel(object):
             == b.equilibrium_conversion
             * (1 - pe.exp(-self.volume_conversion[u] * self.reactor_volume))
             * (
-                component_f[in_stream, 'H2']
-                + component_f[in_stream, 'CO']
-                + component_f[in_stream, 'CH3OH']
+                component_f[in_stream, "H2"]
+                + component_f[in_stream, "CO"]
+                + component_f[in_stream, "CH3OH"]
             )
         )
         b.pressure_con1 = pe.Constraint(expr=b.pressure == p[in_stream])
@@ -640,7 +640,7 @@ class MethanolModel(object):
         vapor_stream = self.vapor_outlets[u]
         liquid_stream = self.liquid_outlets[u]
         b = pe.Block()
-        setattr(block, 'flash_' + str(u), b)
+        setattr(block, "flash_" + str(u), b)
 
         b.vapor_pressure = pe.Var(m.components, bounds=(0.001, 80))
         b.flash_t = pe.Var(bounds=(3, 5))
@@ -650,18 +650,18 @@ class MethanolModel(object):
         b.antoine_A = pe.Param(m.components, mutable=True)
         b.antoine_B = pe.Param(m.components, mutable=True)
         b.antoine_C = pe.Param(m.components, mutable=True)
-        b.antoine_A['H2'] = 13.6333
-        b.antoine_A['CO'] = 14.3686
-        b.antoine_A['CH3OH'] = 18.5875
-        b.antoine_A['CH4'] = 15.2243
-        b.antoine_B['H2'] = 164.9
-        b.antoine_B['CO'] = 530.22
-        b.antoine_B['CH3OH'] = 3626.55
-        b.antoine_B['CH4'] = 897.84
-        b.antoine_C['H2'] = 3.19
-        b.antoine_C['CO'] = -13.15
-        b.antoine_C['CH3OH'] = -34.29
-        b.antoine_C['CH4'] = -7.16
+        b.antoine_A["H2"] = 13.6333
+        b.antoine_A["CO"] = 14.3686
+        b.antoine_A["CH3OH"] = 18.5875
+        b.antoine_A["CH4"] = 15.2243
+        b.antoine_B["H2"] = 164.9
+        b.antoine_B["CO"] = 530.22
+        b.antoine_B["CH3OH"] = 3626.55
+        b.antoine_B["CH4"] = 897.84
+        b.antoine_C["H2"] = 3.19
+        b.antoine_C["CO"] = -13.15
+        b.antoine_C["CH3OH"] = -34.29
+        b.antoine_C["CH4"] = -7.16
 
         def _component_balances(_b, _c):
             return (
@@ -682,15 +682,15 @@ class MethanolModel(object):
 
         def _vle(_b, _c):
             return (
-                _b.vapor_recovery['H2']
+                _b.vapor_recovery["H2"]
                 * (
-                    _b.vapor_recovery[_c] * _b.vapor_pressure['H2']
+                    _b.vapor_recovery[_c] * _b.vapor_pressure["H2"]
                     + (1 - _b.vapor_recovery[_c]) * _b.vapor_pressure[_c]
                 )
-                == _b.vapor_pressure['H2'] * _b.vapor_recovery[_c]
+                == _b.vapor_pressure["H2"] * _b.vapor_recovery[_c]
             )
 
-        b.vle_set = pe.Set(initialize=['CO', 'CH3OH', 'CH4'], ordered=True)
+        b.vle_set = pe.Set(initialize=["CO", "CH3OH", "CH4"], ordered=True)
         b.vle_con = pe.Constraint(b.vle_set, rule=_vle)
 
         def _vapor_recovery(_b, _c):
@@ -722,7 +722,7 @@ class MethanolModel(object):
     def build_stream_doesnt_exist_con(self, block, stream):
         m = self.model
         b = pe.Block()
-        setattr(block, 'stream_doesnt_exist_con_' + str(stream), b)
+        setattr(block, "stream_doesnt_exist_con_" + str(stream), b)
         b.zero_flow_con = pe.Constraint(expr=m.flows[stream] == 0)
 
         def _zero_component_flows(_b, _c):
@@ -738,19 +738,19 @@ class MethanolModel(object):
 def enumerate_solutions():
     import time
 
-    feed_choices = ['cheap', 'expensive']
-    feed_compressor_choices = ['single_stage', 'two_stage']
-    reactor_choices = ['cheap', 'expensive']
-    recycle_compressor_choices = ['single_stage', 'two_stage']
+    feed_choices = ["cheap", "expensive"]
+    feed_compressor_choices = ["single_stage", "two_stage"]
+    reactor_choices = ["cheap", "expensive"]
+    recycle_compressor_choices = ["single_stage", "two_stage"]
 
     print(
-        '{0:<20}{1:<20}{2:<20}{3:<20}{4:<20}{5:<20}'.format(
-            'feed choice',
-            'feed compressor',
-            'reactor choice',
-            'recycle compressor',
-            'termination cond',
-            'profit',
+        "{0:<20}{1:<20}{2:<20}{3:<20}{4:<20}{5:<20}".format(
+            "feed choice",
+            "feed compressor",
+            "reactor choice",
+            "recycle compressor",
+            "termination cond",
+            "profit",
         )
     )
     since = time.time()
@@ -770,35 +770,35 @@ def enumerate_solutions():
                             lb, ub = compute_bounds_on_expr(_c.body)
                             _d.BigM[_c] = max(abs(lb), abs(ub))
 
-                    if feed_choice == 'cheap':
+                    if feed_choice == "cheap":
                         m.cheap_feed_disjunct.indicator_var.fix(1)
                         m.expensive_feed_disjunct.indicator_var.fix(0)
                     else:
                         m.cheap_feed_disjunct.indicator_var.fix(0)
                         m.expensive_feed_disjunct.indicator_var.fix(1)
 
-                    if feed_compressor_choice == 'single_stage':
+                    if feed_compressor_choice == "single_stage":
                         m.single_stage_feed_compressor_disjunct.indicator_var.fix(1)
                         m.two_stage_feed_compressor_disjunct.indicator_var.fix(0)
                     else:
                         m.single_stage_feed_compressor_disjunct.indicator_var.fix(0)
                         m.two_stage_feed_compressor_disjunct.indicator_var.fix(1)
 
-                    if reactor_choice == 'cheap':
+                    if reactor_choice == "cheap":
                         m.cheap_reactor.indicator_var.fix(1)
                         m.expensive_reactor.indicator_var.fix(0)
                     else:
                         m.cheap_reactor.indicator_var.fix(0)
                         m.expensive_reactor.indicator_var.fix(1)
 
-                    if recycle_compressor_choice == 'single_stage':
+                    if recycle_compressor_choice == "single_stage":
                         m.single_stage_recycle_compressor_disjunct.indicator_var.fix(1)
                         m.two_stage_recycle_compressor_disjunct.indicator_var.fix(0)
                     else:
                         m.single_stage_recycle_compressor_disjunct.indicator_var.fix(0)
                         m.two_stage_recycle_compressor_disjunct.indicator_var.fix(1)
 
-                    pe.TransformationFactory('gdp.fix_disjuncts').apply_to(m)
+                    pe.TransformationFactory("gdp.fix_disjuncts").apply_to(m)
 
                     fbbt(m, deactivate_satisfied_constraints=True)
                     fix_vars_with_equal_bounds(m)
@@ -810,10 +810,10 @@ def enumerate_solutions():
                             else:
                                 v.value = 1.0
 
-                    opt = pe.SolverFactory('ipopt')
+                    opt = pe.SolverFactory("ipopt")
                     res = opt.solve(m, tee=False)
                     print(
-                        '{0:<20}{1:<20}{2:<20}{3:<20}{4:<20}{5:<20}'.format(
+                        "{0:<20}{1:<20}{2:<20}{3:<20}{4:<20}{5:<20}".format(
                             feed_choice,
                             feed_compressor_choice,
                             reactor_choice,
@@ -823,14 +823,14 @@ def enumerate_solutions():
                         )
                     )
     time_elapsed = time.time() - since
-    print('The code run {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+    print("The code run {:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
 
     return m
 
 
 def build_model():
     """Build a methanol synthesis process model.
-    
+
     Returns:
         Pyomo model object for methanol synthesis process
     """
@@ -859,8 +859,8 @@ def solve_with_gdp_opt():
         ):
             lb, ub = compute_bounds_on_expr(_c.body)
             _d.BigM[_c] = max(abs(lb), abs(ub))
-    opt = pe.SolverFactory('gdpopt')
-    res = opt.solve(m, algorithm='LOA', mip_solver='gams', nlp_solver='gams', tee=True)
+    opt = pe.SolverFactory("gdpopt")
+    res = opt.solve(m, algorithm="LOA", mip_solver="gams", nlp_solver="gams", tee=True)
     for d in m.component_data_objects(
         ctype=gdp.Disjunct, active=True, sort=True, descend_into=True
     ):
@@ -871,8 +871,8 @@ def solve_with_gdp_opt():
     return m
 
 
-if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG, filename='out.log')
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.DEBUG, filename="out.log")
     from pyomo.util.model_size import *
 
     # m = enumerate()

@@ -5,14 +5,14 @@ from .column import build_column
 
 def build_model():
     """Build a GDP distillation column model.
-    
+
     Returns:
         Pyomo model object for benzene-toluene distillation column
     """
     m = build_column(min_trays=8, max_trays=17, xD=0.95, xB=0.95)
     # Fix feed conditions
-    m.feed['benzene'].fix(50)
-    m.feed['toluene'].fix(50)
+    m.feed["benzene"].fix(50)
+    m.feed["toluene"].fix(50)
     m.T_feed.fix(368)
     m.feed_vap_frac.fix(0.40395)
     # Initial values of reflux and reboil ratios
@@ -31,4 +31,4 @@ def build_model():
     return m
 
 
-__all__ = ['build_model']
+__all__ = ["build_model"]

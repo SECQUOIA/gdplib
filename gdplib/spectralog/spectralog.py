@@ -56,7 +56,7 @@ def build_model():
     """
     )
     # Note: this could come from an external data file
-    spectroscopic_data_table = pd.read_csv(spectroscopic_data, delimiter=r'\s+')
+    spectroscopic_data_table = pd.read_csv(spectroscopic_data, delimiter=r"\s+")
     flat_spectro_data = spectroscopic_data_table.stack()
     spectro_data_dict = {
         (k[0], int(k[1])): v for k, v in flat_spectro_data.to_dict().items()
@@ -72,7 +72,7 @@ def build_model():
     3        0      22      8       0       14      22      14       8 
     """
     )
-    c_data_table = pd.read_csv(c_data, delimiter=r'\s+')
+    c_data_table = pd.read_csv(c_data, delimiter=r"\s+")
     c_data_dict = {
         (k[0], int(k[1])): v for k, v in c_data_table.stack().to_dict().items()
     }
@@ -86,7 +86,7 @@ def build_model():
     3       0       0       1
     """
     )
-    r_data_table = pd.read_csv(r_data, delimiter=r'\s+')
+    r_data_table = pd.read_csv(r_data, delimiter=r"\s+")
     r_data_dict = {
         (k[0], int(k[1])): v for k, v in r_data_table.stack().to_dict().items()
     }
@@ -102,34 +102,34 @@ def build_model():
         m.wave_number,
         m.spectra_data,
         initialize=spectro_data_dict,
-        doc='Absorbance data',
+        doc="Absorbance data",
     )
     m.C = Param(
-        m.compounds, m.spectra_data, initialize=c_data_dict, doc='Concentration data'
+        m.compounds, m.spectra_data, initialize=c_data_dict, doc="Concentration data"
     )
     m.R = Param(
-        m.compounds, m.compounds, initialize=r_data_dict, doc='Covariance matrix'
+        m.compounds, m.compounds, initialize=r_data_dict, doc="Covariance matrix"
     )
 
     m.val = Var(
-        m.spectra_data, doc='Calculated objective values for each spectra data point'
+        m.spectra_data, doc="Calculated objective values for each spectra data point"
     )
     m.ent = Var(
         m.compounds,
         m.wave_number,
         bounds=(0, 1),
-        doc='Binary variables affecting the objective function and constraints.',
+        doc="Binary variables affecting the objective function and constraints.",
     )
     m.Y = BooleanVar(
         m.compounds,
         m.wave_number,
-        doc='Boolean decisions for compound presence at each wave number.',
+        doc="Boolean decisions for compound presence at each wave number.",
     )
     m.P = Var(
         m.compounds,
         m.wave_number,
         bounds=(0, 1000),
-        doc='Continuous variables estimating the concentration level of each compound at each wave number.',
+        doc="Continuous variables estimating the concentration level of each compound at each wave number.",
     )
 
     @m.Disjunction(m.compounds, m.wave_number)
@@ -196,7 +196,7 @@ def build_model():
     m.profit = Objective(
         expr=sum(m.val[j] for j in m.spectra_data)
         + 2 * sum(m.ent[k, i] for k in m.compounds for i in m.wave_number),
-        doc='Maximizes the total spectroscopic agreement across data points and promotes the activation of compound-wave number pairs.',
+        doc="Maximizes the total spectroscopic agreement across data points and promotes the activation of compound-wave number pairs.",
     )
     #  The first sum represents total spectroscopic value across data points, and the second weighted sum promotes activation of compound-wave number pairs.
 
@@ -205,10 +205,10 @@ def build_model():
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('core.logical_to_linear').apply_to(m)
+    TransformationFactory("core.logical_to_linear").apply_to(m)
     # res = SolverFactory('gdpopt').solve(m, tee=False, nlp_solver='gams')
-    TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(m, tee=True, solver='baron')
+    TransformationFactory("gdp.bigm").apply_to(m)
+    SolverFactory("gams").solve(m, tee=True, solver="baron")
     update_boolean_vars_from_binary(m)
     m.profit.display()
     m.Y.display()

@@ -96,17 +96,17 @@ def build_model():
     # The resulting gross power output is used to initialize and set the upper bound of the NP variable in the RED GDP model.
     m_stack = build_REDstack()
 
-    m = pyo.ConcreteModel('RED GDP model')
+    m = pyo.ConcreteModel("RED GDP model")
 
     # ============================================================================
     #     Sets
     # =============================================================================
 
     m.SOL = pyo.Set(
-        doc="High- and Low-concentration streams", initialize=['HC', 'LC'], ordered=True
+        doc="High- and Low-concentration streams", initialize=["HC", "LC"], ordered=True
     )
 
-    m.iem = pyo.Set(doc='Ion-exchange membrane type', initialize=['AEM', 'CEM'])
+    m.iem = pyo.Set(doc="Ion-exchange membrane type", initialize=["AEM", "CEM"])
 
     m.nr = pyo.Param(
         doc="Max. # of RED stacks",
@@ -117,29 +117,29 @@ def build_model():
 
     m.RU = pyo.Set(
         doc="Set of potential RED units (RU)",
-        initialize=['r' + str(nr) for nr in pyo.RangeSet(m.nr)],
+        initialize=["r" + str(nr) for nr in pyo.RangeSet(m.nr)],
     )
 
     m.in_RU = pyo.Set(
-        doc="Inlet RU Port", initialize=['ri' + str(nr) for nr in pyo.RangeSet(m.nr)]
+        doc="Inlet RU Port", initialize=["ri" + str(nr) for nr in pyo.RangeSet(m.nr)]
     )
 
     m.out_RU = pyo.Set(
-        doc="Outlet RU Port", initialize=['ro' + str(nr) for nr in pyo.RangeSet(m.nr)]
+        doc="Outlet RU Port", initialize=["ro" + str(nr) for nr in pyo.RangeSet(m.nr)]
     )
     m.RU_port = pyo.Set(doc="Inlet and Outlet RU Ports", initialize=m.in_RU | m.out_RU)
 
     m.units = pyo.Set(
         doc="Superstructure Units",
-        initialize=['in', 'fs', 'rsu', 'rmu', 'dm', 'disch'] | m.RU | m.RU_port,
+        initialize=["in", "fs", "rsu", "rmu", "dm", "disch"] | m.RU | m.RU_port,
     )
 
     m.splitters = pyo.Set(
-        doc="Set of splitters", within=m.units, initialize=['fs', 'rsu'] | m.out_RU
+        doc="Set of splitters", within=m.units, initialize=["fs", "rsu"] | m.out_RU
     )
 
     m.mixers = pyo.Set(
-        doc="Set of mixers", within=m.units, initialize=['dm', 'rmu'] | m.in_RU
+        doc="Set of mixers", within=m.units, initialize=["dm", "rmu"] | m.in_RU
     )
 
     def _streams_filter(m, val):
@@ -163,7 +163,7 @@ def build_model():
             True if the ports are the same, False otherwise
         """
         x, y = val
-        return re.findall(r'\d+', x) == re.findall(r'\d+', y)
+        return re.findall(r"\d+", x) == re.findall(r"\d+", y)
 
     m.RMU_RU_streams = pyo.Set(
         doc="RMU to RU 1-1 port pairing",
@@ -184,12 +184,12 @@ def build_model():
 
     m.streams = pyo.Set(
         doc="Set of feasible streams",
-        initialize=[('in', 'fs'), ('fs', 'rsu'), ('fs', 'dm')]
-        | ['rsu'] * m.in_RU
+        initialize=[("in", "fs"), ("fs", "rsu"), ("fs", "dm")]
+        | ["rsu"] * m.in_RU
         | m.RU_streams
-        | m.out_RU * ['rmu']
-        | [('rmu', 'dm')]
-        | [('dm', 'disch')],
+        | m.out_RU * ["rmu"]
+        | [("rmu", "dm")]
+        | [("dm", "disch")],
     )
 
     def _from_splitters_filter(m, val):
@@ -209,10 +209,10 @@ def build_model():
             True if the stream is from splitters and discharge port, False otherwise
         """
         x, y = val
-        return x in m.splitters or (x, y) == ('dm', 'disch')
+        return x in m.splitters or (x, y) == ("dm", "disch")
 
     m.from_splitters = pyo.Set(
-        doc='Set of streams from splitters and discharge port',
+        doc="Set of streams from splitters and discharge port",
         within=m.streams,
         initialize=m.streams,
         filter=_from_splitters_filter,
@@ -235,18 +235,18 @@ def build_model():
             True if the stream is to splitters and feed port, False otherwise
         """
         x, y = val
-        return y in m.splitters or (x, y) == ('in', 'fs')
+        return y in m.splitters or (x, y) == ("in", "fs")
 
     m.to_splitters = pyo.Set(
-        doc='Set of streams to splitters and feed port',
+        doc="Set of streams to splitters and feed port",
         within=m.streams,
         initialize=m.streams,
         filter=_to_splitters_filter,
     )
 
     m.aux_equipment = pyo.Set(
-        doc='Set of equipment for cost correlation. Tuple (equipment, type)',
-        initialize=[('Pump', 'Single Stage Centrifugal')],
+        doc="Set of equipment for cost correlation. Tuple (equipment, type)",
+        initialize=[("Pump", "Single Stage Centrifugal")],
     )
 
     # ============================================================================
@@ -255,28 +255,28 @@ def build_model():
 
     # Ideal gas constant [J/mol/K]
     # m.gas_constant = 8.314462618
-    m.gas_constant = physical_constants['molar gas constant'][0]
+    m.gas_constant = physical_constants["molar gas constant"][0]
     # Faraday’s Constant [C/mol] [A s/mol]
     # m.faraday_constant = 96485.33212
-    m.faraday_constant = physical_constants['Faraday constant'][0]
+    m.faraday_constant = physical_constants["Faraday constant"][0]
     m.Tref = 298.15  # Reference temperature [K]
 
     m.T = pyo.Param(
-        doc='Feed streams temperature [K]', initialize=T.loc[0].values[0], mutable=True
+        doc="Feed streams temperature [K]", initialize=T.loc[0].values[0], mutable=True
     )
 
     m.temperature_coeff = pyo.Param(
-        doc='Temperature correction factor [-] of the solution conductivity',
+        doc="Temperature correction factor [-] of the solution conductivity",
         default=0.02,
         initialize=0.02,
     )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
     # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02/K.
 
     m.dynamic_viscosity = pyo.Param(
-        doc='Dynamic viscosity of the solution [Pa s]', default=0.001, initialize=0.001
+        doc="Dynamic viscosity of the solution [Pa s]", default=0.001, initialize=0.001
     )
 
-    m.pump_eff = pyo.Param(doc='Pump efficiency [-]', default=0.75, initialize=0.75)
+    m.pump_eff = pyo.Param(doc="Pump efficiency [-]", default=0.75, initialize=0.75)
 
     # =============================================================================
     #     Financial Parameters
@@ -290,7 +290,7 @@ def build_model():
     )
 
     m.load_factor = pyo.Param(
-        doc='Working hours per year of the RU [h/year]',
+        doc="Working hours per year of the RU [h/year]",
         default=0.9,
         initialize=0.9,
         mutable=True,
@@ -333,8 +333,8 @@ def build_model():
     m.pump_cap_cost_params = pyo.Param(
         m.aux_equipment,
         within=pyo.Any,
-        doc='Pump capital cost parameters for cost correlation of the form: CE = a + b(S)**n',
-        initialize=lambda m, eq1, eq2: {'a': 6900, 'b': 206, 'n': 0.9},
+        doc="Pump capital cost parameters for cost correlation of the form: CE = a + b(S)**n",
+        initialize=lambda m, eq1, eq2: {"a": 6900, "b": 206, "n": 0.9},
     )
 
     m.oandm_cost_factor = pyo.Param(
@@ -384,7 +384,7 @@ def build_model():
     )
 
     m.eur2usd = pyo.Param(
-        initialize=1.12, default=1.12, doc='Market Exchange Rate [USD/EUR]'
+        initialize=1.12, default=1.12, doc="Market Exchange Rate [USD/EUR]"
     )  # Base year 2019 ECB Data
 
     # =============================================================================
@@ -449,7 +449,7 @@ def build_model():
             )
         )
 
-    @m.Param(doc='Membrane area [m2]')
+    @m.Param(doc="Membrane area [m2]")
     def Aiem(m):
         """
         This function calculates the membrane area
@@ -466,7 +466,7 @@ def build_model():
         """
         return m.b * m.L
 
-    @m.Param(doc='Total membrane area per cell pair of the RU [m2]')
+    @m.Param(doc="Total membrane area per cell pair of the RU [m2]")
     def _total_iem_area(m):
         """
         This function calculates the total membrane area per cell pair of the RU
@@ -483,7 +483,7 @@ def build_model():
         """
         return m.cell_pairs * m.Aiem
 
-    @m.Param(m.SOL, doc='Cross-sectional area [m2]')
+    @m.Param(m.SOL, doc="Cross-sectional area [m2]")
     def _cross_area(m, sol):
         """
         This function calculates the cross-sectional area of the channel
@@ -506,20 +506,20 @@ def build_model():
         m.iem,
         doc="Membranes' resistance [ohm m2]",
         within=pyo.NonNegativeReals,
-        default={'CEM': 1.8e-4, 'AEM': 0.6e-4},
+        default={"CEM": 1.8e-4, "AEM": 0.6e-4},
         initialize={
-            'CEM': stack_param.cem_resistance.values[0],
-            'AEM': stack_param.aem_resistance.values[0],
+            "CEM": stack_param.cem_resistance.values[0],
+            "AEM": stack_param.aem_resistance.values[0],
         },
     )
     m.iems_permsel = pyo.Param(
         m.iem,
         doc="Membranes' permselectivity [-]",
         within=pyo.NonNegativeReals,
-        default={'CEM': 0.97, 'AEM': 0.92},
+        default={"CEM": 0.97, "AEM": 0.92},
         initialize={
-            'CEM': stack_param.cem_permsel.values[0],
-            'AEM': stack_param.aem_permsel.values[0],
+            "CEM": stack_param.cem_permsel.values[0],
+            "AEM": stack_param.aem_permsel.values[0],
         },
     )
 
@@ -533,8 +533,8 @@ def build_model():
         within=pyo.NonNegativeReals,
         default=50e-6,
         initialize={
-            'CEM': stack_param.cem_thickness.values[0],
-            'AEM': stack_param.aem_thickness.values[0],
+            "CEM": stack_param.cem_thickness.values[0],
+            "AEM": stack_param.aem_thickness.values[0],
         },
     )
 
@@ -547,16 +547,16 @@ def build_model():
 
     m.vel_ub = pyo.Param(
         m.SOL,
-        doc='Max.linear crossflow velocity [cm/s]',
+        doc="Max.linear crossflow velocity [cm/s]",
         default=3.0,
         initialize=stack_param.vel_ub.values[0],
     )
     m.vel_lb = pyo.Param(
-        m.SOL, doc='Min.linear crossflow velocity [cm/s]', initialize=1.0e-3
+        m.SOL, doc="Min.linear crossflow velocity [cm/s]", initialize=1.0e-3
     )
     m.vel_init = pyo.Param(
         m.SOL,
-        doc='Initial linear crossflow velocity [cm/s]',
+        doc="Initial linear crossflow velocity [cm/s]",
         default=1,
         initialize=stack_param.vel_init.values[0],
     )
@@ -591,21 +591,21 @@ def build_model():
         flow_init is calculated as the product of the initial velocity, the cross-sectional area, and the number of cell pairs.
         If the initial value is greater than the available feed flow rate, the feed flow rate is evenly split between the RED units' high and low salinity streams.
         """
-        if (i, k) in (['rsu'] * m.in_RU | m.out_RU * m.in_RU | m.out_RU * ['rmu']):
+        if (i, k) in (["rsu"] * m.in_RU | m.out_RU * m.in_RU | m.out_RU * ["rmu"]):
             flow_init = pyo.value(
-                ureg.convert(m.vel_init[sol], 'cm/s', 'm/h')
+                ureg.convert(m.vel_init[sol], "cm/s", "m/h")
                 * m._cross_area[sol]
                 * m.cell_pairs
             )
             #             HC and LC inlet flow rate to RU evenly split
             #             if initial value > available feed flow rate
-            if sol == 'HC':
-                if flow_init * m.nr > flow_conc_data['feed_flow_vol']['fh1']:
-                    return flow_conc_data['feed_flow_vol']['fh1'] / m.nr
+            if sol == "HC":
+                if flow_init * m.nr > flow_conc_data["feed_flow_vol"]["fh1"]:
+                    return flow_conc_data["feed_flow_vol"]["fh1"] / m.nr
                 return flow_init
-            if sol == 'LC':
-                if flow_init * m.nr > flow_conc_data['feed_flow_vol']['fl1']:
-                    return flow_conc_data['feed_flow_vol']['fl1'] / m.nr
+            if sol == "LC":
+                if flow_init * m.nr > flow_conc_data["feed_flow_vol"]["fl1"]:
+                    return flow_conc_data["feed_flow_vol"]["fl1"] / m.nr
                 return flow_init
 
     def _flow_vol_b(m, i, k, sol):
@@ -636,25 +636,25 @@ def build_model():
         ub is calculated as the product of the maximum velocity, the cross-sectional area, and the number of cell pairs.
         """
         ub = pyo.value(
-            ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h')
+            ureg.convert(m.vel_ub[sol], "cm/s", "m/h")
             * m._cross_area[sol]
             * m.cell_pairs
         )
         if (i, k) in (m.out_RU * m.in_RU):
             return (None, ub)
-        elif (i, k) in (['rsu'] * m.in_RU | m.out_RU * ['rmu']):
-            if sol == 'HC':
-                if ub > flow_conc_data['feed_flow_vol']['fh1']:
-                    return (None, flow_conc_data['feed_flow_vol']['fh1'])
+        elif (i, k) in (["rsu"] * m.in_RU | m.out_RU * ["rmu"]):
+            if sol == "HC":
+                if ub > flow_conc_data["feed_flow_vol"]["fh1"]:
+                    return (None, flow_conc_data["feed_flow_vol"]["fh1"])
                 return (None, ub)
             else:
-                if ub > flow_conc_data['feed_flow_vol']['fl1']:
-                    return (None, flow_conc_data['feed_flow_vol']['fl1'])
+                if ub > flow_conc_data["feed_flow_vol"]["fl1"]:
+                    return (None, flow_conc_data["feed_flow_vol"]["fl1"])
                 return (None, ub)
         else:
-            if sol == 'HC':
-                return (None, flow_conc_data['feed_flow_vol']['fh1'])
-        return (None, flow_conc_data['feed_flow_vol']['fl1'])
+            if sol == "HC":
+                return (None, flow_conc_data["feed_flow_vol"]["fh1"])
+        return (None, flow_conc_data["feed_flow_vol"]["fl1"])
 
     m.flow_vol = pyo.Var(
         m.streams - m.RMU_RU_streams - m.RU_RSU_streams,
@@ -666,12 +666,12 @@ def build_model():
     )
 
     # Fixing the feed flow rate of the high and low salinity feed streams.
-    m.flow_vol['in', 'fs', 'HC'].fix(flow_conc_data['feed_flow_vol']['fh1'])
-    m.flow_vol['in', 'fs', 'LC'].fix(flow_conc_data['feed_flow_vol']['fl1'])
+    m.flow_vol["in", "fs", "HC"].fix(flow_conc_data["feed_flow_vol"]["fh1"])
+    m.flow_vol["in", "fs", "LC"].fix(flow_conc_data["feed_flow_vol"]["fl1"])
 
     # Set the flow rate of the high and low salinity feed streams of the discharge port.
-    m.flow_vol['dm', 'disch', 'HC'].set_value(flow_conc_data['feed_flow_vol']['fh1'])
-    m.flow_vol['dm', 'disch', 'LC'].set_value(flow_conc_data['feed_flow_vol']['fl1'])
+    m.flow_vol["dm", "disch", "HC"].set_value(flow_conc_data["feed_flow_vol"]["fh1"])
+    m.flow_vol["dm", "disch", "LC"].set_value(flow_conc_data["feed_flow_vol"]["fl1"])
 
     def _flowrate_ratio_b(m):
         """
@@ -688,8 +688,8 @@ def build_model():
         tuple
             Lower and upper bounds of the flow rate ratio of the high and low salinity streams
         """
-        lb = m.vel_lb['LC'] / (m.vel_lb['LC'] + m.vel_ub['HC'])
-        ub = m.vel_ub['LC'] / (m.vel_ub['LC'] + m.vel_lb['HC'])
+        lb = m.vel_lb["LC"] / (m.vel_lb["LC"] + m.vel_ub["HC"])
+        ub = m.vel_ub["LC"] / (m.vel_ub["LC"] + m.vel_lb["HC"])
         return (lb, ub)
 
     def _flowrate_ratio(m):
@@ -707,10 +707,10 @@ def build_model():
         float
             Flow rate ratio of the high and low salinity streams.
         """
-        return m.vel_init['LC'] / sum(m.vel_init[sol] for sol in m.SOL)
+        return m.vel_init["LC"] / sum(m.vel_init[sol] for sol in m.SOL)
 
     m.phi = pyo.Var(
-        doc='Vol. flow rate ratio = In LC to total In (LC+HC) RU [-]',
+        doc="Vol. flow rate ratio = In LC to total In (LC+HC) RU [-]",
         initialize=_flowrate_ratio,
         bounds=_flowrate_ratio_b,
         domain=pyo.NonNegativeReals,
@@ -731,12 +731,12 @@ def build_model():
             Lower and upper bounds of the concentration of the HC and LC mixed stream reaching equilibrium
         """
         lb = (
-            m.phi.ub * flow_conc_data['feed_conc_mol']['fl1']
-            + (1 - m.phi.ub) * flow_conc_data['feed_conc_mol']['fh1']
+            m.phi.ub * flow_conc_data["feed_conc_mol"]["fl1"]
+            + (1 - m.phi.ub) * flow_conc_data["feed_conc_mol"]["fh1"]
         )
         ub = (
-            m.phi.lb * flow_conc_data['feed_conc_mol']['fl1']
-            + (1 - m.phi.lb) * flow_conc_data['feed_conc_mol']['fh1']
+            m.phi.lb * flow_conc_data["feed_conc_mol"]["fl1"]
+            + (1 - m.phi.lb) * flow_conc_data["feed_conc_mol"]["fh1"]
         )
         return (lb, ub)
 
@@ -755,12 +755,12 @@ def build_model():
             Concentration of the HC and LC mixed stream reaching equilibrium.
         """
         return (
-            m.phi * flow_conc_data['feed_conc_mol']['fl1']
-            + (1 - m.phi) * flow_conc_data['feed_conc_mol']['fh1']
+            m.phi * flow_conc_data["feed_conc_mol"]["fl1"]
+            + (1 - m.phi) * flow_conc_data["feed_conc_mol"]["fh1"]
         )
 
     m.conc_mol_eq = pyo.Var(
-        doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol/L]',
+        doc="Concentration of the HC and LC mixed stream reaching equilibrium [mol/L]",
         initialize=_conc_mol_eq,
         bounds=_conc_mol_eq_b,
         domain=pyo.NonNegativeReals,
@@ -786,13 +786,13 @@ def build_model():
         tuple
             Lower and upper bounds of the molar concentration of the high and low salinity streams
         """
-        if (i, k) in (m.out_RU * ['rmu'] | [('rmu', 'dm'), ('dm', 'disch')]):
-            if sol == 'HC':
-                return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
-            return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
-        if sol == 'HC':
-            return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
-        return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
+        if (i, k) in (m.out_RU * ["rmu"] | [("rmu", "dm"), ("dm", "disch")]):
+            if sol == "HC":
+                return (m.conc_mol_eq.lb, flow_conc_data["feed_conc_mol"]["fh1"])
+            return (flow_conc_data["feed_conc_mol"]["fl1"], m.conc_mol_eq.ub)
+        if sol == "HC":
+            return (m.conc_mol_eq.lb, flow_conc_data["feed_conc_mol"]["fh1"])
+        return (flow_conc_data["feed_conc_mol"]["fl1"], m.conc_mol_eq.ub)
 
     m.conc_mol = pyo.Var(
         m.streams - m.RMU_RU_streams - m.RU_RSU_streams,
@@ -801,14 +801,14 @@ def build_model():
         domain=pyo.NonNegativeReals,
         bounds=_conc_mol_b,
         initialize=lambda _, i, k, sol: (
-            flow_conc_data['feed_conc_mol']['fh1']
-            if sol == 'HC'
-            else flow_conc_data['feed_conc_mol']['fl1']
+            flow_conc_data["feed_conc_mol"]["fh1"]
+            if sol == "HC"
+            else flow_conc_data["feed_conc_mol"]["fl1"]
         ),
     )
 
-    m.conc_mol['in', 'fs', 'HC'].fix(flow_conc_data['feed_conc_mol']['fh1'])
-    m.conc_mol['in', 'fs', 'LC'].fix(flow_conc_data['feed_conc_mol']['fl1'])
+    m.conc_mol["in", "fs", "HC"].fix(flow_conc_data["feed_conc_mol"]["fh1"])
+    m.conc_mol["in", "fs", "LC"].fix(flow_conc_data["feed_conc_mol"]["fl1"])
 
     m.NP = pyo.Var(
         m.RU,
@@ -818,7 +818,7 @@ def build_model():
         doc="Net Power output RED stack * 1e-2 [W]",
     )
 
-    @m.Expression(doc='Membranes Capital Cost [USD]')
+    @m.Expression(doc="Membranes Capital Cost [USD]")
     def iems_cap_cost(m):
         """
         Expression to calculate the membranes capital cost in USD
@@ -835,7 +835,7 @@ def build_model():
         """
         return 2 * m._total_iem_area * m.iems_price * m.eur2usd  # 2 iems per cp
 
-    @m.Expression(doc='RED Stack Capital Cost [USD]')
+    @m.Expression(doc="RED Stack Capital Cost [USD]")
     def stack_cap_cost(m):
         """
         Expression to calculate the RED stack capital cost in USD
@@ -856,7 +856,7 @@ def build_model():
 
     m.stack_cost = pyo.Var(
         m.RU,
-        doc='Stack capital cost [USD]',
+        doc="Stack capital cost [USD]",
         initialize=m.stack_cap_cost.expr(),
         domain=pyo.NonNegativeReals,
         bounds=(None, m.stack_cap_cost.expr()),
@@ -891,10 +891,10 @@ def build_model():
         PP = sum(
             48
             * m.dynamic_viscosity
-            * ureg.convert(m.vel_init[sol], 'cm', 'm')
+            * ureg.convert(m.vel_init[sol], "cm", "m")
             / m.dh[sol] ** 2
             * m.L
-            * ureg.convert(m.vel_init[sol], 'cm', 'm')
+            * ureg.convert(m.vel_init[sol], "cm", "m")
             * m._cross_area[sol]
             * m.cell_pairs
             / m.pump_eff
@@ -902,7 +902,7 @@ def build_model():
         )
         return pyo.value(
             m.iems_cap_cost * m.CRFm
-            + m.electricity_price * hours * m.load_factor * ureg.convert(PP, 'W', 'kW')
+            + m.electricity_price * hours * m.load_factor * ureg.convert(PP, "W", "kW")
         )
 
     def _op_cost_b(m):
@@ -923,10 +923,10 @@ def build_model():
         PP = sum(
             48
             * m.dynamic_viscosity
-            * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+            * ureg.convert(m.vel_ub[sol], "cm", "m")
             / m.dh[sol] ** 2
             * m.L
-            * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+            * ureg.convert(m.vel_ub[sol], "cm", "m")
             * m._cross_area[sol]
             * m.cell_pairs
             / m.pump_eff
@@ -939,7 +939,7 @@ def build_model():
                 + m.electricity_price
                 * hours
                 * m.load_factor
-                * ureg.convert(PP, 'W', 'kW')
+                * ureg.convert(PP, "W", "kW")
             ),
         )
 
@@ -947,7 +947,7 @@ def build_model():
         m.RU,
         initialize=_op_cost,
         bounds=_op_cost_b,
-        doc='RU operational cost [USD]',
+        doc="RU operational cost [USD]",
         domain=pyo.NonNegativeReals,
     )
 
@@ -1142,11 +1142,11 @@ def build_model():
 
     # Logical Constraint: At least one RED unit must exist
     m.atleast_oneRU = pyo.LogicalConstraint(
-        doc='At least one RED unit must exist', expr=atleast(1, m.Yunit)
+        doc="At least one RED unit must exist", expr=atleast(1, m.Yunit)
     )
 
     # Logical Constraint: Yi+1 implies Yi
-    @m.LogicalConstraint(m.RU, doc='Existence of RUn+1 implies RUn')
+    @m.LogicalConstraint(m.RU, doc="Existence of RUn+1 implies RUn")
     def Yii_implies_Yi(m, unit):
         """
         Logical constraint for the existence of RED units that implies the existence of the previous RED unit.
@@ -1301,30 +1301,30 @@ def build_model():
                 Flow rate of the high and low salinity streams
             """
             flow_init = pyo.value(
-                ureg.convert(m.vel_init[sol], 'cm/s', 'm/h') * m._cross_area[sol]
+                ureg.convert(m.vel_init[sol], "cm/s", "m/h") * m._cross_area[sol]
             )
-            if sol == 'HC':
+            if sol == "HC":
                 if (
                     pyo.value(flow_init * m.nr * m.cell_pairs)
-                    > flow_conc_data['feed_flow_vol']['fh1']
+                    > flow_conc_data["feed_flow_vol"]["fh1"]
                 ):
                     return ureg.convert(
-                        flow_conc_data['feed_flow_vol']['fh1'] / m.nr / m.cell_pairs,
-                        'm**3',
-                        'liter',
+                        flow_conc_data["feed_flow_vol"]["fh1"] / m.nr / m.cell_pairs,
+                        "m**3",
+                        "liter",
                     )
-                return ureg.convert(flow_init, 'm**3', 'liter')
-            if sol == 'LC':
+                return ureg.convert(flow_init, "m**3", "liter")
+            if sol == "LC":
                 if (
                     pyo.value(flow_init * m.nr * m.cell_pairs)
-                    > flow_conc_data['feed_flow_vol']['fl1']
+                    > flow_conc_data["feed_flow_vol"]["fl1"]
                 ):
                     return ureg.convert(
-                        flow_conc_data['feed_flow_vol']['fl1'] / m.nr / m.cell_pairs,
-                        'm**3',
-                        'liter',
+                        flow_conc_data["feed_flow_vol"]["fl1"] / m.nr / m.cell_pairs,
+                        "m**3",
+                        "liter",
                     )
-                return ureg.convert(flow_init, 'm**3', 'liter')
+                return ureg.convert(flow_init, "m**3", "liter")
 
         def _flow_vol_b(ru, x, sol):
             """
@@ -1345,14 +1345,14 @@ def build_model():
                 Lower and upper bounds of the flow rate of the high and low salinity streams
             """
             lb = pyo.value(
-                ureg.convert(m.vel_lb[sol], 'cm/s', 'm/h') * m._cross_area[sol]
+                ureg.convert(m.vel_lb[sol], "cm/s", "m/h") * m._cross_area[sol]
             )
             ub = pyo.value(
-                ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h') * m._cross_area[sol]
+                ureg.convert(m.vel_ub[sol], "cm/s", "m/h") * m._cross_area[sol]
             )
             return (
-                ureg.convert(lb, 'm**3', 'liter'),
-                ureg.convert(ub, 'm**3', 'liter'),
+                ureg.convert(lb, "m**3", "liter"),
+                ureg.convert(ub, "m**3", "liter"),
             )
 
         ru.flow_vol_x = pyo.Var(
@@ -1382,10 +1382,10 @@ def build_model():
             tuple
                 Lower and upper bounds of the molar concentration of the high and low salinity streams
             """
-            if sol == 'HC':
-                return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
+            if sol == "HC":
+                return (m.conc_mol_eq.lb, flow_conc_data["feed_conc_mol"]["fh1"])
             #                 return (m.conc_mol_eq.lb, feed_conc_mol['fh1'])
-            return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
+            return (flow_conc_data["feed_conc_mol"]["fl1"], m.conc_mol_eq.ub)
 
         def _conc_molx(ru, x, sol):
             """
@@ -1405,9 +1405,9 @@ def build_model():
             float
                 Molar concentration of the high and low salinity streams
             """
-            if sol == 'HC':
-                return flow_conc_data['feed_conc_mol']['fh1']
-            return flow_conc_data['feed_conc_mol']['fl1']
+            if sol == "HC":
+                return flow_conc_data["feed_conc_mol"]["fh1"]
+            return flow_conc_data["feed_conc_mol"]["fl1"]
 
         ru.conc_mol_x = pyo.Var(
             ru.length_domain,
@@ -1440,12 +1440,12 @@ def build_model():
             delta_p = pyo.value(
                 48
                 * m.dynamic_viscosity
-                * ureg.convert(m.vel_init[sol], 'cm', 'm')
+                * ureg.convert(m.vel_init[sol], "cm", "m")
                 / m.dh[sol] ** 2
                 * m.L
             )
-            ub = ureg.convert(1, 'atm', 'mbar')
-            lb = ub - ureg.convert(delta_p, 'Pa', 'mbar')
+            ub = ureg.convert(1, "atm", "mbar")
+            lb = ub - ureg.convert(delta_p, "Pa", "mbar")
             if x == ru.length_domain.first():
                 return ub
             return lb
@@ -1468,7 +1468,7 @@ def build_model():
             tuple
                 Lower and upper bounds of the discretized pressure
             """
-            ub = ureg.convert(1, 'atm', 'mbar')
+            ub = ureg.convert(1, "atm", "mbar")
             return (None, ub)
 
         ru.pressure_x = pyo.Var(
@@ -1477,7 +1477,7 @@ def build_model():
             domain=pyo.NonNegativeReals,
             initialize=_pressure_x,
             bounds=_pressure_x_b,
-            doc='Discretized pressure [mbar]',
+            doc="Discretized pressure [mbar]",
         )
 
         # =============================================================================
@@ -1492,9 +1492,9 @@ def build_model():
                 * m.T
                 / m.faraday_constant
                 * m.iems_permsel_avg
-                * (pyo.log(ru.conc_mol_x[x, 'HC']) - pyo.log(ru.conc_mol_x[x, 'LC'])),
-                'V',
-                'mV',
+                * (pyo.log(ru.conc_mol_x[x, "HC"]) - pyo.log(ru.conc_mol_x[x, "LC"])),
+                "V",
+                "mV",
             ),
             bounds=lambda ru, x: (
                 None,
@@ -1505,11 +1505,11 @@ def build_model():
                     / m.faraday_constant
                     * m.iems_permsel_avg
                     * (
-                        pyo.log(flow_conc_data['feed_conc_mol']['fh1'])
-                        - pyo.log(flow_conc_data['feed_conc_mol']['fl1'])
+                        pyo.log(flow_conc_data["feed_conc_mol"]["fh1"])
+                        - pyo.log(flow_conc_data["feed_conc_mol"]["fl1"])
                     ),
-                    'V',
-                    'mV',
+                    "V",
+                    "mV",
                 ),
             ),
             doc="Nernst ELectric Potential per cell pair [mV per cell pair]",
@@ -1518,8 +1518,8 @@ def build_model():
         ru.EMF = pyo.Var(
             domain=pyo.NonNegativeReals,
             initialize=m.cell_pairs
-            * ureg.convert(_int_trap_rule(ru.length_domain, ru.Ecpx), 'mV', 'V'),
-            bounds=(None, m.cell_pairs * ureg.convert(ru.Ecpx[0].ub, 'mV', 'V')),
+            * ureg.convert(_int_trap_rule(ru.length_domain, ru.Ecpx), "mV", "V"),
+            bounds=(None, m.cell_pairs * ureg.convert(ru.Ecpx[0].ub, "mV", "V")),
             doc="Nernst Potential RED Stack [V]",
         )
 
@@ -1544,12 +1544,12 @@ def build_model():
                 Lower and upper bounds of the sol. conductivity per unit length
             """
             # Conductivity bounds based on correlation from experimental data
-            if sol == 'HC':
-                ub = 7.7228559 * flow_conc_data['feed_conc_mol']['fh1'] + 0.5670209
+            if sol == "HC":
+                ub = 7.7228559 * flow_conc_data["feed_conc_mol"]["fh1"] + 0.5670209
                 lb = 7.7228559 * m.conc_mol_eq.lb + 0.5670209
                 return (lb, ub)
             ub = 10.5763914 * m.conc_mol_eq.ub + 0.0087379
-            lb = 10.5763914 * flow_conc_data['feed_conc_mol']['fl1'] + 0.0087379
+            lb = 10.5763914 * flow_conc_data["feed_conc_mol"]["fl1"] + 0.0087379
             return (lb, ub)
 
         def _ksol(ru, x, sol):
@@ -1572,9 +1572,9 @@ def build_model():
             float
                 Solutions conductivity per unit length
             """
-            if sol == 'HC':
-                return pyo.value(7.7228559 * ru.conc_mol_x[0, 'HC'] + 0.5670209)
-            return pyo.value(10.5763914 * ru.conc_mol_x[0, 'LC'] + 0.0087379)
+            if sol == "HC":
+                return pyo.value(7.7228559 * ru.conc_mol_x[0, "HC"] + 0.5670209)
+            return pyo.value(10.5763914 * ru.conc_mol_x[0, "LC"] + 0.0087379)
 
         ru.ksol = pyo.Var(
             ru.length_domain,
@@ -1616,35 +1616,35 @@ def build_model():
             tuple
                 Lower and upper bounds of the solution resistance per cell pair per unit length
             """
-            if sol == 'HC':
+            if sol == "HC":
                 lb = ureg.convert(
                     m.spacer_thickness[sol]
                     / m.spacer_porosity[sol] ** 2
-                    / ru.ksol_T[0, 'HC'].ub,
-                    'm**2',
-                    'cm**2',
+                    / ru.ksol_T[0, "HC"].ub,
+                    "m**2",
+                    "cm**2",
                 )
                 ub = ureg.convert(
                     m.spacer_thickness[sol]
                     / m.spacer_porosity[sol] ** 2
-                    / ru.ksol_T[0, 'HC'].lb,
-                    'm**2',
-                    'cm**2',
+                    / ru.ksol_T[0, "HC"].lb,
+                    "m**2",
+                    "cm**2",
                 )
                 return (lb, ub)
             lb = ureg.convert(
                 m.spacer_thickness[sol]
                 / m.spacer_porosity[sol] ** 2
-                / ru.ksol_T[0, 'LC'].ub,
-                'm**2',
-                'cm**2',
+                / ru.ksol_T[0, "LC"].ub,
+                "m**2",
+                "cm**2",
             )
             ub = ureg.convert(
                 m.spacer_thickness[sol]
                 / m.spacer_porosity[sol] ** 2
-                / ru.ksol_T[0, 'LC'].lb,
-                'm**2',
-                'cm**2',
+                / ru.ksol_T[0, "LC"].lb,
+                "m**2",
+                "cm**2",
             )
             return (lb, ub)
 
@@ -1666,23 +1666,23 @@ def build_model():
             float
                 Solution resistance per cell pair per unit length
             """
-            if sol == 'HC':
+            if sol == "HC":
                 return pyo.value(
                     ureg.convert(
                         m.spacer_thickness[sol]
                         / m.spacer_porosity[sol] ** 2
-                        / ru.ksol_T[0, 'HC'],
-                        'm**2',
-                        'cm**2',
+                        / ru.ksol_T[0, "HC"],
+                        "m**2",
+                        "cm**2",
                     )
                 )
             return pyo.value(
                 ureg.convert(
                     m.spacer_thickness[sol]
                     / m.spacer_porosity[sol] ** 2
-                    / ru.ksol_T[0, 'LC'],
-                    'm**2',
-                    'cm**2',
+                    / ru.ksol_T[0, "LC"],
+                    "m**2",
+                    "cm**2",
                 )
             )
 
@@ -1712,10 +1712,10 @@ def build_model():
                 Lower and upper bounds of the internal resistance per cell pair per unit length
             """
             lb = sum(ru.Rsol[0, sol].lb for sol in m.SOL) + ureg.convert(
-                sum(m.iems_resistance[iem] for iem in m.iem), 'm**2', 'cm**2'
+                sum(m.iems_resistance[iem] for iem in m.iem), "m**2", "cm**2"
             )
             ub = sum(ru.Rsol[0, sol].ub for sol in m.SOL) + ureg.convert(
-                sum(m.iems_resistance[iem] for iem in m.iem), 'm**2', 'cm**2'
+                sum(m.iems_resistance[iem] for iem in m.iem), "m**2", "cm**2"
             )
             return (lb, ub)
 
@@ -1736,7 +1736,7 @@ def build_model():
                 Internal resistance per cell pair per unit length
             """
             r_iem = ureg.convert(
-                sum(m.iems_resistance[iem] for iem in m.iem), 'm**2', 'cm**2'
+                sum(m.iems_resistance[iem] for iem in m.iem), "m**2", "cm**2"
             )
             return sum(ru.Rsol[0, sol] for sol in m.SOL) + r_iem
 
@@ -1751,11 +1751,11 @@ def build_model():
         ru.Rstack = pyo.Var(
             domain=pyo.NonNegativeReals,
             initialize=lambda _: m.cell_pairs
-            * ureg.convert(_int_trap_rule(ru.length_domain, ru.Rcpx), 'cm**2', 'm**2')
+            * ureg.convert(_int_trap_rule(ru.length_domain, ru.Rcpx), "cm**2", "m**2")
             / m.Aiem,
             bounds=(
-                m.cell_pairs * ureg.convert(ru.Rcpx[0].lb, 'cm**2', 'm**2') / m.Aiem,
-                m.cell_pairs * ureg.convert(ru.Rcpx[0].ub, 'cm**2', 'm**2') / m.Aiem,
+                m.cell_pairs * ureg.convert(ru.Rcpx[0].lb, "cm**2", "m**2") / m.Aiem,
+                m.cell_pairs * ureg.convert(ru.Rcpx[0].ub, "cm**2", "m**2") / m.Aiem,
             ),
             doc="RED stack Internal resistance [ohm]",
         )
@@ -1778,10 +1778,10 @@ def build_model():
         ru.Istack = pyo.Var(
             domain=pyo.NonNegativeReals,
             initialize=lambda _: ureg.convert(
-                _int_trap_rule(ru.length_domain, ru.Idx), 'mA/cm**2', 'A/m**2'
+                _int_trap_rule(ru.length_domain, ru.Idx), "mA/cm**2", "A/m**2"
             )
             * m.Aiem,
-            bounds=(None, ureg.convert(ru.Idx[0].ub, 'mA/cm**2', 'A/m**2') * m.Aiem),
+            bounds=(None, ureg.convert(ru.Idx[0].ub, "mA/cm**2", "A/m**2") * m.Aiem),
             doc="Electric Current Stack [A]",
         )
 
@@ -1805,19 +1805,19 @@ def build_model():
             tuple
                 Lower and upper bounds of the conductive molar flux per unit length
             """
-            lb = ureg.convert(ru.Idx[0].lb, 'mA/cm**2', 'A/m**2') / ureg.convert(
-                m.faraday_constant, 's', 'h'
+            lb = ureg.convert(ru.Idx[0].lb, "mA/cm**2", "A/m**2") / ureg.convert(
+                m.faraday_constant, "s", "h"
             )
-            ub = ureg.convert(ru.Idx[0].ub, 'mA/cm**2', 'A/m**2') / ureg.convert(
-                m.faraday_constant, 's', 'h'
+            ub = ureg.convert(ru.Idx[0].ub, "mA/cm**2", "A/m**2") / ureg.convert(
+                m.faraday_constant, "s", "h"
             )
             return (lb, ub)
 
         ru.Jcond = pyo.Var(
             ru.length_domain,
             domain=pyo.NonNegativeReals,
-            initialize=lambda _, x: ureg.convert(ru.Idx[x], 'mA/cm**2', 'A/m**2')
-            / ureg.convert(m.faraday_constant, 's', 'h'),
+            initialize=lambda _, x: ureg.convert(ru.Idx[x], "mA/cm**2", "A/m**2")
+            / ureg.convert(m.faraday_constant, "s", "h"),
             bounds=_Jcond_b,
             doc="Conductive Molar Flux (electromigration) NaCl per unit length [mol/m2/h]",
         )
@@ -1842,22 +1842,22 @@ def build_model():
             """
             lb = (
                 2
-                * ureg.convert(m.diff_nacl, 'm**2/s', 'm**2/h')
-                / m.iems_thickness['CEM']
+                * ureg.convert(m.diff_nacl, "m**2/s", "m**2/h")
+                / m.iems_thickness["CEM"]
                 * ureg.convert(
-                    (ru.conc_mol_x[0, 'HC'].lb - ru.conc_mol_x[0, 'LC'].ub),
-                    'mol/L',
-                    'mol/m**3',
+                    (ru.conc_mol_x[0, "HC"].lb - ru.conc_mol_x[0, "LC"].ub),
+                    "mol/L",
+                    "mol/m**3",
                 )
             )
             ub = (
                 2
-                * ureg.convert(m.diff_nacl, 'm**2/s', 'm**2/h')
-                / m.iems_thickness['CEM']
+                * ureg.convert(m.diff_nacl, "m**2/s", "m**2/h")
+                / m.iems_thickness["CEM"]
                 * ureg.convert(
-                    (ru.conc_mol_x[0, 'HC'].ub - ru.conc_mol_x[0, 'LC'].lb),
-                    'mol/L',
-                    'mol/m**3',
+                    (ru.conc_mol_x[0, "HC"].ub - ru.conc_mol_x[0, "LC"].lb),
+                    "mol/L",
+                    "mol/m**3",
                 )
             )
             return (lb, ub)
@@ -1866,10 +1866,10 @@ def build_model():
             ru.length_domain,
             domain=pyo.NonNegativeReals,
             initialize=lambda _, x: 2
-            * ureg.convert(m.diff_nacl, 'm**2/s', 'm**2/h')
-            / m.iems_thickness['CEM']
+            * ureg.convert(m.diff_nacl, "m**2/s", "m**2/h")
+            / m.iems_thickness["CEM"]
             * ureg.convert(
-                (ru.conc_mol_x[0, 'HC'] - ru.conc_mol_x[0, 'LC']), 'mol/L', 'mol/m**3'
+                (ru.conc_mol_x[0, "HC"] - ru.conc_mol_x[0, "LC"]), "mol/L", "mol/m**3"
             ),
             bounds=_Jdiff_b,
             doc="Diffusive Molar Flux NaCl per unit length [mol/m2/h]",
@@ -1910,11 +1910,11 @@ def build_model():
                 ureg.convert(
                     -48
                     * m.dynamic_viscosity
-                    * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+                    * ureg.convert(m.vel_ub[sol], "cm", "m")
                     / m.dh[sol] ** 2
                     * m.L,
-                    'Pa',
-                    'mbar',
+                    "Pa",
+                    "mbar",
                 ),
                 None,
             ),
@@ -1924,11 +1924,11 @@ def build_model():
                 else ureg.convert(
                     -48
                     * m.dynamic_viscosity
-                    * ureg.convert(m.vel_init[sol], 'cm', 'm')
+                    * ureg.convert(m.vel_init[sol], "cm", "m")
                     / m.dh[sol] ** 2
                     * m.L,
-                    'Pa',
-                    'mbar',
+                    "Pa",
+                    "mbar",
                 )
             ),
         )
@@ -1945,11 +1945,11 @@ def build_model():
             initialize=sum(
                 48
                 * m.dynamic_viscosity
-                * ureg.convert(m.vel_init[sol], 'cm', 'm')
+                * ureg.convert(m.vel_init[sol], "cm", "m")
                 / m.dh[sol] ** 2
                 * m.L
                 * m.cell_pairs
-                * ureg.convert(ru.flow_vol_x[0, sol], 'dm**3/hour', 'm**3/s')
+                * ureg.convert(ru.flow_vol_x[0, sol], "dm**3/hour", "m**3/s")
                 / m.pump_eff
                 for sol in m.SOL
             ),
@@ -1958,11 +1958,11 @@ def build_model():
                 sum(
                     48
                     * m.dynamic_viscosity
-                    * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+                    * ureg.convert(m.vel_ub[sol], "cm", "m")
                     / m.dh[sol] ** 2
                     * m.L
                     * m.cell_pairs
-                    * ureg.convert(ru.flow_vol_x[0, sol].ub, 'dm**3/hour', 'm**3/s')
+                    * ureg.convert(ru.flow_vol_x[0, sol].ub, "dm**3/hour", "m**3/s")
                     / m.pump_eff
                     for sol in m.SOL
                 ),
@@ -1979,7 +1979,7 @@ def build_model():
 
         @ru.Constraint(
             ru.length_domain,
-            doc='Nernst Potential per unit length per cell pair [mV per cp]',
+            doc="Nernst Potential per unit length per cell pair [mV per cp]",
         )
         def _nernst_potential_cp(ru, x):  # Rg[J/mol/K] , F[A*s/mol], T[K]
             """
@@ -2001,8 +2001,8 @@ def build_model():
             constant = (
                 2 * m.gas_constant * m.T / m.faraday_constant * m.iems_permsel_avg
             )
-            return ru.conc_mol_x[x, 'HC'] == ru.conc_mol_x[x, 'LC'] * pyo.exp(
-                ru.Ecpx[x] / ureg.convert(constant, 'V', 'mV')
+            return ru.conc_mol_x[x, "HC"] == ru.conc_mol_x[x, "LC"] * pyo.exp(
+                ru.Ecpx[x] / ureg.convert(constant, "V", "mV")
             )
 
         @ru.Constraint(
@@ -2028,7 +2028,7 @@ def build_model():
             Pyomo.Constraint
                 Solution's conductivity per unit length
             """
-            if sol == 'HC':
+            if sol == "HC":
                 return ru.ksol[x, sol] == 7.7228559 * ru.conc_mol_x[x, sol] + 0.5670209
             return ru.ksol[x, sol] == 10.5763914 * ru.conc_mol_x[x, sol] + 0.0087379
 
@@ -2083,8 +2083,8 @@ def build_model():
                 Channel's resistance per cell pair per unit length
             """
             return (
-                ru.Rsol[x, sol] * ureg.convert(ru.ksol_T[x, sol], 'S/m', 'S/cm')
-                == ureg.convert(m.spacer_thickness[sol], 'm', 'cm')
+                ru.Rsol[x, sol] * ureg.convert(ru.ksol_T[x, sol], "S/m", "S/cm")
+                == ureg.convert(m.spacer_thickness[sol], "m", "cm")
                 / m.spacer_porosity[sol] ** 2
             )
 
@@ -2109,11 +2109,11 @@ def build_model():
                 Internal resistance per cell pair per unit length
             """
             return ru.Rcpx[x] == sum(ru.Rsol[x, sol] for sol in m.SOL) + ureg.convert(
-                sum(m.iems_resistance[iem] for iem in m.iem), 'm**2', 'cm**2'
+                sum(m.iems_resistance[iem] for iem in m.iem), "m**2", "cm**2"
             )
 
         @ru.Constraint(
-            ru.length_domain, doc='Electric current density per unit length [mA/cm2]'
+            ru.length_domain, doc="Electric current density per unit length [mA/cm2]"
         )
         def _current_dens_calc(ru, x):
             """
@@ -2134,7 +2134,7 @@ def build_model():
             return ru.Idx[x] * (ru.Rcpx[x] + ru.Rload) == ru.Ecpx[x]
 
         @ru.Expression(
-            ru.length_domain, m.SOL, doc='Crossflow velocity in channel eq. [cm/s]'
+            ru.length_domain, m.SOL, doc="Crossflow velocity in channel eq. [cm/s]"
         )
         def vel(ru, x, sol):
             """
@@ -2155,8 +2155,8 @@ def build_model():
                 Crossflow velocity in the channel
             """
             return ureg.convert(
-                ru.flow_vol_x[x, sol], 'liter/hour', 'cm**3/s'
-            ) / ureg.convert(m._cross_area[sol], 'm**2', 'cm**2')
+                ru.flow_vol_x[x, sol], "liter/hour", "cm**3/s"
+            ) / ureg.convert(m._cross_area[sol], "m**2", "cm**2")
 
         def _vel_x(ru, x, sol):
             """
@@ -2179,7 +2179,7 @@ def build_model():
             """
             return ru.vel[x, sol]
 
-        @ru.Expression(m.SOL, doc='Average cross-flow velocity [cm/s]')
+        @ru.Expression(m.SOL, doc="Average cross-flow velocity [cm/s]")
         def vel_avg(ru, sol):
             """
             This function calculates the average cross-flow velocity in the channel.
@@ -2199,7 +2199,7 @@ def build_model():
             v = _vel_x
             return _int_trap_rule_sol(ru, ru.length_domain, sol, v)
 
-        @ru.Constraint(ru.length_domain, doc='Conductive molar flux (electromigration)')
+        @ru.Constraint(ru.length_domain, doc="Conductive molar flux (electromigration)")
         def _cond_molar_flux(ru, x):
             """
             Constraint for the conductive molar flux (electromigration).
@@ -2219,10 +2219,10 @@ def build_model():
                 Conductive molar flux (electromigration)
             """
             return ru.Jcond[x] * ureg.convert(
-                m.faraday_constant, 's', 'h'
-            ) == ureg.convert(ru.Idx[x], 'mA/cm**2', 'A/m**2')
+                m.faraday_constant, "s", "h"
+            ) == ureg.convert(ru.Idx[x], "mA/cm**2", "A/m**2")
 
-        @ru.Constraint(ru.length_domain, doc='Diffusive molar flux [mol/m2/h]')
+        @ru.Constraint(ru.length_domain, doc="Diffusive molar flux [mol/m2/h]")
         def _diff_molar_flux(ru, x):
             """
             Constraint for the diffusive molar flux.
@@ -2242,13 +2242,13 @@ def build_model():
                 Diffusive molar flux
             """
             return ru.Jdiff[x] == 2 * ureg.convert(
-                m.diff_nacl, 'm**2/s', 'm**2/h'
-            ) / m.iems_thickness['CEM'] * ureg.convert(
-                ru.conc_mol_x[x, 'HC'] - ru.conc_mol_x[x, 'LC'], 'mol/L', 'mol/m**3'
+                m.diff_nacl, "m**2/s", "m**2/h"
+            ) / m.iems_thickness["CEM"] * ureg.convert(
+                ru.conc_mol_x[x, "HC"] - ru.conc_mol_x[x, "LC"], "mol/L", "mol/m**3"
             )
 
         @ru.Constraint(
-            ru.length_domain, doc='Total molar flux from HC to LC side [mol/m2/h]'
+            ru.length_domain, doc="Total molar flux from HC to LC side [mol/m2/h]"
         )
         def _total_molar_flux(ru, x):
             """
@@ -2338,7 +2338,7 @@ def build_model():
         @ru.Constraint(
             ru.length_domain,
             m.SOL,
-            doc='Volumetric flow rate balance w/o water transfer (i.e. no osmotic flux)',
+            doc="Volumetric flow rate balance w/o water transfer (i.e. no osmotic flux)",
         )
         def _flow_balance(ru, x, sol):
             """
@@ -2430,7 +2430,7 @@ def build_model():
             dv = _conc_mol_dx
             return _bwd_fun(ru, x, sol, v, dv)
 
-        @ru.Constraint(ru.length_domain, m.SOL, doc='Molar concentration balance')
+        @ru.Constraint(ru.length_domain, m.SOL, doc="Molar concentration balance")
         def _conc_balance(ru, x, sol):
             """
             This constraint calculates the molar concentration balance.
@@ -2456,13 +2456,13 @@ def build_model():
             """
             if x == ru.length_domain.first():
                 return pyo.Constraint.Skip
-            if sol == 'LC':
+            if sol == "LC":
                 return (
                     ru.conc_mol_dx[x, sol] * ru.flow_vol_x[x, sol] == ru.Ji[x] * m.Aiem
                 )
             return ru.conc_mol_dx[x, sol] * ru.flow_vol_x[x, sol] == -ru.Ji[x] * m.Aiem
 
-        @ru.Constraint(ru.length_domain, doc='Concentration HC >= LC')
+        @ru.Constraint(ru.length_domain, doc="Concentration HC >= LC")
         def _conc_hc_gt_lc(ru, x):
             """
             This constraint ensures that the concentration of the high salinity stream is greater than the concentration of the low salinity stream.
@@ -2479,10 +2479,10 @@ def build_model():
             Pyomo.Constraint
                 Concentration of the high salinity stream is greater than the concentration of the low salinity stream
             """
-            return ru.conc_mol_x[x, 'HC'] >= ru.conc_mol_x[x, 'LC']
+            return ru.conc_mol_x[x, "HC"] >= ru.conc_mol_x[x, "LC"]
 
         @ru.Expression(
-            ru.length_domain, m.SOL, doc='Pressure drop per unit length [mbar/m]'
+            ru.length_domain, m.SOL, doc="Pressure drop per unit length [mbar/m]"
         )
         def _deltaP(ru, x, sol):
             """
@@ -2505,10 +2505,10 @@ def build_model():
             return ureg.convert(
                 48
                 * m.dynamic_viscosity
-                * ureg.convert(ru.vel[x, sol], 'cm', 'm')
+                * ureg.convert(ru.vel[x, sol], "cm", "m")
                 / m.dh[sol] ** 2,
-                'Pa',
-                'mbar',
+                "Pa",
+                "mbar",
             )
 
         def _pressure_x(ru, x, sol):
@@ -2579,7 +2579,7 @@ def build_model():
             return _bwd_fun(ru, x, sol, v, dv)
 
         @ru.Constraint(
-            ru.length_domain, m.SOL, doc='Friction pressure drop per unit length [mbar]'
+            ru.length_domain, m.SOL, doc="Friction pressure drop per unit length [mbar]"
         )
         def _pressure_drop(ru, x, sol):
             """
@@ -2625,7 +2625,7 @@ def build_model():
             return ru.Rsol[x, sol]
 
         @ru.Expression(
-            m.SOL, doc='Average cross-flow velocity per unit length [ohm cm2 per cp]'
+            m.SOL, doc="Average cross-flow velocity per unit length [ohm cm2 per cp]"
         )
         def Rsol_avg(ru, sol):
             """
@@ -2647,7 +2647,7 @@ def build_model():
             return _int_trap_rule_sol(ru, ru.length_domain, sol, v)
 
         @ru.Expression(
-            doc='Average cell pair resistance per unit length [ohm cm2 per cp]'
+            doc="Average cell pair resistance per unit length [ohm cm2 per cp]"
         )
         def Rcp_avg(ru):
             """
@@ -2665,7 +2665,7 @@ def build_model():
             """
             return _int_trap_rule(ru.length_domain, ru.Rcpx)
 
-        @ru.Expression(doc='Average current density [mA/cm2]')
+        @ru.Expression(doc="Average current density [mA/cm2]")
         def Id_avg(ru):
             """
             This function calculates the average current density using the integral trapezoidal rule.
@@ -2682,7 +2682,7 @@ def build_model():
             """
             return _int_trap_rule(ru.length_domain, ru.Idx)
 
-        @ru.Expression(doc='Average cell pair potential per unit length [mV per cp]')
+        @ru.Expression(doc="Average cell pair potential per unit length [mV per cp]")
         def Ecp_avg(ru):
             """
             This function calculates the average cell pair potential per unit length using the integral trapezoidal rule.
@@ -2699,7 +2699,7 @@ def build_model():
             """
             return _int_trap_rule(ru.length_domain, ru.Ecpx)
 
-        @ru.Constraint(doc='Electromotive force RED unit [mV]')
+        @ru.Constraint(doc="Electromotive force RED unit [mV]")
         def _electric_potential_stack(ru):
             """
             This constraint calculates the electromotive force of the RED unit.
@@ -2714,9 +2714,9 @@ def build_model():
             Pyomo.Constraint
                 Electromotive force of the RED unit
             """
-            return ru.EMF == m.cell_pairs * ureg.convert(ru.Ecp_avg, 'mV', 'V')
+            return ru.EMF == m.cell_pairs * ureg.convert(ru.Ecp_avg, "mV", "V")
 
-        @ru.Constraint(doc='RED stack internal resistance [ohm]')
+        @ru.Constraint(doc="RED stack internal resistance [ohm]")
         def _int_resistance_stack(ru):
             """
             This constraint calculates the internal resistance of the RED stack.
@@ -2732,10 +2732,10 @@ def build_model():
                 Internal resistance of the RED stack
             """
             return ru.Rstack * m.Aiem == m.cell_pairs * ureg.convert(
-                ru.Rcp_avg, 'cm**2', 'm**2'
+                ru.Rcp_avg, "cm**2", "m**2"
             )
 
-        @ru.Constraint(doc='Electric current RED unit [A]')
+        @ru.Constraint(doc="Electric current RED unit [A]")
         def _electric_current_stack(ru):
             """
             This constraint calculates the electric current of the RED unit.
@@ -2752,9 +2752,9 @@ def build_model():
             Pyomo.Constraint
                 Electric current of the RED unit
             """
-            return ru.Istack == ureg.convert(ru.Id_avg, 'mA/cm**2', 'A/m**2') * m.Aiem
+            return ru.Istack == ureg.convert(ru.Id_avg, "mA/cm**2", "A/m**2") * m.Aiem
 
-        @ru.Constraint(doc='Gross Power Output RED unit [W]')
+        @ru.Constraint(doc="Gross Power Output RED unit [W]")
         def _gross_power(ru):
             """
             This constraint calculates the gross power output of the RED unit.
@@ -2771,7 +2771,7 @@ def build_model():
             """
             return ru.GP == ru.Istack * (ru.EMF - ru.Rstack * ru.Istack)
 
-        @ru.Constraint(doc='Pumping Power Consumption RED unit [W]')
+        @ru.Constraint(doc="Pumping Power Consumption RED unit [W]")
         def _pump_power(ru):
             """
             This constraint calculates the pumping power consumption of the RED unit.
@@ -2789,15 +2789,15 @@ def build_model():
             return ru.PP * m.pump_eff == sum(
                 ureg.convert(
                     ru.pressure_x[0, sol] - ru.pressure_x[ru.length_domain.last(), sol],
-                    'mbar',
-                    'Pa',
+                    "mbar",
+                    "Pa",
                 )
                 * m.cell_pairs
-                * ureg.convert(ru.flow_vol_x[0, sol], 'dm**3/hour', 'm**3/s')
+                * ureg.convert(ru.flow_vol_x[0, sol], "dm**3/hour", "m**3/s")
                 for sol in m.SOL
             )
 
-        @ru.Constraint(doc='Net Power Output RED unit [W]')
+        @ru.Constraint(doc="Net Power Output RED unit [W]")
         def _net_power(ru):
             """
             This constraint calculates the net power output of the RED unit.
@@ -2852,27 +2852,27 @@ def build_model():
 
         def _flow_vol(unit_exists, i, k, sol):
             flow_init = pyo.value(
-                ureg.convert(m.vel_init[sol], 'cm/s', 'm/h')
+                ureg.convert(m.vel_init[sol], "cm/s", "m/h")
                 * m._cross_area[sol]
                 * m.cell_pairs
             )
-            if sol == 'HC':
-                if flow_init * m.nr > flow_conc_data['feed_flow_vol']['fh1']:
-                    return flow_conc_data['feed_flow_vol']['fh1'] / m.nr
+            if sol == "HC":
+                if flow_init * m.nr > flow_conc_data["feed_flow_vol"]["fh1"]:
+                    return flow_conc_data["feed_flow_vol"]["fh1"] / m.nr
                 return flow_init
-            if sol == 'LC':
-                if flow_init * m.nr > flow_conc_data['feed_flow_vol']['fl1']:
-                    return flow_conc_data['feed_flow_vol']['fl1'] / m.nr
+            if sol == "LC":
+                if flow_init * m.nr > flow_conc_data["feed_flow_vol"]["fl1"]:
+                    return flow_conc_data["feed_flow_vol"]["fl1"] / m.nr
                 return flow_init
 
         def _flow_vol_b(unit_exists, i, k, sol):
             lb = pyo.value(
-                ureg.convert(m.vel_lb[sol], 'cm/s', 'm/h')
+                ureg.convert(m.vel_lb[sol], "cm/s", "m/h")
                 * m._cross_area[sol]
                 * m.cell_pairs
             )
             ub = pyo.value(
-                ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h')
+                ureg.convert(m.vel_ub[sol], "cm/s", "m/h")
                 * m._cross_area[sol]
                 * m.cell_pairs
             )
@@ -2888,9 +2888,9 @@ def build_model():
         )
 
         def _conc_mol_b(unit_exists, i, k, sol):
-            if sol == 'HC':
-                return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
-            return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
+            if sol == "HC":
+                return (m.conc_mol_eq.lb, flow_conc_data["feed_conc_mol"]["fh1"])
+            return (flow_conc_data["feed_conc_mol"]["fl1"], m.conc_mol_eq.ub)
 
         unit_exists.conc_mol = pyo.Var(
             unit_exists.streams,
@@ -2899,13 +2899,13 @@ def build_model():
             domain=pyo.NonNegativeReals,
             bounds=_conc_mol_b,
             initialize=lambda _, i, k, sol: (
-                flow_conc_data['feed_conc_mol']['fh1']
-                if sol == 'HC'
-                else flow_conc_data['feed_conc_mol']['fl1']
+                flow_conc_data["feed_conc_mol"]["fh1"]
+                if sol == "HC"
+                else flow_conc_data["feed_conc_mol"]["fl1"]
             ),
         )
 
-        @unit_exists.Constraint(doc='Net power output RU')
+        @unit_exists.Constraint(doc="Net power output RU")
         def _net_power(unit_exists):
             """
             This constraint calculates the net power output of the RED unit.
@@ -2924,7 +2924,7 @@ def build_model():
             scale_factor = 1e-2
             return unit_exists.ru.NP * scale_factor == m.NP[unit]
 
-        @unit_exists.Constraint(doc='RU Stack Capital Cost [USD]')
+        @unit_exists.Constraint(doc="RU Stack Capital Cost [USD]")
         def _stack_cap_cost(unit_exists):
             """
             This constraint calculates the stack capital cost of the RED unit.
@@ -2944,7 +2944,7 @@ def build_model():
                 1 + m.stackelectrodes_cost_factor
             )
 
-        @unit_exists.Constraint(doc='Operating Cost RU [USD/y]')
+        @unit_exists.Constraint(doc="Operating Cost RU [USD/y]")
         def _operating_cost(unit_exists):
             """
             This constraint calculates the operating cost of the RED unit.
@@ -2966,7 +2966,7 @@ def build_model():
                 m.electricity_price
                 * hours
                 * m.load_factor
-                * ureg.convert(unit_exists.ru.PP, 'W', 'kW')
+                * ureg.convert(unit_exists.ru.PP, "W", "kW")
             )
             return (
                 m.operating_cost[unit]
@@ -2977,11 +2977,11 @@ def build_model():
         #     Boundary Conditions and Material Balances
         # =============================================================================
 
-        unit_exists.bound_con = pyo.ConstraintList(doc='Boundary conditions')
-        unit_exists.balances_con = pyo.ConstraintList(doc='Material balances')
+        unit_exists.bound_con = pyo.ConstraintList(doc="Boundary conditions")
+        unit_exists.balances_con = pyo.ConstraintList(doc="Material balances")
 
         unit_exists.flow_vol_bound = pyo.ConstraintList(
-            doc='Volumetric flow rate bounds to/from active RU'
+            doc="Volumetric flow rate bounds to/from active RU"
         )
 
         for sol in m.SOL:
@@ -2999,7 +2999,7 @@ def build_model():
 
             [
                 unit_exists.bound_con.add(
-                    ureg.convert(unit_exists.ru.flow_vol_x[0, sol], 'liter', 'm**3')
+                    ureg.convert(unit_exists.ru.flow_vol_x[0, sol], "liter", "m**3")
                     * m.cell_pairs
                     == unit_exists.flow_vol[rm, unit, sol]
                 )
@@ -3012,8 +3012,8 @@ def build_model():
                         unit_exists.ru.flow_vol_x[
                             unit_exists.ru.length_domain.last(), sol
                         ],
-                        'liter',
-                        'm**3',
+                        "liter",
+                        "m**3",
                     )
                     * m.cell_pairs
                     == unit_exists.flow_vol[unit, rs, sol]
@@ -3038,7 +3038,7 @@ def build_model():
                 if r == unit
             ]  # The outlet concentration from the cell pairs is equal to the outlet concentration of the RED unit.
             unit_exists.bound_con.add(
-                unit_exists.ru.pressure_x[0, sol] == ureg.convert(1, 'atm', 'mbar')
+                unit_exists.ru.pressure_x[0, sol] == ureg.convert(1, "atm", "mbar")
             )
 
             [
@@ -3077,27 +3077,27 @@ def build_model():
 
         unit_absent = m.unit_absent[unit]
 
-        unit_absent._no_flow = pyo.ConstraintList(doc='No-flow constraint')
+        unit_absent._no_flow = pyo.ConstraintList(doc="No-flow constraint")
         unit_absent._no_conc = pyo.ConstraintList(doc="Concentration into RU")
         for sol in m.SOL:
             [
                 unit_absent._no_flow.add(m.flow_vol[src, ri, sol] == 0)
-                for src, ri in ['rsu'] * m.in_RU
+                for src, ri in ["rsu"] * m.in_RU
                 if (ri, unit) in m.RMU_RU_streams
             ]  # No flow into the RED unit
             [
                 unit_absent._no_conc.add(
                     m.conc_mol[ro, sink, sol] == m.conc_mol[ro, sink, sol].lb
                 )
-                for ro, sink in m.out_RU * m.in_RU | m.out_RU * ['rmu']
+                for ro, sink in m.out_RU * m.in_RU | m.out_RU * ["rmu"]
                 if (unit, ro) in m.RU_RSU_streams
             ]  # Outlet stream concentration set to lower bound.
 
         unit_absent._no_net_power = pyo.Constraint(
-            doc='No Net Power Output', expr=m.NP[unit] == 0
+            doc="No Net Power Output", expr=m.NP[unit] == 0
         )
 
-        unit_absent._no_costs = pyo.ConstraintList(doc='No capital and operating costs')
+        unit_absent._no_costs = pyo.ConstraintList(doc="No capital and operating costs")
         unit_absent._no_costs.add(
             m.stack_cost[unit] == 0
         )  # Stack capital cost set to 0
@@ -3108,7 +3108,7 @@ def build_model():
     # Sets the midpoint between the lower and upper bounds of the uninitialized variables
     init_vars.InitMidpoint().apply_to(m)
 
-    @m.Expression(doc='Total Net Power Output active RU [kW]')
+    @m.Expression(doc="Total Net Power Output active RU [kW]")
     def TNP(m):
         """
         This expression calculates the total net power output of the active RED unit.
@@ -3124,10 +3124,10 @@ def build_model():
             Total Net Power Output active RU [kW] as the sum of the net power output of the RED units
         """
         scale_factor = 1e2
-        return ureg.convert(sum(m.NP[ru] * scale_factor for ru in m.RU), 'W', 'kW')
+        return ureg.convert(sum(m.NP[ru] * scale_factor for ru in m.RU), "W", "kW")
 
     @m.Expression(
-        doc='Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh/m3]'
+        doc="Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh/m3]"
     )
     def TNSE(m):
         """
@@ -3143,7 +3143,7 @@ def build_model():
         Pyomo.Expression
             Total Net Specific Energy per m3 of HC and LC inlet streams to active RU [kWh/m3] as the ratio between the total net power output and the total volumetric flow rate of the high and low salinity streams
         """
-        return m.TNP / sum(m._flow_into['rsu', sol] for sol in m.SOL)
+        return m.TNP / sum(m._flow_into["rsu", sol] for sol in m.SOL)
 
     # New var. for pump capital cost: Z = sum(Q)**0.9, Z >= 0
     # The new variable is introduced to avoid numerical issues with the concave term in the pump capital cost correlation.
@@ -3152,15 +3152,15 @@ def build_model():
         m.aux_equipment,
         domain=pyo.NonNegativeReals,
         initialize=lambda _, sol, eq1, eq2: pyo.value(
-            ureg.convert(m._flow_out_from['rsu', sol], 'm**3/hour', 'liter/sec')
+            ureg.convert(m._flow_out_from["rsu", sol], "m**3/hour", "liter/sec")
             ** m.pump_cap_cost_params[(eq1, eq2)]["n"]
         ),
         bounds=lambda _, sol, eq1, eq2: (
             None,
             ureg.convert(
-                sum(m.flow_vol['rsu', ri, sol].ub for ri in m.in_RU),
-                'm**3/hour',
-                'liter/sec',
+                sum(m.flow_vol["rsu", ri, sol].ub for ri in m.in_RU),
+                "m**3/hour",
+                "liter/sec",
             )
             ** m.pump_cap_cost_params[(eq1, eq2)]["n"],
         ),
@@ -3168,7 +3168,7 @@ def build_model():
     )
 
     @m.Constraint(
-        m.SOL, m.aux_equipment, doc='New var potential term in pump capital cost cstr.'
+        m.SOL, m.aux_equipment, doc="New var potential term in pump capital cost cstr."
     )
     def _pump_cap_cost_nv(m, sol, eq1, eq2):
         """
@@ -3189,9 +3189,9 @@ def build_model():
         """
         return m.pump_cap_cost_var[sol, (eq1, eq2)] ** (
             1 / m.pump_cap_cost_params[(eq1, eq2)]["n"]
-        ) == ureg.convert(m._flow_out_from['rsu', sol], 'm**3/hour', 'liter/sec')
+        ) == ureg.convert(m._flow_out_from["rsu", sol], "m**3/hour", "liter/sec")
 
-    @m.Expression(doc='Pumps Capital Cost [USD]')
+    @m.Expression(doc="Pumps Capital Cost [USD]")
     def pump_cap_cost(m):
         """
         This expression calculates the pumps capital cost based on the correlation from Sinnot and Towler (2012).
@@ -3216,15 +3216,15 @@ def build_model():
         """
         return (
             sum(
-                m.pump_cap_cost_params[('Pump', 'Single Stage Centrifugal')]["a"]
-                + m.pump_cap_cost_params[('Pump', 'Single Stage Centrifugal')]["b"]
-                * m.pump_cap_cost_var[sol, ('Pump', 'Single Stage Centrifugal')]
+                m.pump_cap_cost_params[("Pump", "Single Stage Centrifugal")]["a"]
+                + m.pump_cap_cost_params[("Pump", "Single Stage Centrifugal")]["b"]
+                * m.pump_cap_cost_var[sol, ("Pump", "Single Stage Centrifugal")]
                 for sol in m.SOL
             )
             * m.cost_index_ratio
         )
 
-    @m.Expression(doc='Total capital expenses [USD]')
+    @m.Expression(doc="Total capital expenses [USD]")
     def CAPEX(m):
         """
         This expression calculates the total capital expenses of the RED system as the sum of the stack and pump capital costs and civil and infrastructure costs.
@@ -3246,7 +3246,7 @@ def build_model():
             + civil_and_infra  # Civil and infrastructure costs
         )
 
-    @m.Expression(doc='Total operational expenses [USD/y]')
+    @m.Expression(doc="Total operational expenses [USD/y]")
     def OPEX(m):
         """
         This expression calculates the total operational expenses of the RED system as the sum of the operating costs and the 2% of the capital expenses for the operation and maintenance.
@@ -3263,7 +3263,7 @@ def build_model():
         """
         return sum(m.operating_cost[ru] for ru in m.RU) + m.oandm_cost_factor * m.CAPEX
 
-    @m.Expression(doc='Total Annualized Cost [USD/y]')
+    @m.Expression(doc="Total Annualized Cost [USD/y]")
     def TAC(m):
         """
         This expression calculates the total annualized cost of the RED system as the sum of the annualized capital cost and operational expenses.
@@ -3280,7 +3280,7 @@ def build_model():
         """
         return m.CRF * m.CAPEX + m.OPEX
 
-    @m.Expression(doc='Net Energy Yield [kWh/y]')
+    @m.Expression(doc="Net Energy Yield [kWh/y]")
     def net_energy_yield(m):
         """
         This expression defines the annual net energy yield of the RED system.
@@ -3298,7 +3298,7 @@ def build_model():
         hours = 8760  # [h/y]
         return hours * m.load_factor * m.TNP
 
-    @m.Expression(doc='Net Present Value [kUSD]')
+    @m.Expression(doc="Net Present Value [kUSD]")
     def NPV(m):
         """
         This function calculates the Net Present Value (NPV) of the RED unit.
@@ -3317,7 +3317,7 @@ def build_model():
         """
         return (m.electricity_price * m.net_energy_yield - m.TAC) * 1e-3 / m.CRF
 
-    @m.Expression(doc='Levelized Cost of Energy [USD/kWh]')
+    @m.Expression(doc="Levelized Cost of Energy [USD/kWh]")
     def LCOE(m):
         """
         This function calculates the Levelized Cost of Energy (LCOE) of the RED unit.

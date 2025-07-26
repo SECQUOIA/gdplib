@@ -15,7 +15,7 @@ syngas_dir = os.path.dirname(os.path.realpath(__file__))
 
 def build_model():
     """Build a syngas production process superstructure model.
-    
+
     Returns:
         Pyomo model object for syngas production process optimization
     """
@@ -23,30 +23,30 @@ def build_model():
 
     m.syngas_techs = Set(
         doc="syngas process technologies",
-        initialize=['SMR', 'POX', 'ATR', 'CR', 'DMR', 'BR', 'TR'],
+        initialize=["SMR", "POX", "ATR", "CR", "DMR", "BR", "TR"],
     )
     m.species = Set(
-        doc="chemical species", initialize=['CH4', 'H2O', 'O2', 'H2', 'CO', 'CO2']
+        doc="chemical species", initialize=["CH4", "H2O", "O2", "H2", "CO", "CO2"]
     )
     m.syngas_tech_units = Set(
         doc="process units involved in syngas process technologies",
-        initialize=['compressor', 'exchanger', 'reformer'],
+        initialize=["compressor", "exchanger", "reformer"],
     )
     m.utilities = Set(
-        doc="process utilities", initialize=['power', 'coolingwater', 'naturalgas']
+        doc="process utilities", initialize=["power", "coolingwater", "naturalgas"]
     )
     m.aux_equipment = Set(
         doc="auxiliary process equipment to condition syngas",
         initialize=[
-            'absorber1',
-            'bypass1',
-            'WGS',
-            'flash',
-            'PSA',
-            'absorber2',
-            'bypass3',
-            'compressor',
-            'bypass4',
+            "absorber1",
+            "bypass1",
+            "WGS",
+            "flash",
+            "PSA",
+            "absorber2",
+            "bypass3",
+            "compressor",
+            "bypass4",
         ],
     )
     m.process_options = Set(
@@ -55,7 +55,7 @@ def build_model():
     )
     m.extra_process_nodes = Set(
         doc="extra process nodes for mixers and splitters",
-        initialize=['in', 'ms1', 'm1', 's1', 'ms2', 'ms3', 'm2', 'ms4', 's2'],
+        initialize=["in", "ms1", "m1", "s1", "ms2", "ms3", "m2", "ms4", "s2"],
     )
     m.all_unit_types = Set(
         doc="all process unit types",
@@ -65,21 +65,21 @@ def build_model():
         doc="nodes in the superstructure",
         initialize=m.process_options | m.extra_process_nodes,
     )
-    group1 = {'absorber1', 'bypass1', 'WGS'}
-    group2 = {'compressor', 'bypass3'}
-    group3 = {'absorber2', 'bypass4'}
+    group1 = {"absorber1", "bypass1", "WGS"}
+    group2 = {"compressor", "bypass3"}
+    group3 = {"absorber2", "bypass4"}
     m.streams = Set(
         doc="superstructure potential streams",
-        initialize=[(tech, 'ms1') for tech in m.syngas_techs]
-        + [('in', tech) for tech in m.syngas_techs]
-        + [('ms1', option) for option in group1]
-        + [(option, 'm1') for option in group1]
-        + [('m1', 'flash'), ('flash', 's1'), ('s1', 'PSA'), ('s1', 'ms2')]
-        + [('ms2', option) for option in group2]
-        + [(option, 'ms3') for option in group2]
-        + [('ms3', option) for option in group3]
-        + [(option, 'm2') for option in group3]
-        + [('PSA', 'ms4'), ('ms4', 'ms3'), ('ms4', 's2'), ('s2', 'm1'), ('s2', 'ms1')],
+        initialize=[(tech, "ms1") for tech in m.syngas_techs]
+        + [("in", tech) for tech in m.syngas_techs]
+        + [("ms1", option) for option in group1]
+        + [(option, "m1") for option in group1]
+        + [("m1", "flash"), ("flash", "s1"), ("s1", "PSA"), ("s1", "ms2")]
+        + [("ms2", option) for option in group2]
+        + [(option, "ms3") for option in group2]
+        + [("ms3", option) for option in group3]
+        + [(option, "m2") for option in group3]
+        + [("PSA", "ms4"), ("ms4", "ms3"), ("ms4", "s2"), ("s2", "m1"), ("s2", "ms1")],
     )
 
     """
@@ -95,32 +95,32 @@ def build_model():
         m.species,
         doc="raw material cost [dollar·kmol-1]",
         initialize={
-            'CH4': 2.6826,
-            'H2O': 0.18,
-            'O2': 0.7432,
-            'H2': 8,
-            'CO': 0,
-            'CO2': 1.8946,
+            "CH4": 2.6826,
+            "H2O": 0.18,
+            "O2": 0.7432,
+            "H2": 8,
+            "CO": 0,
+            "CO2": 1.8946,
         },
     )
 
     feed_ratios = {
-        ('SMR', 'H2O'): 3,
-        ('POX', 'O2'): 0.5,
-        ('ATR', 'H2O'): 1.43,
-        ('ATR', 'O2'): 0.6,
-        ('CR', 'H2O'): 2.5,
-        ('CR', 'O2'): 0.19,
-        ('DMR', 'CO2'): 1,
-        ('BR', 'H2O'): 1.6,
-        ('BR', 'CO2'): 0.8,
-        ('TR', 'H2O'): 2.46,
-        ('TR', 'CO2'): 1.3,
-        ('TR', 'O2'): 0.47,
+        ("SMR", "H2O"): 3,
+        ("POX", "O2"): 0.5,
+        ("ATR", "H2O"): 1.43,
+        ("ATR", "O2"): 0.6,
+        ("CR", "H2O"): 2.5,
+        ("CR", "O2"): 0.19,
+        ("DMR", "CO2"): 1,
+        ("BR", "H2O"): 1.6,
+        ("BR", "CO2"): 0.8,
+        ("TR", "H2O"): 2.46,
+        ("TR", "CO2"): 1.3,
+        ("TR", "O2"): 0.47,
     }
 
     data_dict = (
-        pd.read_csv('%s/syngas_conversion_data.txt' % syngas_dir, delimiter=r'\s+')
+        pd.read_csv("%s/syngas_conversion_data.txt" % syngas_dir, delimiter=r"\s+")
         .fillna(0)
         .stack()
         .to_dict()
@@ -135,16 +135,16 @@ def build_model():
         m.all_unit_types,
         doc="capital cost variable parameter",
         initialize={
-            'compressor': 172.4,
-            'exchanger': 59.99,
-            'reformer': 67.64,
-            'absorber1': 314.1,
-            'bypass1': 0,
-            'WGS': 314.1,
-            'flash': 314.1,
-            'PSA': 3.1863e04,
-            'absorber2': 314.1,
-            'bypass3': 0,
+            "compressor": 172.4,
+            "exchanger": 59.99,
+            "reformer": 67.64,
+            "absorber1": 314.1,
+            "bypass1": 0,
+            "WGS": 314.1,
+            "flash": 314.1,
+            "PSA": 3.1863e04,
+            "absorber2": 314.1,
+            "bypass3": 0,
         },
         default=0,
     )
@@ -152,16 +152,16 @@ def build_model():
         m.all_unit_types,
         doc="capital cost fixed parameter",
         initialize={
-            'compressor': 104300,
-            'exchanger': 187100,
-            'reformer': 480100,
-            'absorber1': 1.531e04,
-            'bypass1': 0,
-            'WGS': 1.531e04,
-            'flash': 1.531e04,
-            'PSA': 666.34e03,
-            'absorber2': 1.531e04,
-            'bypass3': 0,
+            "compressor": 104300,
+            "exchanger": 187100,
+            "reformer": 480100,
+            "absorber1": 1.531e04,
+            "bypass1": 0,
+            "WGS": 1.531e04,
+            "flash": 1.531e04,
+            "PSA": 666.34e03,
+            "absorber2": 1.531e04,
+            "bypass3": 0,
         },
         default=0,
     )
@@ -169,16 +169,16 @@ def build_model():
         m.all_unit_types,
         doc="capital cost material factor",
         initialize={
-            'compressor': 3.5,
-            'exchanger': 1.7,
-            'reformer': 4,
-            'absorber1': 1,
-            'bypass1': 0,
-            'WGS': 1,
-            'flash': 1,
-            'PSA': 3.5,
-            'absorber2': 1,
-            'bypass3': 0,
+            "compressor": 3.5,
+            "exchanger": 1.7,
+            "reformer": 4,
+            "absorber1": 1,
+            "bypass1": 0,
+            "WGS": 1,
+            "flash": 1,
+            "PSA": 3.5,
+            "absorber2": 1,
+            "bypass3": 0,
         },
         default=0,
     )
@@ -186,16 +186,16 @@ def build_model():
         m.all_unit_types,
         doc="bare module parameter 1",
         initialize={
-            'compressor': 0,
-            'exchanger': 1.63,
-            'reformer': 0,
-            'absorber1': 2.25,
-            'bypass1': 0,
-            'WGS': 1.49,
-            'flash': 2.25,
-            'PSA': 0,
-            'absorber2': 2.25,
-            'bypass3': 0,
+            "compressor": 0,
+            "exchanger": 1.63,
+            "reformer": 0,
+            "absorber1": 2.25,
+            "bypass1": 0,
+            "WGS": 1.49,
+            "flash": 2.25,
+            "PSA": 0,
+            "absorber2": 2.25,
+            "bypass3": 0,
         },
         default=0,
     )
@@ -203,21 +203,21 @@ def build_model():
         m.all_unit_types,
         doc="bare module parameter 2",
         initialize={
-            'compressor': 1,
-            'exchanger': 1.66,
-            'reformer': 1,
-            'absorber1': 1.82,
-            'bypass1': 0,
-            'WGS': 1.52,
-            'flash': 1.82,
-            'PSA': 1,
-            'absorber2': 1.82,
-            'bypass3': 0,
+            "compressor": 1,
+            "exchanger": 1.66,
+            "reformer": 1,
+            "absorber1": 1.82,
+            "bypass1": 0,
+            "WGS": 1.52,
+            "flash": 1.82,
+            "PSA": 1,
+            "absorber2": 1.82,
+            "bypass3": 0,
         },
         default=0,
     )
     data_dict = (
-        pd.read_csv('%s/syngas_pressure_factor_data.txt' % syngas_dir, delimiter=r'\s+')
+        pd.read_csv("%s/syngas_pressure_factor_data.txt" % syngas_dir, delimiter=r"\s+")
         .stack()
         .to_dict()
     )
@@ -228,23 +228,23 @@ def build_model():
     m.utility_cost = Param(
         m.utilities,
         doc="dollars per kWh of utility u [dollar·KWh-1]",
-        initialize={'power': 0.127, 'coolingwater': 0.01, 'naturalgas': 0.036},
+        initialize={"power": 0.127, "coolingwater": 0.01, "naturalgas": 0.036},
     )
     m.utility_emission = Param(
         m.utilities,
         doc="CO2 emitted per kW [kgCO2·kWh-1]",
-        initialize={'power': 0.44732, 'coolingwater': 0, 'naturalgas': 0.2674},
+        initialize={"power": 0.44732, "coolingwater": 0, "naturalgas": 0.2674},
     )
     m.raw_material_emission = Param(
         m.species,
         doc="kg CO2 emitted per kmol of raw material [kgCO2·kmol-1]",
         initialize={
-            'CH4': 11.7749,
-            'H2O': 0,
-            'O2': 10.9525,
-            'H2': 0,
-            'CO': 0,
-            'CO2': 0,
+            "CH4": 11.7749,
+            "H2O": 0,
+            "O2": 10.9525,
+            "H2": 0,
+            "CO": 0,
+            "CO2": 0,
         },
     )
 
@@ -262,7 +262,7 @@ def build_model():
     )
 
     data_dict = (
-        pd.read_csv('%s/syngas_utility_data.txt' % syngas_dir, delimiter=r'\s+')
+        pd.read_csv("%s/syngas_utility_data.txt" % syngas_dir, delimiter=r"\s+")
         .stack()
         .to_dict()
     )
@@ -274,7 +274,7 @@ def build_model():
     )
 
     data_dict = (
-        pd.read_csv('%s/syngas_num_units_data.txt' % syngas_dir, delimiter=r'\s+')
+        pd.read_csv("%s/syngas_num_units_data.txt" % syngas_dir, delimiter=r"\s+")
         .stack()
         .to_dict()
     )
@@ -289,13 +289,13 @@ def build_model():
         m.syngas_techs,
         doc="total exchanger area in process i per kmol·h-1 methane fed [m2·h·kmol methane -1]",
         initialize={
-            'SMR': 0.885917,
-            'POX': 0.153036,
-            'ATR': 0.260322,
-            'CR': 0.726294,
-            'DMR': 0.116814,
-            'BR': 0.825808,
-            'TR': 0.10539,
+            "SMR": 0.885917,
+            "POX": 0.153036,
+            "ATR": 0.260322,
+            "CR": 0.726294,
+            "DMR": 0.116814,
+            "BR": 0.825808,
+            "TR": 0.10539,
         },
     )
 
@@ -303,13 +303,13 @@ def build_model():
         m.syngas_techs,
         doc="reformer duties per kmol methane fed [kWh·kmol methane-1]",
         initialize={
-            'SMR': 54.654,
-            'POX': 39.0104,
-            'ATR': 44.4600,
-            'CR': 68.2382,
-            'DMR': 68.412,
-            'BR': 61.442,
-            'TR': 6.592,
+            "SMR": 54.654,
+            "POX": 39.0104,
+            "ATR": 44.4600,
+            "CR": 68.2382,
+            "DMR": 68.412,
+            "BR": 61.442,
+            "TR": 6.592,
         },
     )
 
@@ -317,13 +317,13 @@ def build_model():
         m.syngas_techs,
         doc="process i operating pressure  [bar]",
         initialize={
-            'SMR': 20,
-            'POX': 30,
-            'ATR': 25,
-            'CR': 25,
-            'DMR': 1,
-            'BR': 7,
-            'TR': 20,
+            "SMR": 20,
+            "POX": 30,
+            "ATR": 25,
+            "CR": 25,
+            "DMR": 1,
+            "BR": 7,
+            "TR": 20,
         },
     )
     m.final_syngas_pressure = Param(doc="final syngas pressure [bar]", initialize=1)
@@ -412,7 +412,7 @@ def build_model():
 
     @m.Expression(m.species)
     def raw_material_flow(m, species):
-        return sum(m.flow['in', tech, species] for tech in m.syngas_techs)
+        return sum(m.flow["in", tech, species] for tech in m.syngas_techs)
 
     m.syngas_tech_cost = Var(
         bounds=(0, None), doc="total cost of sygas process [$·y-1]"
@@ -433,11 +433,11 @@ def build_model():
     @m.Expression(m.syngas_techs, m.syngas_tech_units)
     def variable_utilization(m, tech, equip):
         variable_rate_term = {
-            'compressor': m.syngas_tech_utility_rate['power', tech],
-            'exchanger': m.syngas_tech_exchanger_area[tech],
-            'reformer': m.syngas_tech_reformer_duty[tech],
+            "compressor": m.syngas_tech_utility_rate["power", tech],
+            "exchanger": m.syngas_tech_exchanger_area[tech],
+            "reformer": m.syngas_tech_reformer_duty[tech],
         }
-        return variable_rate_term[equip] * m.flow['in', tech, 'CH4'] * 3600
+        return variable_rate_term[equip] * m.flow["in", tech, "CH4"] * 3600
 
     m.aux_unit_capital_cost = Var(
         m.aux_equipment, bounds=(0, None), doc="auxiliary unit capital cost [$·h-1]"
@@ -474,7 +474,7 @@ def build_model():
     )
 
     m.syngas_total_flow = Expression(
-        expr=sum(m.final_syngas_flow[species] for species in {'H2', 'CO2', 'CO', 'CH4'})
+        expr=sum(m.final_syngas_flow[species] for species in {"H2", "CO2", "CO", "CH4"})
     )
 
     @m.Expression(m.aux_equipment)
@@ -486,15 +486,15 @@ def build_model():
         + m.Fabs1 * 3600 * 44
         + m.Fabs2 * 3600 * 44
         - m.co2_inject * 3600 * 44
-        + m.oxygen_flow * m.raw_material_emission['O2'] * 3600
-        + m.wgs_steam * m.raw_material_emission['H2O'] * 3600
-        + m.purge_flow['CO2'] * 3600 * 44
+        + m.oxygen_flow * m.raw_material_emission["O2"] * 3600
+        + m.wgs_steam * m.raw_material_emission["H2O"] * 3600
+        + m.purge_flow["CO2"] * 3600 * 44
         + (
             m.psa_power
             + m.syngas_power
             + sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs)
         )
-        * m.utility_emission['power']
+        * m.utility_emission["power"]
         + m.wgs_heater * 0.094316389565193
     )
 
@@ -508,7 +508,7 @@ def build_model():
             + m.syngas_power
             + sum(m.syngas_tech_compressor_power[tech] for tech in m.syngas_techs)
         )
-        * m.utility_cost['power']
+        * m.utility_cost["power"]
         + m.wgs_heater * 0.064
     )
 
@@ -518,18 +518,18 @@ def build_model():
 
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_process_feed_species_ratio(m, tech, species):
-        if species == 'CH4':
+        if species == "CH4":
             return Constraint.Skip
         return (
-            m.flow['in', tech, species]
-            == feed_ratios.get((tech, species), 0) * m.flow['in', tech, 'CH4']
+            m.flow["in", tech, species]
+            == feed_ratios.get((tech, species), 0) * m.flow["in", tech, "CH4"]
         )
 
     @m.Constraint(m.syngas_techs, m.species)
     def syngas_conversion_calc(m, tech, species):
         return (
-            m.flow[tech, 'ms1', species]
-            == m.flow['in', tech, 'CH4'] * m.syngas_conversion_factor[species, tech]
+            m.flow[tech, "ms1", species]
+            == m.flow["in", tech, "CH4"] * m.syngas_conversion_factor[species, tech]
         )
 
     m.raw_material_cost_calc = Constraint(
@@ -539,8 +539,8 @@ def build_model():
                 m.raw_material_flow[species] * m.raw_material_cost[species]
                 for species in m.species
             )
-            + m.wgs_steam * m.raw_material_cost['H2O']
-            + m.oxygen_flow * m.raw_material_cost['O2']
+            + m.wgs_steam * m.raw_material_cost["H2O"]
+            + m.oxygen_flow * m.raw_material_cost["O2"]
         )
     )
 
@@ -589,7 +589,7 @@ def build_model():
         def base_tech_operating_cost_calc(disj, util):
             return m.base_tech_operating_cost[tech, util] == (
                 m.syngas_tech_utility_rate[util, tech]
-                * m.flow['in', tech, 'CH4']
+                * m.flow["in", tech, "CH4"]
                 * 3600
                 * m.utility_cost[util]
             )
@@ -623,7 +623,7 @@ def build_model():
                 for util in m.utilities
             )
             # CO2 consumed by syngas processes
-            - sum(m.flow['in', tech, 'CO2'] for tech in m.syngas_techs) * 3600 * 44
+            - sum(m.flow["in", tech, "CO2"] for tech in m.syngas_techs) * 3600 * 44
             # Emissions from raw materials
             + sum(
                 m.raw_material_flow[species] * m.raw_material_emission[species] * 3600
@@ -644,7 +644,7 @@ def build_model():
                 / 0.8
                 * (40 + 273)
                 * 8.314
-                * sum(m.flow[tech, 'ms1', species] for species in m.species)
+                * sum(m.flow[tech, "ms1", species] for species in m.species)
                 * (
                     (
                         m.syngas_tech_outlet_pressure[tech]
@@ -701,192 +701,192 @@ def build_model():
     # ms1 balances
     @m.Constraint(m.species)
     def ms1_mass_balance(m, species):
-        return m.flow_into['ms1', species] == m.flow_out_from['ms1', species]
+        return m.flow_into["ms1", species] == m.flow_out_from["ms1", species]
 
-    for this_unit in {'absorber1', 'WGS'}:
+    for this_unit in {"absorber1", "WGS"}:
         unit_exists = m.unit_exists[this_unit]
 
         @unit_exists.Constraint(m.species)
         def unit_inlet_composition_balance(disj, species):
-            total_flow = sum(m.flow_out_from['ms1', jj] for jj in m.species)
+            total_flow = sum(m.flow_out_from["ms1", jj] for jj in m.species)
             total_flow_to_this_unit = sum(
                 m.flow_into[this_unit, jj] for jj in m.species
             )
-            total_flow_species = m.flow_out_from['ms1', species]
+            total_flow_species = m.flow_out_from["ms1", species]
             return (
-                total_flow * m.flow['ms1', this_unit, species]
+                total_flow * m.flow["ms1", this_unit, species]
                 == total_flow_to_this_unit * total_flow_species
             )
 
     # WGS Reactor  CO + H2O <-> CO2 + H2
-    wgs_exists = m.unit_exists['WGS']
+    wgs_exists = m.unit_exists["WGS"]
     wgs_exists.CH4_balance = Constraint(
-        expr=m.flow_out_from['WGS', 'CH4'] == m.flow_into['WGS', 'CH4']
+        expr=m.flow_out_from["WGS", "CH4"] == m.flow_into["WGS", "CH4"]
     )
     wgs_exists.CO_balance = Constraint(
-        expr=m.flow_out_from['WGS', 'CO'] == m.flow_into['WGS', 'CO'] - m.Xw
+        expr=m.flow_out_from["WGS", "CO"] == m.flow_into["WGS", "CO"] - m.Xw
     )
     wgs_exists.CO2_balance = Constraint(
-        expr=m.flow_out_from['WGS', 'CO2'] == m.flow_into['WGS', 'CO2'] + m.Xw
+        expr=m.flow_out_from["WGS", "CO2"] == m.flow_into["WGS", "CO2"] + m.Xw
     )
     wgs_exists.H2_balance = Constraint(
-        expr=m.flow_out_from['WGS', 'H2'] == m.flow_into['WGS', 'H2'] + m.Xw
+        expr=m.flow_out_from["WGS", "H2"] == m.flow_into["WGS", "H2"] + m.Xw
     )
     wgs_exists.H2O_balance = Constraint(
-        expr=m.flow_out_from['WGS', 'H2O']
-        == m.flow_into['WGS', 'H2O'] + m.wgs_steam - m.Xw
+        expr=m.flow_out_from["WGS", "H2O"]
+        == m.flow_into["WGS", "H2O"] + m.wgs_steam - m.Xw
     )
-    wgs_exists.max_molar_reaction = Constraint(expr=m.Xw <= m.flow_into['WGS', 'CO'])
+    wgs_exists.max_molar_reaction = Constraint(expr=m.Xw <= m.flow_into["WGS", "CO"])
 
     wgs_exists.rxn_equilibrium = Constraint(
-        expr=m.Keqw * m.flow_out_from['WGS', 'CO'] * m.flow_out_from['WGS', 'H2O']
-        == (m.flow_out_from['WGS', 'CO2'] * m.flow_out_from['WGS', 'H2'])
+        expr=m.Keqw * m.flow_out_from["WGS", "CO"] * m.flow_out_from["WGS", "H2O"]
+        == (m.flow_out_from["WGS", "CO2"] * m.flow_out_from["WGS", "H2"])
     )
 
     wgs_exists.capital_cost = Constraint(
-        expr=m.aux_unit_capital_cost['WGS']
+        expr=m.aux_unit_capital_cost["WGS"]
         == (
-            (m.p1['WGS'] * 100 * m.flow_out_from['WGS', 'H2'] + m.p2['WGS'])
-            * m.aux_module_factors['WGS']
+            (m.p1["WGS"] * 100 * m.flow_out_from["WGS", "H2"] + m.p2["WGS"])
+            * m.aux_module_factors["WGS"]
             / 8000
             * m.cost_index_ratio
         )
     )
 
     wgs_exists.temperature_balance = Constraint(
-        expr=m.wgs_inlet_temperature * m.total_flow_into['WGS']
+        expr=m.wgs_inlet_temperature * m.total_flow_into["WGS"]
         == (
             sum(
-                m.flow[tech, 'ms1', species]
+                m.flow[tech, "ms1", species]
                 for tech in m.syngas_techs
                 for species in m.species
             )
             * 250
-            + sum(m.flow['s2', 'ms1', species] for species in m.species) * 40
+            + sum(m.flow["s2", "ms1", species] for species in m.species) * 40
         )
     )
     wgs_exists.heater_duty = Constraint(
         expr=m.wgs_heater
-        == m.total_flow_into['WGS'] * 46 * (250 - m.wgs_inlet_temperature)
+        == m.total_flow_into["WGS"] * 46 * (250 - m.wgs_inlet_temperature)
     )
 
     # Bypass 1
-    bypass1_exists = m.unit_exists['bypass1']
+    bypass1_exists = m.unit_exists["bypass1"]
 
     @bypass1_exists.Constraint(m.species)
     def bypass1_mass_balance(disj, species):
-        return m.flow_into['bypass1', species] == m.flow_out_from['bypass1', species]
+        return m.flow_into["bypass1", species] == m.flow_out_from["bypass1", species]
 
     # Absorber
-    absorber_exists = m.unit_exists['absorber1']
+    absorber_exists = m.unit_exists["absorber1"]
 
     @absorber_exists.Constraint(m.species)
     def absorber_mass_balance(disj, species):
-        return m.flow_out_from['absorber1', species] == m.flow_into[
-            'absorber1', species
-        ] - (m.Fabs1 if species == 'CO2' else 0)
+        return m.flow_out_from["absorber1", species] == m.flow_into[
+            "absorber1", species
+        ] - (m.Fabs1 if species == "CO2" else 0)
 
     absorber_exists.co2_absorption = Constraint(
-        expr=m.Fabs1 == 0.96 * m.flow_into['absorber1', 'CO2']
+        expr=m.Fabs1 == 0.96 * m.flow_into["absorber1", "CO2"]
     )
     absorber_exists.cost = Constraint(
-        expr=m.aux_unit_capital_cost['absorber1']
+        expr=m.aux_unit_capital_cost["absorber1"]
         == (
-            (m.p1['absorber1'] * 100 * m.Fabs1 + m.p2['absorber1'])
-            * m.aux_module_factors['absorber1']
+            (m.p1["absorber1"] * 100 * m.Fabs1 + m.p2["absorber1"])
+            * m.aux_module_factors["absorber1"]
             / 8000
             * m.cost_index_ratio
         )
     )
 
-    m.unit_absent['absorber1'].no_absorption = Constraint(expr=m.Fabs1 == 0)
+    m.unit_absent["absorber1"].no_absorption = Constraint(expr=m.Fabs1 == 0)
 
     for this_unit in group1:
         unit_exists = m.unit_exists[this_unit]
         unit_exists.minimum_flow = Constraint(
             expr=m.total_flow_into[this_unit]
-            >= m.total_flow_from['ms1'] * m.min_flow_division
+            >= m.total_flow_from["ms1"] * m.min_flow_division
         )
 
     # Flash
     @m.Constraint(m.species)
     def m1_mass_balance(m, species):
-        return m.flow_into['m1', species] == m.flow_out_from['m1', species]
+        return m.flow_into["m1", species] == m.flow_out_from["m1", species]
 
-    flash_exists = m.unit_exists['flash']
+    flash_exists = m.unit_exists["flash"]
 
     @flash_exists.Constraint(m.species)
     def flash_mass_balance(disj, species):
-        return m.flow_out_from['flash', species] == (
-            m.flow_into['flash', species] if not species == 'H2O' else 0
+        return m.flow_out_from["flash", species] == (
+            m.flow_into["flash", species] if not species == "H2O" else 0
         )
 
     flash_exists.water_sep = Constraint(
-        expr=m.flash_water == m.flow_into['flash', 'H2O']
+        expr=m.flash_water == m.flow_into["flash", "H2O"]
     )
 
     @m.Constraint(m.species)
     def post_flash_split_outlet(m, species):
         return (
-            m.flow_out_from['flash', species]
-            == m.flow_into['PSA', species] + m.flow_into['ms2', species]
+            m.flow_out_from["flash", species]
+            == m.flow_into["PSA", species] + m.flow_into["ms2", species]
         )
 
     flash_exists.cost = Constraint(
-        expr=m.aux_unit_capital_cost['flash']
+        expr=m.aux_unit_capital_cost["flash"]
         == (
-            (m.p1['flash'] * 100 * m.flash_water + m.p2['flash'])
-            * m.aux_module_factors['flash']
+            (m.p1["flash"] * 100 * m.flash_water + m.p2["flash"])
+            * m.aux_module_factors["flash"]
             / 8000
             * m.cost_index_ratio
         )
     )
 
     # PSA
-    psa_exists = m.unit_exists['PSA']
+    psa_exists = m.unit_exists["PSA"]
 
     @psa_exists.Constraint(m.species)
     def psa_inlet_composition_balance(disj, species):
-        total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
-        total_flow_to_this_unit = sum(m.flow_into['PSA', jj] for jj in m.species)
-        total_flow_species = m.flow_out_from['s1', species]
+        total_flow = sum(m.flow_out_from["s1", jj] for jj in m.species)
+        total_flow_to_this_unit = sum(m.flow_into["PSA", jj] for jj in m.species)
+        total_flow_species = m.flow_out_from["s1", species]
         return (
-            total_flow * m.flow['s1', 'PSA', species]
+            total_flow * m.flow["s1", "PSA", species]
             == total_flow_to_this_unit * total_flow_species
         )
 
     @m.Constraint(m.species)
     def ms2_inlet_composition_balance(disj, species):
-        total_flow = sum(m.flow_out_from['s1', jj] for jj in m.species)
-        total_flow_to_this_unit = sum(m.flow_into['ms2', jj] for jj in m.species)
-        total_flow_species = m.flow_out_from['s1', species]
+        total_flow = sum(m.flow_out_from["s1", jj] for jj in m.species)
+        total_flow_to_this_unit = sum(m.flow_into["ms2", jj] for jj in m.species)
+        total_flow_species = m.flow_out_from["s1", species]
         return (
-            total_flow * m.flow['s1', 'ms2', species]
+            total_flow * m.flow["s1", "ms2", species]
             == total_flow_to_this_unit * total_flow_species
         )
 
     @psa_exists.Constraint(m.species)
     def psa_mass_balance(disj, species):
         return (
-            m.flow_out_from['PSA', species] + m.psa_recovered[species]
-            == m.flow_into['PSA', species]
+            m.flow_out_from["PSA", species] + m.psa_recovered[species]
+            == m.flow_into["PSA", species]
         )
 
     @psa_exists.Constraint(m.species)
     def psa_recovery(disj, species):
-        return m.flow_out_from['PSA', species] == m.flow_into['PSA', species] * (
+        return m.flow_out_from["PSA", species] == m.flow_into["PSA", species] * (
             (
                 1 - m.psa_hydrogen_recovery
-                if species == 'H2'
+                if species == "H2"
                 else m.psa_separation_hydrogen_purity
             )
         )
 
     psa_exists.cost = Constraint(
-        expr=m.aux_unit_capital_cost['PSA']
+        expr=m.aux_unit_capital_cost["PSA"]
         == (
-            (m.p1['PSA'] * m.flow_into['PSA', 'H2'] + m.p2['PSA'])
-            * m.aux_module_factors['PSA']
+            (m.p1["PSA"] * m.flow_into["PSA", "H2"] + m.p2["PSA"])
+            * m.aux_module_factors["PSA"]
             / 8000
         )
     )
@@ -897,7 +897,7 @@ def build_model():
             / 0.8
             * (40 + 273)
             * 8.314
-            * m.total_flow_into['PSA']
+            * m.total_flow_into["PSA"]
             * (
                 (30 + 1e-6) ** (1.5 - 1 / 1.5)
                 - m.first_stage_outlet_pressure ** (1.5 - 1 / 1.5)
@@ -905,7 +905,7 @@ def build_model():
         )
     )
 
-    psa_absent = m.unit_absent['PSA']
+    psa_absent = m.unit_absent["PSA"]
 
     @psa_absent.Constraint(m.species)
     def no_psa_recovery(disj, species):
@@ -918,77 +918,77 @@ def build_model():
     # ms4
     @m.Constraint(m.species)
     def ms4_inlet_mass_balance(m, species):
-        return m.flow_out_from['PSA', species] == m.flow_into['ms4', species]
+        return m.flow_out_from["PSA", species] == m.flow_into["ms4", species]
 
     @m.Constraint(m.species)
     def ms4_outlet_mass_balance(m, species):
         return (
-            m.flow_out_from['ms4', species] + m.purge_flow[species]
-            == m.flow_into['ms4', species]
+            m.flow_out_from["ms4", species] + m.purge_flow[species]
+            == m.flow_into["ms4", species]
         )
 
     @m.Constraint(m.species)
     def purge_flow_limit(m, species):
-        return m.purge_flow[species] <= m.flow_into['ms4', species] * 0.01
+        return m.purge_flow[species] <= m.flow_into["ms4", species] * 0.01
 
     @m.Constraint(m.species)
     def s2_inlet_composition(m, species):
-        total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
-        total_flow_to_this_unit = sum(m.flow_into['s2', jj] for jj in m.species)
-        total_flow_species = m.flow_into['ms4', species]
+        total_flow = sum(m.flow_into["ms4", jj] for jj in m.species)
+        total_flow_to_this_unit = sum(m.flow_into["s2", jj] for jj in m.species)
+        total_flow_species = m.flow_into["ms4", species]
         return (
-            total_flow * m.flow['ms4', 's2', species]
+            total_flow * m.flow["ms4", "s2", species]
             == total_flow_to_this_unit * total_flow_species
         )
 
     @m.Constraint(m.species)
     def ms4_to_ms3_composition(m, species):
-        total_flow = sum(m.flow_into['ms4', jj] for jj in m.species)
-        total_flow_to_this_unit = sum(m.flow['ms4', 's2', jj] for jj in m.species)
-        total_flow_species = m.flow_into['ms4', species]
+        total_flow = sum(m.flow_into["ms4", jj] for jj in m.species)
+        total_flow_to_this_unit = sum(m.flow["ms4", "s2", jj] for jj in m.species)
+        total_flow_species = m.flow_into["ms4", species]
         return (
-            total_flow * m.flow['ms4', 's2', species]
+            total_flow * m.flow["ms4", "s2", species]
             == total_flow_to_this_unit * total_flow_species
         )
 
     # s2
     @m.Constraint(m.species)
     def s2_mass_balance(m, species):
-        return m.flow_into['s2', species] == m.flow['s2', 'ms1', species]
+        return m.flow_into["s2", species] == m.flow["s2", "ms1", species]
 
     @m.Constraint(m.species)
     def no_flow_s2_to_m1(m, species):
-        return m.flow['s2', 'm1', species] == 0
+        return m.flow["s2", "m1", species] == 0
 
     # ms2
     @m.Constraint(m.species)
     def ms2_mass_balance(m, species):
-        return m.flow_out_from['ms2', species] == (
-            m.flow_into['ms2', species] + (m.co2_inject if species == 'CO2' else 0)
+        return m.flow_out_from["ms2", species] == (
+            m.flow_into["ms2", species] + (m.co2_inject if species == "CO2" else 0)
         )
 
     # bypass3
-    bypass3_exists = m.unit_exists['bypass3']
+    bypass3_exists = m.unit_exists["bypass3"]
 
     @bypass3_exists.Constraint(m.species)
     def bypass3_mass_balance(disj, species):
-        return m.flow_into['bypass3', species] == m.flow_out_from['bypass3', species]
+        return m.flow_into["bypass3", species] == m.flow_out_from["bypass3", species]
 
     # compressor
-    compressor_exists = m.unit_exists['compressor']
+    compressor_exists = m.unit_exists["compressor"]
 
     @compressor_exists.Constraint(m.species)
     def compressor_inlet_mass_balance(disj, species):
-        return m.flow_into['compressor', species] == m.flow_out_from['ms2', species]
+        return m.flow_into["compressor", species] == m.flow_out_from["ms2", species]
 
     @compressor_exists.Constraint(m.species)
     def compressor_mass_balance(disj, species):
         return (
-            m.flow_out_from['compressor', species] == m.flow_into['compressor', species]
+            m.flow_out_from["compressor", species] == m.flow_into["compressor", species]
         )
 
     compressor_exists.cost = Constraint(
-        expr=m.aux_unit_capital_cost['compressor']
+        expr=m.aux_unit_capital_cost["compressor"]
         == (((3.553 * 10**5) + 586 * m.syngas_power) / 8000 * m.cost_index_ratio)
     )
 
@@ -999,7 +999,7 @@ def build_model():
             / 0.8
             * (40 + 273)
             * 8.314
-            * m.total_flow_into['compressor']
+            * m.total_flow_into["compressor"]
             * (
                 m.final_syngas_pressure ** (1.5 - 1 / 1.5)
                 - m.first_stage_outlet_pressure ** (1.5 - 1 / 1.5)
@@ -1007,80 +1007,80 @@ def build_model():
         )
     )
 
-    no_compressor = m.unit_absent['compressor']
+    no_compressor = m.unit_absent["compressor"]
     no_compressor.final_pressure = Constraint(
         expr=m.first_stage_outlet_pressure >= m.final_syngas_pressure
     )
 
     compressor_exists.compressor_minimum_flow = Constraint(
-        expr=m.total_flow_into['compressor']
-        >= (m.total_flow_from['flash'] * m.min_flow_division)
+        expr=m.total_flow_into["compressor"]
+        >= (m.total_flow_from["flash"] * m.min_flow_division)
     )
     psa_exists.psa_minimum_flow = Constraint(
-        expr=m.total_flow_into['PSA']
-        >= (m.total_flow_from['flash'] * m.min_flow_division)
+        expr=m.total_flow_into["PSA"]
+        >= (m.total_flow_from["flash"] * m.min_flow_division)
     )
 
     m.compressor_or_bypass = LogicalConstraint(
-        expr=exactly(1, m.Yunit['bypass3'], m.Yunit['compressor'])
+        expr=exactly(1, m.Yunit["bypass3"], m.Yunit["compressor"])
     )
 
     # ms3
     @m.Constraint(m.species)
     def ms3_mass_balance(m, species):
-        return m.flow_into['ms3', species] == m.flow_out_from['ms3', species]
+        return m.flow_into["ms3", species] == m.flow_out_from["ms3", species]
 
     # bypass 4
-    bypass4_exists = m.unit_exists['bypass4']
+    bypass4_exists = m.unit_exists["bypass4"]
 
     @bypass4_exists.Constraint(m.species)
     def bypass4_mass_balance(disj, species):
-        return m.flow_into['bypass4', species] == m.flow_out_from['bypass4', species]
+        return m.flow_into["bypass4", species] == m.flow_out_from["bypass4", species]
 
     # absorber 2
-    absorber2_exists = m.unit_exists['absorber2']
+    absorber2_exists = m.unit_exists["absorber2"]
 
     @absorber2_exists.Constraint(m.species)
     def absorber2_mass_balance(disj, species):
-        return m.flow_out_from['absorber2', species] == (
-            m.flow_into['absorber2', species] - (m.Fabs2 if species == 'CO2' else 0)
+        return m.flow_out_from["absorber2", species] == (
+            m.flow_into["absorber2", species] - (m.Fabs2 if species == "CO2" else 0)
         )
 
     absorber2_exists.co2_absorption = Constraint(
-        expr=m.Fabs2 == 0.96 * m.flow_into['absorber2', 'CO2']
+        expr=m.Fabs2 == 0.96 * m.flow_into["absorber2", "CO2"]
     )
     absorber2_exists.cost = Constraint(
-        expr=m.aux_unit_capital_cost['absorber2']
+        expr=m.aux_unit_capital_cost["absorber2"]
         == (
-            (m.p1['absorber2'] * 100 * m.Fabs2 + m.p2['absorber2'])
-            * m.aux_module_factors['absorber2']
+            (m.p1["absorber2"] * 100 * m.Fabs2 + m.p2["absorber2"])
+            * m.aux_module_factors["absorber2"]
             / 8000
             * m.cost_index_ratio
         )
     )
 
-    m.unit_absent['absorber2'].no_absorption = Constraint(expr=m.Fabs2 == 0)
+    m.unit_absent["absorber2"].no_absorption = Constraint(expr=m.Fabs2 == 0)
 
     m.only_one_absorber = LogicalConstraint(
-        expr=atmost(1, m.Yunit['absorber1'], m.Yunit['absorber2'])
+        expr=atmost(1, m.Yunit["absorber1"], m.Yunit["absorber2"])
     )
 
     @m.Constraint(m.species)
     def final_mass_balance(m, species):
-        return m.final_syngas_flow[species] == m.flow_into['m2', species]
+        return m.final_syngas_flow[species] == m.flow_into["m2", species]
 
     m.syngas_stoich_number = Constraint(
         expr=m.stoichiometric_number
-        * (m.final_syngas_flow['CO'] + m.final_syngas_flow['CO2'])
-        == (m.final_syngas_flow['H2'] - m.final_syngas_flow['CO2'])
+        * (m.final_syngas_flow["CO"] + m.final_syngas_flow["CO2"])
+        == (m.final_syngas_flow["H2"] - m.final_syngas_flow["CO2"])
     )
     m.impurity_limit = Constraint(
         expr=m.max_impurity
         * sum(
             m.final_syngas_flow[species]
-            for species in {'CO', 'H2', 'CH4', 'CO2', 'H2O'}
+            for species in {"CO", "H2", "CH4", "CO2", "H2O"}
         )
-        >= sum(m.final_syngas_flow[species] for species in {'CH4', 'H2O'})
+        >= sum(m.final_syngas_flow[species] for species in {"CH4", "H2O"})
     )
 
     m.syngas_process_limits = LogicalConstraint(
@@ -1122,24 +1122,24 @@ def build_model():
     # Not done yet:
     # FPSA.up(j) = 20;
     # FPSAmain.up(j) = 20;
-    m.flow['ms4', 's2', :].setub(20)
-    m.flow['s2', 'ms1', :].setub(20)
-    m.flow['ms4', 'ms3', :].setub(20)
-    m.flow['psa', 'ms4', :].setub(20)
+    m.flow["ms4", "s2", :].setub(20)
+    m.flow["s2", "ms1", :].setub(20)
+    m.flow["ms4", "ms3", :].setub(20)
+    m.flow["psa", "ms4", :].setub(20)
 
-    m.no_downstream_oxygen = Constraint(expr=m.flow_out_from['ms1', 'O2'] == 0)
+    m.no_downstream_oxygen = Constraint(expr=m.flow_out_from["ms1", "O2"] == 0)
 
     # No oxygen in downstream processes: not enforced yet
 
     m.aux_unit_capital_cost.setub(10000)
 
-    m.always_use_flash = LogicalConstraint(expr=m.Yunit['flash'])
+    m.always_use_flash = LogicalConstraint(expr=m.Yunit["flash"])
 
     m.syngas_minimum_demand = Constraint(expr=m.syngas_total_flow >= 0.3)
     m.syngas_maximum_demand = Constraint(expr=m.syngas_total_flow <= 5)
 
-    m.final_syngas_flow['CO'].fix(0.3)
-    m.final_syngas_flow['CO2'].fix(0.3 * m.co2_ratio)
+    m.final_syngas_flow["CO"].fix(0.3)
+    m.final_syngas_flow["CO2"].fix(0.3 * m.co2_ratio)
 
     m.obj = Objective(expr=m.final_total_cost)
 
@@ -1190,22 +1190,22 @@ def display_nonzeros(var):
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('core.logical_to_linear').apply_to(m)
+    TransformationFactory("core.logical_to_linear").apply_to(m)
     # TransformationFactory('gdp.bigm').apply_to(m)
     # result = SolverFactory('gams').solve(
     #     m, tee=True, keepfiles=True, symbolic_solver_labels=True,
     #     solver='scip', add_options=['option optcr=0;'],
     #     # solver="cplex", add_options=['GAMS_MODEL.optfile=1;', '$onecho > cplex.opt', 'iis=1', '$offecho'],
     # )
-    result = SolverFactory('gdpopt').solve(
+    result = SolverFactory("gdpopt").solve(
         m,
-        strategy='LOA',
+        strategy="LOA",
         tee=True,
-        mip_solver='gams',
-        nlp_solver='gams',
-        nlp_solver_args=dict(solver='scip', add_options=['option optcr=0;']),
-        minlp_solver='gams',
-        minlp_solver_args=dict(solver='baron', add_options=['option optcr=0;']),
+        mip_solver="gams",
+        nlp_solver="gams",
+        nlp_solver_args=dict(solver="scip", add_options=["option optcr=0;"]),
+        minlp_solver="gams",
+        minlp_solver_args=dict(solver="baron", add_options=["option optcr=0;"]),
     )
     if not result.solver.termination_condition == tc.optimal:
         print("Termination Condition: ", result.solver.termination_condition)

@@ -128,16 +128,16 @@ def initialize_kaibel():
 
     mn.name = "Initialization Code"
 
-    mn.cols = RangeSet(3, doc='Number of columns ')
-    mn.sec = RangeSet(3, doc='Sections in column: 1 reb, 2 side feed, 3 cond')
-    mn.nc1 = RangeSet(c_c1, doc='Number of components in Column 1')
-    mn.nc2 = RangeSet(c_c2, doc='Number of components in Column 2')
-    mn.nc3 = RangeSet(c_c3, doc='Number of components in Column 3')
+    mn.cols = RangeSet(3, doc="Number of columns ")
+    mn.sec = RangeSet(3, doc="Sections in column: 1 reb, 2 side feed, 3 cond")
+    mn.nc1 = RangeSet(c_c1, doc="Number of components in Column 1")
+    mn.nc2 = RangeSet(c_c2, doc="Number of components in Column 2")
+    mn.nc3 = RangeSet(c_c3, doc="Number of components in Column 3")
 
     mn.Tnmin = Var(
         mn.cols,
         mn.sec,
-        doc='Temperature in K',
+        doc="Temperature in K",
         bounds=(0, 500),
         domain=NonNegativeReals,
     )
@@ -145,7 +145,7 @@ def initialize_kaibel():
         mn.cols,
         mn.sec,
         mn.nc1,
-        doc='Temperature term for vapor pressure',
+        doc="Temperature term for vapor pressure",
         domain=NonNegativeReals,
         bounds=(0, None),
     )
@@ -153,7 +153,7 @@ def initialize_kaibel():
         mn.cols,
         mn.sec,
         mn.nc2,
-        doc='Temperature term for vapor pressure',
+        doc="Temperature term for vapor pressure",
         domain=NonNegativeReals,
         bounds=(0, None),
     )
@@ -161,7 +161,7 @@ def initialize_kaibel():
         mn.cols,
         mn.sec,
         mn.nc3,
-        doc='Temperature term for vapor pressure',
+        doc="Temperature term for vapor pressure",
         domain=NonNegativeReals,
         bounds=(0, None),
     )
@@ -188,7 +188,7 @@ def initialize_kaibel():
         Constraint
             The constraint statement to calculate the reduced temperature.
         """
-        return mn.Tr1nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
+        return mn.Tr1nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, "TC"]
 
     @mn.Constraint(mn.cols, mn.sec, mn.nc2, doc="Temperature term for vapor pressure")
     def _column2_reduced_temperature(mn, col, sec, nc):
@@ -212,7 +212,7 @@ def initialize_kaibel():
         Constraint
             The constraint equation to calculate the reduced temperature
         """
-        return mn.Tr2nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
+        return mn.Tr2nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, "TC"]
 
     @mn.Constraint(mn.cols, mn.sec, mn.nc3, doc="Temperature term for vapor pressure")
     def _column3_reduced_temperature(mn, col, sec, nc):
@@ -236,7 +236,7 @@ def initialize_kaibel():
         Constraint
             The constraint equation to calculate the reduced temperature in column 3
         """
-        return mn.Tr3nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, 'TC']
+        return mn.Tr3nmin[col, sec, nc] * mn.Tnmin[col, sec] == mn.prop[nc, "TC"]
 
     @mn.Constraint(mn.cols, mn.sec, doc="Boiling point temperature")
     def _equilibrium_equation(mn, col, sec):
@@ -268,18 +268,18 @@ def initialize_kaibel():
         return (
             sum(
                 xi_nmin[col, sec, nc]
-                * mn.prop[nc, 'PC']
+                * mn.prop[nc, "PC"]
                 * exp(
                     a[col, sec, nc]
                     * (
-                        mn.prop[nc, 'vpA']
-                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC'])
-                        + mn.prop[nc, 'vpB']
-                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC']) ** 1.5
-                        + mn.prop[nc, 'vpC']
-                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC']) ** 3
-                        + mn.prop[nc, 'vpD']
-                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, 'TC']) ** 6
+                        mn.prop[nc, "vpA"]
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, "TC"])
+                        + mn.prop[nc, "vpB"]
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, "TC"]) ** 1.5
+                        + mn.prop[nc, "vpC"]
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, "TC"]) ** 3
+                        + mn.prop[nc, "vpD"]
+                        * (1 - mn.Tnmin[col, sec] / mn.prop[nc, "TC"]) ** 6
                     )
                 )
                 / Pnmin[sec]
@@ -292,7 +292,7 @@ def initialize_kaibel():
 
     ####
 
-    SolverFactory('ipopt').solve(mn)
+    SolverFactory("ipopt").solve(mn)
 
     yc = {}  # Vapor composition
     kl = {}  # Light key component
@@ -329,19 +329,19 @@ def initialize_kaibel():
             for nc in b:
                 yc[col, sec, nc] = (
                     xi_nmin[col, sec, nc]
-                    * mn.prop[nc, 'PC']
+                    * mn.prop[nc, "PC"]
                     * exp(
-                        mn.prop[nc, 'TC']
+                        mn.prop[nc, "TC"]
                         / value(mn.Tnmin[col, sec])
                         * (
-                            mn.prop[nc, 'vpA']
-                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC'])
-                            + mn.prop[nc, 'vpB']
-                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 1.5
-                            + mn.prop[nc, 'vpC']
-                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 3
-                            + mn.prop[nc, 'vpD']
-                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, 'TC']) ** 6
+                            mn.prop[nc, "vpA"]
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, "TC"])
+                            + mn.prop[nc, "vpB"]
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, "TC"]) ** 1.5
+                            + mn.prop[nc, "vpC"]
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, "TC"]) ** 3
+                            + mn.prop[nc, "vpD"]
+                            * (1 - value(mn.Tnmin[col, sec]) / mn.prop[nc, "TC"]) ** 6
                         )
                     )
                 ) / Pnmin[

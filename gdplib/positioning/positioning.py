@@ -75,7 +75,7 @@ def build_model():
         25: 0.7,
     }
     m.fixed_profit = Param(
-        m.consumers, initialize=fixed_profit_data, doc='Fixed profit for each consumer'
+        m.consumers, initialize=fixed_profit_data, doc="Fixed profit for each consumer"
     )  # fixed profit for each consumer
 
     minimum_weights_data = {
@@ -108,7 +108,7 @@ def build_model():
     m.minimum_weights = Param(
         m.consumers,
         initialize=minimum_weights_data,
-        doc='Minimum weights for each consumer',
+        doc="Minimum weights for each consumer",
     )  # minimum weights for each consumer
 
     # Bounds for the locations
@@ -145,7 +145,7 @@ def build_model():
     """
     )
     ideal_points_table = pd.read_csv(
-        ideal_points_data, delimiter=r'\s+'
+        ideal_points_data, delimiter=r"\s+"
     )  # ideal points for each consumer and product
     ideal_points_dict = {
         (k[0], int(k[1])): v for k, v in ideal_points_table.stack().to_dict().items()
@@ -154,7 +154,7 @@ def build_model():
         m.consumers,
         m.locations,
         initialize=ideal_points_dict,
-        doc='Ideal points for each consumer and product',
+        doc="Ideal points for each consumer and product",
     )
 
     weights_data = StringIO(
@@ -187,7 +187,7 @@ def build_model():
     25      6.32    0.81    6.12    6.73    7.93
     """
     )
-    weights_table = pd.read_csv(weights_data, delimiter=r'\s+')
+    weights_table = pd.read_csv(weights_data, delimiter=r"\s+")
     weights_dict = {
         (k[0], int(k[1])): v for k, v in weights_table.stack().to_dict().items()
     }
@@ -195,7 +195,7 @@ def build_model():
         m.consumers,
         m.locations,
         initialize=weights_dict,
-        doc='Weights for each consumer and product',
+        doc="Weights for each consumer and product",
     )
 
     existing_products_data = StringIO(
@@ -213,7 +213,7 @@ def build_model():
     10      6.49    1.92    0.05    4.89    6.43
     """
     )
-    existing_products_table = pd.read_csv(existing_products_data, delimiter=r'\s+')
+    existing_products_table = pd.read_csv(existing_products_data, delimiter=r"\s+")
     existing_products_dict = {
         (k[0], int(k[1])): v
         for k, v in existing_products_table.stack().to_dict().items()
@@ -222,7 +222,7 @@ def build_model():
         m.products,
         m.locations,
         initialize=existing_products_dict,
-        doc='Existing products for each location and product',
+        doc="Existing products for each location and product",
     )
 
     # m.consumers * m.products
@@ -239,15 +239,15 @@ def build_model():
     # minimum dissimilarity between the existing products and consumers' ideal points
     r = {i: min(rr[i, j] for j in m.products) for i in m.consumers}
 
-    m.x = Var(m.locations, doc='Location of each product')
+    m.x = Var(m.locations, doc="Location of each product")
     m.Y = BooleanVar(
         m.consumers,
-        doc='Indicates if consumer positioning is satisfactory based on distance to ideal points.',
+        doc="Indicates if consumer positioning is satisfactory based on distance to ideal points.",
     )
-    m.H = Param(initialize=1000, doc='Big M value')
+    m.H = Param(initialize=1000, doc="Big M value")
     m.U = Var(
         bounds=(0, 5000),
-        doc='Upper bound on the sum of the distances to the ideal points',
+        doc="Upper bound on the sum of the distances to the ideal points",
     )  # Slack variable
 
     @m.Disjunction(m.consumers)
@@ -287,19 +287,19 @@ def build_model():
         m.x[k].setub(ub)
 
     m.c1 = Constraint(
-        expr=m.x[1] - m.x[2] + m.x[3] + m.x[4] + m.x[5] <= 10, doc='Constraint 1'
+        expr=m.x[1] - m.x[2] + m.x[3] + m.x[4] + m.x[5] <= 10, doc="Constraint 1"
     )
     m.c2 = Constraint(
         expr=0.6 * m.x[1] - 0.9 * m.x[2] - 0.5 * m.x[3] + 0.1 * m.x[4] + m.x[5]
         <= -0.64,
-        doc='Constraint 2',
+        doc="Constraint 2",
     )
     m.c3 = Constraint(
-        expr=m.x[1] - m.x[2] + m.x[3] - m.x[4] + m.x[5] >= 0.69, doc='Constraint 3'
+        expr=m.x[1] - m.x[2] + m.x[3] - m.x[4] + m.x[5] >= 0.69, doc="Constraint 3"
     )
-    m.c4 = Constraint(expr=0.157 * m.x[1] + 0.05 * m.x[2] <= 1.5, doc='Constraint 4')
+    m.c4 = Constraint(expr=0.157 * m.x[1] + 0.05 * m.x[2] <= 1.5, doc="Constraint 4")
     m.c5 = Constraint(
-        expr=0.25 * m.x[2] + 1.05 * m.x[4] - 0.3 * m.x[5] >= 4.5, doc='Constraint 5'
+        expr=0.25 * m.x[2] + 1.05 * m.x[4] - 0.3 * m.x[5] >= 4.5, doc="Constraint 5"
     )
 
     # Minimizes total adjusted dissimilarity costs and maximizes consumer-based fixed profit, while balancing quadratic and linear operational costs across multiple product locations.
@@ -311,7 +311,7 @@ def build_model():
         - 0.5 * m.x[3]
         + 0.1 * m.x[4] ** 2
         + m.x[5],
-        doc='Objective function',
+        doc="Objective function",
     )
 
     return m
@@ -319,11 +319,11 @@ def build_model():
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('core.logical_to_linear').apply_to(m)
+    TransformationFactory("core.logical_to_linear").apply_to(m)
     # res = SolverFactory('gdpopt').solve(m, tee=True, nlp_solver='gams')
-    TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(
-        m, tee=True, solver='baron', add_options=['option optcr=0;']
+    TransformationFactory("gdp.bigm").apply_to(m)
+    SolverFactory("gams").solve(
+        m, tee=True, solver="baron", add_options=["option optcr=0;"]
     )
     update_boolean_vars_from_binary(m)
     m.Y.display()

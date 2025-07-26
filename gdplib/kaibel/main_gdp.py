@@ -101,13 +101,13 @@ def main():
 
     intro_message(m)
 
-    results = SolverFactory('gdpopt').solve(
+    results = SolverFactory("gdpopt").solve(
         m,
-        strategy='LOA',
+        strategy="LOA",
         tee=True,
         time_limit=3600,
-        mip_solver='gams',
-        mip_solver_args=dict(solver='cplex'),
+        mip_solver="gams",
+        mip_solver_args=dict(solver="cplex"),
     )
 
     m.calc_nt = sum(
@@ -123,9 +123,9 @@ def main():
 
     display_results(m)
 
-    print('  ', results)
-    print('  Solver Status: ', results.solver.status)
-    print('  Termination condition: ', results.solver.termination_condition)
+    print("  ", results)
+    print("  Solver Status: ", results.solver.status)
+    print("  Termination condition: ", results.solver.termination_condition)
 
 
 def intro_message(m):
@@ -158,20 +158,20 @@ def display_results(m):
     m : Pyomo ConcreteModel
         The Pyomo model object containing the results of the optimization process.
     """
-    print('')
-    print('Components:')
-    print('1 methanol')
-    print('2 ethanol')
-    print('3 butanol')
-    print('4 propanol')
-    print(' ')
-    print('Objective: %s' % value(m.obj))
-    print('Trays: %s' % value(m.calc_nt))
-    print('Dividing_wall_start: %s' % value(m.dw_start))
-    print('Dividing_wall_end: %s' % value(m.dw_end))
-    print(' ')
+    print("")
+    print("Components:")
+    print("1 methanol")
+    print("2 ethanol")
+    print("3 butanol")
+    print("4 propanol")
+    print(" ")
+    print("Objective: %s" % value(m.obj))
+    print("Trays: %s" % value(m.calc_nt))
+    print("Dividing_wall_start: %s" % value(m.dw_start))
+    print("Dividing_wall_end: %s" % value(m.dw_end))
+    print(" ")
     print(
-        'Qreb: {: >3.0f}kW  B_1: {: > 2.0f}  B_2: {: >2.0f}  B_3: {: >2.0f}  B_4: {: >2.0f}  Btotal: {: >2.0f}'.format(
+        "Qreb: {: >3.0f}kW  B_1: {: > 2.0f}  B_2: {: >2.0f}  B_3: {: >2.0f}  B_4: {: >2.0f}  Btotal: {: >2.0f}".format(
             value(m.Qreb / m.Qscale),
             value(m.B[1]),
             value(m.B[2]),
@@ -181,7 +181,7 @@ def display_results(m):
         )
     )
     print(
-        'Qcon: {: >2.0f}kW  D_1: {: >2.0f}  D_2: {: >2.0f}  D_3: {: >2.0f}  D_4: {: >2.0f}  Dtotal: {: >2.0f}'.format(
+        "Qcon: {: >2.0f}kW  D_1: {: >2.0f}  D_2: {: >2.0f}  D_3: {: >2.0f}  D_4: {: >2.0f}  Dtotal: {: >2.0f}".format(
             value(m.Qcon / m.Qscale),
             value(m.D[1]),
             value(m.D[2]),
@@ -190,13 +190,13 @@ def display_results(m):
             value(m.Dtotal),
         )
     )
-    print(' ')
-    print('Reflux: {: >3.4f}'.format(value(m.rr)))
-    print('Reboil: {: >3.4f} '.format(value(m.bu)))
-    print(' ')
-    print('Flowrates[mol/s]')
+    print(" ")
+    print("Reflux: {: >3.4f}".format(value(m.rr)))
+    print("Reboil: {: >3.4f} ".format(value(m.bu)))
+    print(" ")
+    print("Flowrates[mol/s]")
     print(
-        'F_1: {: > 3.0f}  F_2: {: >2.0f}  F_3: {: >2.0f}  F_4: {: >2.0f}  Ftotal: {: >2.0f}'.format(
+        "F_1: {: > 3.0f}  F_2: {: >2.0f}  F_3: {: >2.0f}  F_4: {: >2.0f}  Ftotal: {: >2.0f}".format(
             value(m.F[1]),
             value(m.F[2]),
             value(m.F[3]),
@@ -205,7 +205,7 @@ def display_results(m):
         )
     )
     print(
-        'S1_1:  {: > 1.0f}  S1_2: {: >2.0f}  S1_3: {: >2.0f}  S1_4: {: >2.0f}  S1total: {: >2.0f}'.format(
+        "S1_1:  {: > 1.0f}  S1_2: {: >2.0f}  S1_3: {: >2.0f}  S1_4: {: >2.0f}  S1total: {: >2.0f}".format(
             value(m.S[1, 1]),
             value(m.S[1, 2]),
             value(m.S[1, 3]),
@@ -214,7 +214,7 @@ def display_results(m):
         )
     )
     print(
-        'S2_1:  {: > 1.0f}  S2_2: {: >2.0f}  S2_3: {: >2.0f}  S2_4: {: >2.0f}  S2total: {: >2.0f}'.format(
+        "S2_1:  {: > 1.0f}  S2_2: {: >2.0f}  S2_3: {: >2.0f}  S2_4: {: >2.0f}  S2total: {: >2.0f}".format(
             value(m.S[2, 1]),
             value(m.S[2, 2]),
             value(m.S[2, 3]),
@@ -222,21 +222,21 @@ def display_results(m):
             sum(value(m.S[2, comp]) for comp in m.comp),
         )
     )
-    print(' ')
-    print('Distributors:')
-    print('dl[2]: {: >3.4f} dl[3]: {: >3.4f}'.format(value(m.dl[2]), value(m.dl[3])))
-    print('dv[2]: {: >3.4f} dv[3]: {: >3.4f}'.format(value(m.dv[2]), value(m.dv[3])))
-    print(' ')
-    print(' ')
-    print(' ')
-    print('               Kaibel Column Sections     ')
-    print('__________________________________________')
-    print(' ')
-    print(' Tray       Bottom                Feed    ')
-    print('__________________________________________')
+    print(" ")
+    print("Distributors:")
+    print("dl[2]: {: >3.4f} dl[3]: {: >3.4f}".format(value(m.dl[2]), value(m.dl[3])))
+    print("dv[2]: {: >3.4f} dv[3]: {: >3.4f}".format(value(m.dv[2]), value(m.dv[3])))
+    print(" ")
+    print(" ")
+    print(" ")
+    print("               Kaibel Column Sections     ")
+    print("__________________________________________")
+    print(" ")
+    print(" Tray       Bottom                Feed    ")
+    print("__________________________________________")
     for t in reversed(list(m.tray)):
         print(
-            '[{: >2.0f}] {: >9.0g} {: >18.0g}   F:{: >3.0f} '.format(
+            "[{: >2.0f}] {: >9.0g} {: >18.0g}   F:{: >3.0f} ".format(
                 t,
                 (
                     fabs(value(m.tray_exists[1, t].indicator_var))
@@ -251,14 +251,14 @@ def display_results(m):
                 sum(value(m.F[comp]) for comp in m.comp) if t == m.feed_tray else 0,
             )
         )
-    print(' ')
-    print('__________________________________________')
-    print(' ')
-    print('            Product                 Top   ')
-    print('__________________________________________')
+    print(" ")
+    print("__________________________________________")
+    print(" ")
+    print("            Product                 Top   ")
+    print("__________________________________________")
     for t in reversed(list(m.tray)):
         print(
-            '[{: >2.0f}] {: >9.0g}   S1:{: >2.0f}   S2:{: >2.0f} {: >8.0g}'.format(
+            "[{: >2.0f}] {: >9.0g}   S1:{: >2.0f}   S2:{: >2.0f} {: >8.0g}".format(
                 t,
                 (
                     fabs(value(m.tray_exists[3, t].indicator_var))
@@ -282,7 +282,7 @@ def display_results(m):
                 ),
             )
         )
-    print(' 1 = trays exists, 0 = absent tray')
+    print(" 1 = trays exists, 0 = absent tray")
 
 
 if __name__ == "__main__":

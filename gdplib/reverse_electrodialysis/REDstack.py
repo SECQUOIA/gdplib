@@ -33,7 +33,7 @@ T = pd.read_csv(os.path.join(wnd_dir, "T.csv"))
 
 
 def build_REDstack():
-    '''
+    """
     This function builds the RED stack model using the data from the stack_param.csv, flow_conc_data.csv, and T.csv files.
 
     Returns
@@ -41,8 +41,8 @@ def build_REDstack():
     m : pyomo.ConcreteModel
         RED stack model
 
-    '''
-    m = pyo.ConcreteModel('RED model')
+    """
+    m = pyo.ConcreteModel("RED model")
 
     # ============================================================================
     #     Sets
@@ -50,47 +50,47 @@ def build_REDstack():
 
     m.SOL = pyo.Set(
         doc="Set of High- and Low-concentration streams",
-        initialize=['HC', 'LC'],
+        initialize=["HC", "LC"],
         ordered=True,
     )
 
-    m.iem = pyo.Set(doc='Ion-exchange membrane type', initialize=['AEM', 'CEM'])
+    m.iem = pyo.Set(doc="Ion-exchange membrane type", initialize=["AEM", "CEM"])
 
     m.port = pyo.Set(
-        doc='Inlet and Outlet RU Ports', initialize=['rm', 'rs'], ordered=True
+        doc="Inlet and Outlet RU Ports", initialize=["rm", "rs"], ordered=True
     )
 
     # ============================================================================
     #     Constant parameters
     # =============================================================================
 
-    m.gas_constant = physical_constants['molar gas constant'][
+    m.gas_constant = physical_constants["molar gas constant"][
         0
     ]  # Ideal gas constant [J/mol/K]
-    m.faraday_constant = physical_constants['Faraday constant'][
+    m.faraday_constant = physical_constants["Faraday constant"][
         0
     ]  # Faraday’s Constant [C/mol] [A*s/mol]
     m.Tref = 298.15  # Reference temperature [K]
 
     m.T = pyo.Param(
-        doc='Feed streams temperature [K]',
+        doc="Feed streams temperature [K]",
         within=pyo.NonNegativeReals,
         initialize=T.loc[0].values[0],
         mutable=True,
     )
 
     m.temperature_coeff = pyo.Param(
-        doc='Temperature correction factor [-] of the solution conductivity',
+        doc="Temperature correction factor [-] of the solution conductivity",
         default=0.02,
         initialize=0.02,
     )  # Mehdizadeh, et al. (2019) Membranes, 9(6), 73. https://doi.org/10.3390/membranes9060073
     # Linear temperature dependence of the solution conductivity. The temperature coefficient of the solution conductivity is 0.02/K.
 
     m.dynamic_viscosity = pyo.Param(
-        doc='Dynamic viscosity of the solution [Pa s]', default=1e-3, initialize=1e-3
+        doc="Dynamic viscosity of the solution [Pa s]", default=1e-3, initialize=1e-3
     )
 
-    m.pump_eff = pyo.Param(doc='Pump efficiency [-]', default=0.75, initialize=0.75)
+    m.pump_eff = pyo.Param(doc="Pump efficiency [-]", default=0.75, initialize=0.75)
 
     # =============================================================================
     #     RED Stack Parameters
@@ -138,11 +138,11 @@ def build_REDstack():
             )
         )
 
-    @m.Param(doc='Membrane area [m2]')
+    @m.Param(doc="Membrane area [m2]")
     def Aiem(m):
         return m.b * m.L
 
-    @m.Param(m.SOL, doc='Cross-sectional area [m2]')
+    @m.Param(m.SOL, doc="Cross-sectional area [m2]")
     def _cross_area(m, sol):
         return m.b * m.spacer_thickness[sol] * m.spacer_porosity[sol]
 
@@ -150,20 +150,20 @@ def build_REDstack():
         m.iem,
         doc="Membranes' resistance [ohm m2]",
         within=pyo.NonNegativeReals,
-        default={'CEM': 1.8e-4, 'AEM': 0.6e-4},
+        default={"CEM": 1.8e-4, "AEM": 0.6e-4},
         initialize={
-            'CEM': stack_param.cem_resistance.values[0],
-            'AEM': stack_param.aem_resistance.values[0],
+            "CEM": stack_param.cem_resistance.values[0],
+            "AEM": stack_param.aem_resistance.values[0],
         },
     )
     m.iems_permsel = pyo.Param(
         m.iem,
         doc="Membranes' permselectivity [-]",
         within=pyo.NonNegativeReals,
-        default={'CEM': 0.97, 'AEM': 0.92},
+        default={"CEM": 0.97, "AEM": 0.92},
         initialize={
-            'CEM': stack_param.cem_permsel.values[0],
-            'AEM': stack_param.aem_permsel.values[0],
+            "CEM": stack_param.cem_permsel.values[0],
+            "AEM": stack_param.aem_permsel.values[0],
         },
     )
 
@@ -177,8 +177,8 @@ def build_REDstack():
         within=pyo.NonNegativeReals,
         default=50e-6,
         initialize={
-            'CEM': stack_param.cem_thickness.values[0],
-            'AEM': stack_param.aem_thickness.values[0],
+            "CEM": stack_param.cem_thickness.values[0],
+            "AEM": stack_param.aem_thickness.values[0],
         },
     )
 
@@ -191,18 +191,18 @@ def build_REDstack():
 
     m.vel_ub = pyo.Param(
         m.SOL,
-        doc='Max. linear crossflow velocity [cm/s]',
+        doc="Max. linear crossflow velocity [cm/s]",
         default=3.0,
         initialize=stack_param.vel_ub.values[0],
     )
 
     m.vel_lb = pyo.Param(
-        m.SOL, doc='Min. linear crossflow velocity [cm/s]', initialize=0.01
+        m.SOL, doc="Min. linear crossflow velocity [cm/s]", initialize=0.01
     )
 
     m.vel_init = pyo.Param(
         m.SOL,
-        doc='Min. linear crossflow velocity [cm/s]',
+        doc="Min. linear crossflow velocity [cm/s]",
         default=1.0,
         initialize=stack_param.vel_init.values[0],
     )
@@ -321,8 +321,8 @@ def build_REDstack():
         int
             The initial volumetric flow rate
         """
-        init = ureg.convert(m.vel_init[sol], 'cm/second', 'm/hour') * m._cross_area[sol]
-        return ureg.convert(init, 'm**3', 'liter')
+        init = ureg.convert(m.vel_init[sol], "cm/second", "m/hour") * m._cross_area[sol]
+        return ureg.convert(init, "m**3", "liter")
 
     def _flow_vol_b(m, x, sol):
         """
@@ -341,8 +341,8 @@ def build_REDstack():
         tuple
             The bounds of the volumetric flow rate
         """
-        ub = pyo.value(ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h') * m._cross_area[sol])
-        return (None, ureg.convert(ub, 'm**3', 'liter'))
+        ub = pyo.value(ureg.convert(m.vel_ub[sol], "cm/s", "m/h") * m._cross_area[sol])
+        return (None, ureg.convert(ub, "m**3", "liter"))
 
     m.flow_vol_x = pyo.Var(
         m.length_domain,
@@ -369,8 +369,8 @@ def build_REDstack():
         tuple
             The bounds of the flow rate ratio
         """
-        lb = m.vel_lb['LC'] / (m.vel_lb['LC'] + m.vel_ub['HC'])
-        ub = m.vel_ub['LC'] / (m.vel_ub['LC'] + m.vel_lb['HC'])
+        lb = m.vel_lb["LC"] / (m.vel_lb["LC"] + m.vel_ub["HC"])
+        ub = m.vel_ub["LC"] / (m.vel_ub["LC"] + m.vel_lb["HC"])
         return (lb, ub)
 
     def _flowrate_ratio(m):
@@ -387,10 +387,10 @@ def build_REDstack():
         int
             The initial flow rate ratio
         """
-        return m.vel_init['LC'] / sum(m.vel_init[sol] for sol in m.SOL)
+        return m.vel_init["LC"] / sum(m.vel_init[sol] for sol in m.SOL)
 
     m.phi = pyo.Var(
-        doc='Vol. flow rate ratio = In LC to total In (LC+HC) RU [-]',
+        doc="Vol. flow rate ratio = In LC to total In (LC+HC) RU [-]",
         initialize=_flowrate_ratio,
         bounds=_flowrate_ratio_b,
         domain=pyo.NonNegativeReals,
@@ -411,12 +411,12 @@ def build_REDstack():
             The bounds of the concentration of the mixed stream reaching equilibrium
         """
         lb = (
-            m.phi.ub * flow_conc_data['feed_conc_mol']['fl1']
-            + (1 - m.phi.ub) * flow_conc_data['feed_conc_mol']['fh1']
+            m.phi.ub * flow_conc_data["feed_conc_mol"]["fl1"]
+            + (1 - m.phi.ub) * flow_conc_data["feed_conc_mol"]["fh1"]
         )
         ub = (
-            m.phi.lb * flow_conc_data['feed_conc_mol']['fl1']
-            + (1 - m.phi.lb) * flow_conc_data['feed_conc_mol']['fh1']
+            m.phi.lb * flow_conc_data["feed_conc_mol"]["fl1"]
+            + (1 - m.phi.lb) * flow_conc_data["feed_conc_mol"]["fh1"]
         )
         return (lb, ub)
 
@@ -435,12 +435,12 @@ def build_REDstack():
             The initial concentration of the mixed stream reaching equilibrium
         """
         return (
-            m.phi * flow_conc_data['feed_conc_mol']['fl1']
-            + (1 - m.phi) * flow_conc_data['feed_conc_mol']['fh1']
+            m.phi * flow_conc_data["feed_conc_mol"]["fl1"]
+            + (1 - m.phi) * flow_conc_data["feed_conc_mol"]["fh1"]
         )
 
     m.conc_mol_eq = pyo.Var(
-        doc='Concentration of the HC and LC mixed stream reaching equilibrium [mol/L]',
+        doc="Concentration of the HC and LC mixed stream reaching equilibrium [mol/L]",
         initialize=_conc_mol_eq,
         bounds=_conc_mol_eq_b,
         domain=pyo.NonNegativeReals,
@@ -464,9 +464,9 @@ def build_REDstack():
         tuple
             The bounds of the molar concentration
         """
-        if sol == 'HC':
-            return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
-        return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
+        if sol == "HC":
+            return (m.conc_mol_eq.lb, flow_conc_data["feed_conc_mol"]["fh1"])
+        return (flow_conc_data["feed_conc_mol"]["fl1"], m.conc_mol_eq.ub)
 
     def _conc_molx(m, x, sol):
         """
@@ -486,9 +486,9 @@ def build_REDstack():
         int
             The initial molar concentration
         """
-        if sol == 'HC':
-            return flow_conc_data['feed_conc_mol']['fh1']
-        return flow_conc_data['feed_conc_mol']['fl1']
+        if sol == "HC":
+            return flow_conc_data["feed_conc_mol"]["fh1"]
+        return flow_conc_data["feed_conc_mol"]["fl1"]
 
     m.conc_mol_x = pyo.Var(
         m.length_domain,
@@ -523,12 +523,12 @@ def build_REDstack():
         delta_p = pyo.value(
             48
             * m.dynamic_viscosity
-            * ureg.convert(m.vel_init[sol], 'cm', 'm')
+            * ureg.convert(m.vel_init[sol], "cm", "m")
             / m.dh[sol] ** 2
             * m.L
         )
-        ub = ureg.convert(1, 'atm', 'mbar')
-        lb = ub - ureg.convert(delta_p, 'Pa', 'mbar')
+        ub = ureg.convert(1, "atm", "mbar")
+        lb = ub - ureg.convert(delta_p, "Pa", "mbar")
         if x == m.length_domain.first():
             return ub
         return lb
@@ -553,12 +553,12 @@ def build_REDstack():
         delta_p = pyo.value(
             48
             * m.dynamic_viscosity
-            * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+            * ureg.convert(m.vel_ub[sol], "cm", "m")
             / m.dh[sol] ** 2
             * m.L
         )
-        ub = ureg.convert(1, 'atm', 'mbar')
-        lb = ub - ureg.convert(delta_p, 'Pa', 'mbar')
+        ub = ureg.convert(1, "atm", "mbar")
+        lb = ub - ureg.convert(delta_p, "Pa", "mbar")
         return (lb, ub)
 
     m.pressure_x = pyo.Var(
@@ -567,7 +567,7 @@ def build_REDstack():
         domain=pyo.NonNegativeReals,
         initialize=_pressure_x,
         bounds=_pressure_x_b,
-        doc='Discretized pressure [mbar]',
+        doc="Discretized pressure [mbar]",
     )
 
     m.flow_vol_dx = pyo.Var(
@@ -592,11 +592,11 @@ def build_REDstack():
             ureg.convert(
                 -48
                 * m.dynamic_viscosity
-                * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+                * ureg.convert(m.vel_ub[sol], "cm", "m")
                 / m.dh[sol] ** 2
                 * m.L,
-                'Pa',
-                'mbar',
+                "Pa",
+                "mbar",
             ),
             None,
         ),
@@ -606,11 +606,11 @@ def build_REDstack():
             else ureg.convert(
                 -48
                 * m.dynamic_viscosity
-                * ureg.convert(m.vel_init[sol], 'cm', 'm')
+                * ureg.convert(m.vel_init[sol], "cm", "m")
                 / m.dh[sol] ** 2
                 * m.L,
-                'Pa',
-                'mbar',
+                "Pa",
+                "mbar",
             )
         ),
     )
@@ -620,15 +620,15 @@ def build_REDstack():
         m.SOL,
         doc="Volumetric flow rate [m3/h]",
         initialize=lambda _, p, sol: m.cell_pairs
-        * ureg.convert(m.vel_init[sol], 'cm/s', 'm/h')
+        * ureg.convert(m.vel_init[sol], "cm/s", "m/h")
         * m._cross_area[sol],
         domain=pyo.NonNegativeReals,
         bounds=lambda _, p, sol: (
             m.cell_pairs
-            * ureg.convert(m.vel_lb[sol], 'cm/s', 'm/h')
+            * ureg.convert(m.vel_lb[sol], "cm/s", "m/h")
             * m._cross_area[sol],
             m.cell_pairs
-            * ureg.convert(m.vel_ub[sol], 'cm/s', 'm/h')
+            * ureg.convert(m.vel_ub[sol], "cm/s", "m/h")
             * m._cross_area[sol],
         ),
     )
@@ -651,9 +651,9 @@ def build_REDstack():
         tuple
             The bounds of the molar concentration
         """
-        if sol == 'HC':
-            return (m.conc_mol_eq.lb, flow_conc_data['feed_conc_mol']['fh1'])
-        return (flow_conc_data['feed_conc_mol']['fl1'], m.conc_mol_eq.ub)
+        if sol == "HC":
+            return (m.conc_mol_eq.lb, flow_conc_data["feed_conc_mol"]["fh1"])
+        return (flow_conc_data["feed_conc_mol"]["fl1"], m.conc_mol_eq.ub)
 
     def _conc_mol(m, p, sol):
         """
@@ -673,9 +673,9 @@ def build_REDstack():
         int
             The initial molar concentration
         """
-        if sol == 'HC':
-            return flow_conc_data['feed_conc_mol']['fh1']
-        return flow_conc_data['feed_conc_mol']['fl1']
+        if sol == "HC":
+            return flow_conc_data["feed_conc_mol"]["fh1"]
+        return flow_conc_data["feed_conc_mol"]["fl1"]
 
     m.conc_mol = pyo.Var(
         m.port,
@@ -699,9 +699,9 @@ def build_REDstack():
             * m.T
             / m.faraday_constant
             * m.iems_permsel_avg
-            * (pyo.log(m.conc_mol_x[x, 'HC']) - pyo.log(m.conc_mol_x[x, 'LC'])),
-            'V',
-            'mV',
+            * (pyo.log(m.conc_mol_x[x, "HC"]) - pyo.log(m.conc_mol_x[x, "LC"])),
+            "V",
+            "mV",
         ),
         bounds=lambda _, x: (
             None,
@@ -712,11 +712,11 @@ def build_REDstack():
                 / m.faraday_constant
                 * m.iems_permsel_avg
                 * (
-                    pyo.log(flow_conc_data['feed_conc_mol']['fh1'])
-                    - pyo.log(flow_conc_data['feed_conc_mol']['fl1'])
+                    pyo.log(flow_conc_data["feed_conc_mol"]["fh1"])
+                    - pyo.log(flow_conc_data["feed_conc_mol"]["fl1"])
                 ),
-                'V',
-                'mV',
+                "V",
+                "mV",
             ),
         ),
         doc="Nernst ELectric Potential per cell pair [mV per cell pair]",
@@ -725,8 +725,8 @@ def build_REDstack():
     m.EMF = pyo.Var(
         domain=pyo.NonNegativeReals,
         initialize=m.cell_pairs
-        * ureg.convert(_int_trap_rule(m.length_domain, m.Ecpx), 'mV', 'V'),
-        bounds=(None, m.cell_pairs * ureg.convert(m.Ecpx[0].ub, 'mV', 'V')),
+        * ureg.convert(_int_trap_rule(m.length_domain, m.Ecpx), "mV", "V"),
+        bounds=(None, m.cell_pairs * ureg.convert(m.Ecpx[0].ub, "mV", "V")),
         doc="Nernst Potential RED Stack [V]",
     )
 
@@ -752,12 +752,12 @@ def build_REDstack():
         """
         # Conductivity bounds based on the feed concentration in the high and low concentration compartments
         # The expression is derived from the linear regression of the experimental data (Tristán et al., 2020)
-        if sol == 'HC':
-            ub = 7.7228559 * flow_conc_data['feed_conc_mol']['fh1'] + 0.5670209
+        if sol == "HC":
+            ub = 7.7228559 * flow_conc_data["feed_conc_mol"]["fh1"] + 0.5670209
             lb = 7.7228559 * m.conc_mol_eq.lb + 0.5670209
             return (lb, ub)
         ub = 10.5763914 * m.conc_mol_eq.ub + 0.0087379
-        lb = 10.5763914 * flow_conc_data['feed_conc_mol']['fl1'] + 0.0087379
+        lb = 10.5763914 * flow_conc_data["feed_conc_mol"]["fl1"] + 0.0087379
         return (lb, ub)
 
     def _ksol(m, x, sol):
@@ -780,9 +780,9 @@ def build_REDstack():
         int
             The initial solution conductivity
         """
-        if sol == 'HC':
-            return pyo.value(7.7228559 * m.conc_mol_x[0, 'HC'] + 0.5670209)
-        return pyo.value(10.5763914 * m.conc_mol_x[0, 'LC'] + 0.0087379)
+        if sol == "HC":
+            return pyo.value(7.7228559 * m.conc_mol_x[0, "HC"] + 0.5670209)
+        return pyo.value(10.5763914 * m.conc_mol_x[0, "LC"] + 0.0087379)
 
     m.ksol = pyo.Var(
         m.length_domain,
@@ -824,35 +824,35 @@ def build_REDstack():
         tuple
             The bounds of the solution resistance
         """
-        if sol == 'HC':
+        if sol == "HC":
             lb = ureg.convert(
                 m.spacer_thickness[sol]
                 / m.spacer_porosity[sol] ** 2
-                / m.ksol_T[0, 'HC'].ub,
-                'ohm*m**2',
-                'ohm*cm**2',
+                / m.ksol_T[0, "HC"].ub,
+                "ohm*m**2",
+                "ohm*cm**2",
             )
             ub = ureg.convert(
                 m.spacer_thickness[sol]
                 / m.spacer_porosity[sol] ** 2
-                / m.ksol_T[0, 'HC'].lb,
-                'ohm*m**2',
-                'ohm*cm**2',
+                / m.ksol_T[0, "HC"].lb,
+                "ohm*m**2",
+                "ohm*cm**2",
             )
             return (lb, ub)
         lb = ureg.convert(
             m.spacer_thickness[sol]
             / m.spacer_porosity[sol] ** 2
-            / m.ksol_T[0, 'LC'].ub,
-            'ohm*m**2',
-            'ohm*cm**2',
+            / m.ksol_T[0, "LC"].ub,
+            "ohm*m**2",
+            "ohm*cm**2",
         )
         ub = ureg.convert(
             m.spacer_thickness[sol]
             / m.spacer_porosity[sol] ** 2
-            / m.ksol_T[0, 'LC'].lb,
-            'ohm*m**2',
-            'ohm*cm**2',
+            / m.ksol_T[0, "LC"].lb,
+            "ohm*m**2",
+            "ohm*cm**2",
         )
         return (lb, ub)
 
@@ -874,23 +874,23 @@ def build_REDstack():
         int
             The initial solution resistance
         """
-        if sol == 'HC':
+        if sol == "HC":
             return pyo.value(
                 ureg.convert(
                     m.spacer_thickness[sol]
                     / m.spacer_porosity[sol] ** 2
-                    / m.ksol_T[0, 'HC'],
-                    'ohm*m**2',
-                    'ohm*cm**2',
+                    / m.ksol_T[0, "HC"],
+                    "ohm*m**2",
+                    "ohm*cm**2",
                 )
             )
         return pyo.value(
             ureg.convert(
                 m.spacer_thickness[sol]
                 / m.spacer_porosity[sol] ** 2
-                / m.ksol_T[0, 'LC'],
-                'ohm*m**2',
-                'ohm*cm**2',
+                / m.ksol_T[0, "LC"],
+                "ohm*m**2",
+                "ohm*cm**2",
             )
         )
 
@@ -920,10 +920,10 @@ def build_REDstack():
             The bounds of the internal resistance per cell pair
         """
         lb = sum(m.Rsol[0, sol].lb for sol in m.SOL) + ureg.convert(
-            sum(m.iems_resistance[iem] for iem in m.iem), 'ohm*m**2', 'ohm*cm**2'
+            sum(m.iems_resistance[iem] for iem in m.iem), "ohm*m**2", "ohm*cm**2"
         )
         ub = sum(m.Rsol[0, sol].ub for sol in m.SOL) + ureg.convert(
-            sum(m.iems_resistance[iem] for iem in m.iem), 'ohm*m**2', 'ohm*cm**2'
+            sum(m.iems_resistance[iem] for iem in m.iem), "ohm*m**2", "ohm*cm**2"
         )
         return (lb, ub)
 
@@ -944,7 +944,7 @@ def build_REDstack():
             The initial internal resistance per cell pair
         """
         return sum(m.Rsol[0, sol] for sol in m.SOL) + ureg.convert(
-            sum(m.iems_resistance[iem] for iem in m.iem), 'ohm*m**2', 'ohm*cm**2'
+            sum(m.iems_resistance[iem] for iem in m.iem), "ohm*m**2", "ohm*cm**2"
         )
 
     m.Rcpx = pyo.Var(
@@ -958,11 +958,11 @@ def build_REDstack():
     m.Rstack = pyo.Var(
         domain=pyo.NonNegativeReals,
         initialize=lambda _: m.cell_pairs
-        * ureg.convert(_int_trap_rule(m.length_domain, m.Rcpx), 'ohm*cm**2', 'ohm*m**2')
+        * ureg.convert(_int_trap_rule(m.length_domain, m.Rcpx), "ohm*cm**2", "ohm*m**2")
         / m.Aiem,  # Resistance of the RED stack computed from the internal resistance using the trapezoidal rule.
         bounds=(
-            m.cell_pairs * ureg.convert(m.Rcpx[0].lb, 'ohm*cm**2', 'ohm*m**2') / m.Aiem,
-            m.cell_pairs * ureg.convert(m.Rcpx[0].ub, 'ohm*cm**2', 'ohm*m**2') / m.Aiem,
+            m.cell_pairs * ureg.convert(m.Rcpx[0].lb, "ohm*cm**2", "ohm*m**2") / m.Aiem,
+            m.cell_pairs * ureg.convert(m.Rcpx[0].ub, "ohm*cm**2", "ohm*m**2") / m.Aiem,
         ),
         doc="RED stack Internal resistance [ohm]",
     )
@@ -985,10 +985,10 @@ def build_REDstack():
     m.Istack = pyo.Var(
         domain=pyo.NonNegativeReals,
         initialize=lambda _: ureg.convert(
-            _int_trap_rule(m.length_domain, m.Idx), 'mA/cm**2', 'A/m**2'
+            _int_trap_rule(m.length_domain, m.Idx), "mA/cm**2", "A/m**2"
         )
         * m.Aiem,
-        bounds=(None, ureg.convert(m.Idx[0].ub, 'mA/cm**2', 'A/m**2') * m.Aiem),
+        bounds=(None, ureg.convert(m.Idx[0].ub, "mA/cm**2", "A/m**2") * m.Aiem),
         doc="Electric Current Stack [A]",
     )
 
@@ -1004,9 +1004,9 @@ def build_REDstack():
         initialize=sum(
             48
             * m.dynamic_viscosity
-            * ureg.convert(m.vel_init[sol], 'cm/s', 'm/s')
+            * ureg.convert(m.vel_init[sol], "cm/s", "m/s")
             / m.dh[sol] ** 2
-            * ureg.convert(m.flow_vol['rm', sol], 'm**3/h', 'm**3/s')
+            * ureg.convert(m.flow_vol["rm", sol], "m**3/h", "m**3/s")
             / m.pump_eff
             for sol in m.SOL
         ),
@@ -1015,9 +1015,9 @@ def build_REDstack():
             sum(
                 48
                 * m.dynamic_viscosity
-                * ureg.convert(m.vel_ub[sol], 'cm', 'm')
+                * ureg.convert(m.vel_ub[sol], "cm", "m")
                 / m.dh[sol] ** 2
-                * ureg.convert(m.flow_vol['rm', sol].ub, 'm**3/h', 'm**3/s')
+                * ureg.convert(m.flow_vol["rm", sol].ub, "m**3/h", "m**3/s")
                 / m.pump_eff
                 for sol in m.SOL
             ),
@@ -1053,19 +1053,19 @@ def build_REDstack():
         tuple
             The bounds of the conductive molar flux
         """
-        lb = ureg.convert(m.Idx[0].lb, 'mA/cm**2', 'A/m**2') / ureg.convert(
-            m.faraday_constant, 'A*s/mol', 'A*h/mol'
+        lb = ureg.convert(m.Idx[0].lb, "mA/cm**2", "A/m**2") / ureg.convert(
+            m.faraday_constant, "A*s/mol", "A*h/mol"
         )
-        ub = ureg.convert(m.Idx[0].ub, 'mA/cm**2', 'A/m**2') / ureg.convert(
-            m.faraday_constant, 'A*s/mol', 'A*h/mol'
+        ub = ureg.convert(m.Idx[0].ub, "mA/cm**2", "A/m**2") / ureg.convert(
+            m.faraday_constant, "A*s/mol", "A*h/mol"
         )
         return (lb, ub)
 
     m.Jcond = pyo.Var(
         m.length_domain,
         domain=pyo.NonNegativeReals,
-        initialize=lambda _, x: ureg.convert(m.Idx[x], 'mA/cm**2', 'A/m**2')
-        / ureg.convert(m.faraday_constant, 'A*s/mol', 'A*h/mol'),
+        initialize=lambda _, x: ureg.convert(m.Idx[x], "mA/cm**2", "A/m**2")
+        / ureg.convert(m.faraday_constant, "A*s/mol", "A*h/mol"),
         bounds=_Jcond_b,
         doc="Conductive Molar Flux (electromigration) NaCl per unit length [mol/m2/h]",
     )
@@ -1090,22 +1090,22 @@ def build_REDstack():
         """
         lb = (
             2
-            * ureg.convert(m.diff_nacl, 'm**2/s', 'm**2/h')
-            / m.iems_thickness['CEM']
+            * ureg.convert(m.diff_nacl, "m**2/s", "m**2/h")
+            / m.iems_thickness["CEM"]
             * ureg.convert(
-                (m.conc_mol_x[0, 'HC'].lb - m.conc_mol_x[0, 'LC'].ub),
-                'mol/L',
-                'mol/m**3',
+                (m.conc_mol_x[0, "HC"].lb - m.conc_mol_x[0, "LC"].ub),
+                "mol/L",
+                "mol/m**3",
             )
         )
         ub = (
             2
-            * ureg.convert(m.diff_nacl, 'm**2/s', 'm**2/h')
-            / m.iems_thickness['CEM']
+            * ureg.convert(m.diff_nacl, "m**2/s", "m**2/h")
+            / m.iems_thickness["CEM"]
             * ureg.convert(
-                (m.conc_mol_x[0, 'HC'].ub - m.conc_mol_x[0, 'LC'].lb),
-                'mol/L',
-                'mol/m**3',
+                (m.conc_mol_x[0, "HC"].ub - m.conc_mol_x[0, "LC"].lb),
+                "mol/L",
+                "mol/m**3",
             )
         )
         return (lb, ub)
@@ -1114,10 +1114,10 @@ def build_REDstack():
         m.length_domain,
         domain=pyo.NonNegativeReals,
         initialize=lambda _, x: 2
-        * ureg.convert(m.diff_nacl, 'm**2/s', 'm**2/h')
-        / m.iems_thickness['CEM']
+        * ureg.convert(m.diff_nacl, "m**2/s", "m**2/h")
+        / m.iems_thickness["CEM"]
         * ureg.convert(
-            (m.conc_mol_x[0, 'HC'] - m.conc_mol_x[0, 'LC']), 'mol/L', 'mol/m**3'
+            (m.conc_mol_x[0, "HC"] - m.conc_mol_x[0, "LC"]), "mol/L", "mol/m**3"
         ),
         bounds=_Jdiff_b,
         doc="Diffusive Molar Flux NaCl per unit length [mol/m2/h]",
@@ -1136,32 +1136,32 @@ def build_REDstack():
     # =============================================================================
 
     # The boundary conditions stablish relations between the variables at the inlet and outlet of the RED stack.
-    m.bound_con = pyo.ConstraintList(doc='Boundary conditions')
+    m.bound_con = pyo.ConstraintList(doc="Boundary conditions")
     for sol in m.SOL:
         [
             m.bound_con.add(
-                ureg.convert(m.flow_vol_x[0, sol], 'dm**3', 'm**3') * m.cell_pairs
-                == m.flow_vol['rm', sol]
+                ureg.convert(m.flow_vol_x[0, sol], "dm**3", "m**3") * m.cell_pairs
+                == m.flow_vol["rm", sol]
             )
         ]  # The inlet flow rate is equally distributed among the cell pairs at the inlet.
         [
             m.bound_con.add(
-                ureg.convert(m.flow_vol_x[m.length_domain.last(), sol], 'dm**3', 'm**3')
+                ureg.convert(m.flow_vol_x[m.length_domain.last(), sol], "dm**3", "m**3")
                 * m.cell_pairs
-                == m.flow_vol['rs', sol]
+                == m.flow_vol["rs", sol]
             )
         ]  # The outlet flow rate is equally distributed among the cell pairs at the outlet.
-        [m.bound_con.add(m.conc_mol_x[0, sol] == m.conc_mol['rm', sol])]
+        [m.bound_con.add(m.conc_mol_x[0, sol] == m.conc_mol["rm", sol])]
         # The concentration at the inlet position is equal to the concentration at the inlet port.
         [
             m.bound_con.add(
-                m.conc_mol_x[m.length_domain.last(), sol] == m.conc_mol['rs', sol]
+                m.conc_mol_x[m.length_domain.last(), sol] == m.conc_mol["rs", sol]
             )
         ]  # The concetration at the outlet position is equal to the concentration at the outlet port.
-        [m.bound_con.add(m.pressure_x[0, sol] == ureg.convert(1, 'atm', 'mbar'))]
+        [m.bound_con.add(m.pressure_x[0, sol] == ureg.convert(1, "atm", "mbar"))]
         # The pressure at the inlet position is set to 1 atm.
 
-    @m.Constraint(doc='Flow rate ratio diluate to total flow rate [-]')
+    @m.Constraint(doc="Flow rate ratio diluate to total flow rate [-]")
     def _flowrate_ratio(m):
         """
         This function sets the flow rate ratio based on the total flow rate in the high and low concentration compartments.
@@ -1176,8 +1176,8 @@ def build_REDstack():
         pyomo.Constraint
             The flow rate ratio constraint
         """
-        total_flow = sum(m.flow_vol['rm', sol] for sol in m.SOL)
-        return m.phi * total_flow == m.flow_vol['rm', 'LC']
+        total_flow = sum(m.flow_vol["rm", sol] for sol in m.SOL)
+        return m.phi * total_flow == m.flow_vol["rm", "LC"]
 
     @m.Constraint(doc="Molar concentration reaching equilibrium [mol/L]")
     def _conc_mol_eq(m):
@@ -1196,12 +1196,12 @@ def build_REDstack():
         """
         return (
             m.conc_mol_eq
-            == m.phi * m.conc_mol['rm', 'LC'] + (1 - m.phi) * m.conc_mol['rm', 'HC']
+            == m.phi * m.conc_mol["rm", "LC"] + (1 - m.phi) * m.conc_mol["rm", "HC"]
         )
 
     @m.Constraint(
         m.length_domain,
-        doc='Nernst Potential per unit length per cell pair [mV per cp]',
+        doc="Nernst Potential per unit length per cell pair [mV per cp]",
     )
     def _nernst_potential_cp(m, x):  # Rg[J/mol/K] , F [A*s/mol], T[K]
         """
@@ -1222,8 +1222,8 @@ def build_REDstack():
         nernst_constant = (
             2 * m.gas_constant * m.T / m.faraday_constant * m.iems_permsel_avg
         )
-        return m.conc_mol_x[x, 'HC'] == m.conc_mol_x[x, 'LC'] * pyo.exp(
-            m.Ecpx[x] / ureg.convert(nernst_constant, 'V', 'mV')
+        return m.conc_mol_x[x, "HC"] == m.conc_mol_x[x, "LC"] * pyo.exp(
+            m.Ecpx[x] / ureg.convert(nernst_constant, "V", "mV")
         )
 
     @m.Constraint(
@@ -1249,7 +1249,7 @@ def build_REDstack():
         pyomo.Constraint
             The solution conductivity per unit length constraint
         """
-        if sol == 'HC':
+        if sol == "HC":
             return m.ksol[x, sol] == 7.7228559 * m.conc_mol_x[x, sol] + 0.5670209
         return m.ksol[x, sol] == 10.5763914 * m.conc_mol_x[x, sol] + 0.0087379
 
@@ -1307,8 +1307,8 @@ def build_REDstack():
             The channel resistance per cell pair per unit length constraint
         """
         return (
-            m.Rsol[x, sol] * ureg.convert(m.ksol_T[x, sol], 'S/m', 'S/cm')
-            == ureg.convert(m.spacer_thickness[sol], 'm', 'cm')
+            m.Rsol[x, sol] * ureg.convert(m.ksol_T[x, sol], "S/m", "S/cm")
+            == ureg.convert(m.spacer_thickness[sol], "m", "cm")
             / m.spacer_porosity[sol] ** 2
         )
 
@@ -1334,11 +1334,11 @@ def build_REDstack():
             The internal resistance per cell pair per unit length constraint
         """
         return m.Rcpx[x] == sum(m.Rsol[x, sol] for sol in m.SOL) + ureg.convert(
-            sum(m.iems_resistance[iem] for iem in m.iem), 'ohm*m**2', 'ohm*cm**2'
+            sum(m.iems_resistance[iem] for iem in m.iem), "ohm*m**2", "ohm*cm**2"
         )
 
     @m.Constraint(
-        m.length_domain, doc='Electric current density per unit length [mA/cm2]'
+        m.length_domain, doc="Electric current density per unit length [mA/cm2]"
     )
     def _current_dens_calc(m, x):
         """
@@ -1361,7 +1361,7 @@ def build_REDstack():
         return m.Idx[x] * (m.Rcpx[x] + m.Rload) == m.Ecpx[x]
 
     @m.Expression(
-        m.length_domain, m.SOL, doc='Crossflow velocity in channel eq. [cm/s]'
+        m.length_domain, m.SOL, doc="Crossflow velocity in channel eq. [cm/s]"
     )
     def vel(m, x, sol):
         """
@@ -1382,8 +1382,8 @@ def build_REDstack():
             The crossflow velocity in the channel
         """
         return ureg.convert(
-            m.flow_vol_x[x, sol], 'liter/hour', 'cm**3/s'
-        ) / ureg.convert(m._cross_area[sol], 'm**2', 'cm**2')
+            m.flow_vol_x[x, sol], "liter/hour", "cm**3/s"
+        ) / ureg.convert(m._cross_area[sol], "m**2", "cm**2")
 
     def _vel_x(m, x, sol):
         """
@@ -1406,7 +1406,7 @@ def build_REDstack():
         """
         return m.vel[x, sol]
 
-    @m.Expression(m.SOL, doc='Average cross-flow velocity [cm/s]')
+    @m.Expression(m.SOL, doc="Average cross-flow velocity [cm/s]")
     def vel_avg(m, sol):
         """
         This function computes the average cross-flow velocity based on the crossflow velocity in the channel.
@@ -1426,7 +1426,7 @@ def build_REDstack():
         v = _vel_x
         return _int_trap_rule_sol(m, m.length_domain, sol, v)
 
-    @m.Constraint(m.length_domain, doc='Conductive molar flux (electromigration)')
+    @m.Constraint(m.length_domain, doc="Conductive molar flux (electromigration)")
     def _cond_molar_flux(m, x):
         """
         This function computes the conductive molar flux.
@@ -1446,10 +1446,10 @@ def build_REDstack():
             The conductive molar flux constraint
         """
         return m.Jcond[x] * ureg.convert(
-            m.faraday_constant, 'A*s/mol', 'A*h/mol'
-        ) == ureg.convert(m.Idx[x], 'mA/cm**2', 'A/m**2')
+            m.faraday_constant, "A*s/mol", "A*h/mol"
+        ) == ureg.convert(m.Idx[x], "mA/cm**2", "A/m**2")
 
-    @m.Constraint(m.length_domain, doc='Diffusive molar flux [mol/m2/h]')
+    @m.Constraint(m.length_domain, doc="Diffusive molar flux [mol/m2/h]")
     def _diff_molar_flux(m, x):
         """
         This function computes the diffusive molar flux.
@@ -1469,12 +1469,12 @@ def build_REDstack():
             The diffusive molar flux constraint
         """
         return m.Jdiff[x] == 2 * ureg.convert(
-            m.diff_nacl, 'm**2/s', 'm**2/h'
-        ) / m.iems_thickness['CEM'] * ureg.convert(
-            (m.conc_mol_x[x, 'HC'] - m.conc_mol_x[x, 'LC']), 'mol/L', 'mol/m**3'
+            m.diff_nacl, "m**2/s", "m**2/h"
+        ) / m.iems_thickness["CEM"] * ureg.convert(
+            (m.conc_mol_x[x, "HC"] - m.conc_mol_x[x, "LC"]), "mol/L", "mol/m**3"
         )
 
-    @m.Constraint(m.length_domain, doc='Total molar flux from HC to LC side [mol/m2/h]')
+    @m.Constraint(m.length_domain, doc="Total molar flux from HC to LC side [mol/m2/h]")
     def _total_molar_flux(m, x):
         """
         This function computes the total molar flux from the high concentration compartment to the low concentration compartment.
@@ -1563,7 +1563,7 @@ def build_REDstack():
     @m.Constraint(
         m.length_domain,
         m.SOL,
-        doc='Volumetric flow rate balance w/o water transfer (i.e. no osmotic flux)',
+        doc="Volumetric flow rate balance w/o water transfer (i.e. no osmotic flux)",
     )
     def _flow_balance(m, x, sol):
         """
@@ -1655,7 +1655,7 @@ def build_REDstack():
         dv = _conc_mol_dx
         return _bwd_fun(m, x, sol, v, dv)
 
-    @m.Constraint(m.length_domain, m.SOL, doc='Molar concentration balance')
+    @m.Constraint(m.length_domain, m.SOL, doc="Molar concentration balance")
     def _conc_balance(m, x, sol):
         """
         This function computes the molar concentration balance.
@@ -1680,11 +1680,11 @@ def build_REDstack():
         """
         if x == m.length_domain.first():
             return pyo.Constraint.Skip
-        if sol == 'LC':
+        if sol == "LC":
             return m.conc_mol_dx[x, sol] * m.flow_vol_x[x, sol] == m.b * m.Ji[x] * m.L
         return m.conc_mol_dx[x, sol] * m.flow_vol_x[x, sol] == -m.b * m.Ji[x] * m.L
 
-    @m.Constraint(m.length_domain, doc='Concentration HC >= LC')
+    @m.Constraint(m.length_domain, doc="Concentration HC >= LC")
     def _conc_hc_gt_lc(m, x):
         """
         This constraint ensures that the molar concentration in the high concentration compartment is greater than or equal to the molar concentration in the low concentration compartment.
@@ -1701,9 +1701,9 @@ def build_REDstack():
         pyomo.Constraint
             The molar concentration in the high concentration compartment is greater than or equal to the molar concentration in the low concentration compartment constraint
         """
-        return m.conc_mol_x[x, 'HC'] >= m.conc_mol_x[x, 'LC']
+        return m.conc_mol_x[x, "HC"] >= m.conc_mol_x[x, "LC"]
 
-    @m.Expression(m.length_domain, m.SOL, doc='Pressure drop per unit length [mbar/m]')
+    @m.Expression(m.length_domain, m.SOL, doc="Pressure drop per unit length [mbar/m]")
     def _deltaP(m, x, sol):
         """
         This function computes the pressure drop per unit length based on the crossflow velocity and the hydraulic diameter of the channel.
@@ -1726,10 +1726,10 @@ def build_REDstack():
         return ureg.convert(
             48
             * m.dynamic_viscosity
-            * ureg.convert(m.vel[x, sol], 'cm', 'm')
+            * ureg.convert(m.vel[x, sol], "cm", "m")
             / m.dh[sol] ** 2,
-            'Pa',
-            'mbar',
+            "Pa",
+            "mbar",
         )  # [mbar/m]
 
     def _pressure_x(m, x, sol):
@@ -1800,7 +1800,7 @@ def build_REDstack():
         dv = _pressure_dx
         return _bwd_fun(m, x, sol, v, dv)
 
-    @m.Constraint(m.length_domain, m.SOL, doc='Friction pressure drop [mbar/m]')
+    @m.Constraint(m.length_domain, m.SOL, doc="Friction pressure drop [mbar/m]")
     def _pressure_drop(m, x, sol):
         """
         This function computes the friction pressure drop based on the crossflow velocity and the hydraulic diameter of the channel.
@@ -1823,7 +1823,7 @@ def build_REDstack():
             return pyo.Constraint.Skip
         return m.pressure_dx[x, sol] == -m._deltaP[x, sol] * m.L
 
-    @m.Expression(doc='Average cell pair resistance per unit length [ohm cm2 per cp]')
+    @m.Expression(doc="Average cell pair resistance per unit length [ohm cm2 per cp]")
     def Rcp_avg(m):
         """
         This function computes the average cell pair resistance per unit length with the trapezoidal rule.
@@ -1840,7 +1840,7 @@ def build_REDstack():
         """
         return _int_trap_rule(m.length_domain, m.Rcpx)
 
-    @m.Expression(doc='Average current density [mA/cm2]')
+    @m.Expression(doc="Average current density [mA/cm2]")
     def Id_avg(m):
         """
         This function computes the average current density based on the electric current density with the trapezoidal rule.
@@ -1857,7 +1857,7 @@ def build_REDstack():
         """
         return _int_trap_rule(m.length_domain, m.Idx)
 
-    @m.Expression(doc='Average cell pair potential per unit length [mV per cp]')
+    @m.Expression(doc="Average cell pair potential per unit length [mV per cp]")
     def Ecp_avg(m):
         """
         This function computes the average cell pair potential per unit length with the trapezoidal rule.
@@ -1874,7 +1874,7 @@ def build_REDstack():
         """
         return _int_trap_rule(m.length_domain, m.Ecpx)
 
-    @m.Constraint(doc='Electromotive force RED unit [V]')
+    @m.Constraint(doc="Electromotive force RED unit [V]")
     def _electric_potential_stack(m):
         """
         This function computes the electromotive force of the RED stack based on the average cell pair potential and the number of cell pairs.
@@ -1889,9 +1889,9 @@ def build_REDstack():
         pyomo.Constraint
             The electromotive force of the RED stack constraint
         """
-        return m.EMF == m.cell_pairs * ureg.convert(m.Ecp_avg, 'mV', 'V')
+        return m.EMF == m.cell_pairs * ureg.convert(m.Ecp_avg, "mV", "V")
 
-    @m.Constraint(doc='RED stack internal resistance [ohm]')
+    @m.Constraint(doc="RED stack internal resistance [ohm]")
     def _int_resistance_stack(m):
         """
         This function computes the internal resistance of the RED stack based on the average cell pair resistance and the number of cell pairs.
@@ -1907,11 +1907,11 @@ def build_REDstack():
             The internal resistance of the RED stack constraint
         """
         return (
-            m.Rstack * ureg.convert(m.b * m.L, 'm**2', 'cm**2')
+            m.Rstack * ureg.convert(m.b * m.L, "m**2", "cm**2")
             == m.cell_pairs * m.Rcp_avg
         )
 
-    @m.Constraint(doc='Electric current RED unit [A]')
+    @m.Constraint(doc="Electric current RED unit [A]")
     def _electric_current_stack(m):
         """
         This function computes the electric current of the RED stack based on the average current density, the area of the ion exchange membrane, and the number of cell pairs.
@@ -1928,9 +1928,9 @@ def build_REDstack():
         pyomo.Constraint
             The electric current of the RED stack constraint
         """
-        return m.Istack == ureg.convert(m.Id_avg, 'mA/cm**2', 'A/m**2') * m.Aiem
+        return m.Istack == ureg.convert(m.Id_avg, "mA/cm**2", "A/m**2") * m.Aiem
 
-    @m.Constraint(doc='Gross Power Output RED unit [W]')
+    @m.Constraint(doc="Gross Power Output RED unit [W]")
     def _gross_power(m):
         """
         This function computes the gross power output of the RED stack.
@@ -1947,7 +1947,7 @@ def build_REDstack():
         """
         return m.GP == m.Istack * (m.EMF - m.Rstack * m.Istack)
 
-    @m.Constraint(doc='Pumping Power Consumption RED unit [W]')
+    @m.Constraint(doc="Pumping Power Consumption RED unit [W]")
     def _pump_power(m):
         """
         This function computes the pumping power consumption of the RED stack based on the pressure difference at the inlet and outlet of the RED stack, the volumetric flow rate, and the pump efficiency.
@@ -1965,14 +1965,14 @@ def build_REDstack():
         return m.PP * m.pump_eff == sum(
             ureg.convert(
                 (m.pressure_x[0, sol] - m.pressure_x[m.length_domain.last(), sol]),
-                'mbar',
-                'Pa',
+                "mbar",
+                "Pa",
             )
-            * ureg.convert(m.flow_vol['rm', sol], '1/hour', '1/s')
+            * ureg.convert(m.flow_vol["rm", sol], "1/hour", "1/s")
             for sol in m.SOL
         )
 
-    @m.Constraint(doc='Net Power Output RED unit [W]')
+    @m.Constraint(doc="Net Power Output RED unit [W]")
     def _net_power(m):
         """
         This function computes the net power output of the RED stack.
@@ -1996,14 +1996,14 @@ def build_REDstack():
     m.dual = pyo.Suffix(direction=pyo.Suffix.IMPORT)
 
     # Solve the model
-    pyo.SolverFactory('gams').solve(
+    pyo.SolverFactory("gams").solve(
         m,
         tee=False,
         # load_solutions=False,
         io_options=dict(
             # solver='baron',
-            solver='ipopth',  #'conopt4',#'msnlp',#'baron',
-            mtype='nlp',
+            solver="ipopth",  #'conopt4',#'msnlp',#'baron',
+            mtype="nlp",
             # add_options=['option optcr=1e-2','optca = 1.e-6','reslim = 30000']
         ),
     )
