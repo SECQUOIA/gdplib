@@ -1,0 +1,5 @@
+# Development requirements for GDPlib
+pytest>=6.0.0
+pytest-cov>=2.10.0
+black>=20.8b1
+flake8>=3.8.0

@@ -11,7 +11,15 @@ from setuptools import setup, find_packages
 kwargs = dict(
     name='gdplib',
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        'Pyomo>=5.6.1',
+        'setuptools>=39.0.1',
+        'pandas>=1.0.1',
+        'matplotlib>=2.2.2',
+        'scipy>=1.0.0',
+        'pint>=0.15.0',
+        'openpyxl>=3.0.0',
+    ],
     extras_require={},
     package_data={
         # If any package contains *.template or *.json files, include them:
