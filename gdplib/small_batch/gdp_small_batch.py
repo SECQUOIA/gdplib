@@ -237,7 +237,7 @@ def build_model():
     # Relating number of units to 0-1 variables
     @m.Constraint(m.j)
     def units(m, j):
-        r"""
+        """
         Relating number of units to 0-1 variables.
         Equation:
             n_j = sum_{k \in K} coeffval_{k,j} for j = mixer, reactor, centrifuge
