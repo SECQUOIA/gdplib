@@ -83,8 +83,10 @@ class TestModelStructure:
 
             has_readme = any(os.path.exists(readme) for readme in readme_files)
             if not has_readme:
-                pytest.skip(
-                    f"{module_name} directory has no README file (recommended but not required)"
+                import warnings
+                warnings.warn(
+                    f"{module_name} directory has no README file (recommended but not required)",
+                    UserWarning,
                 )
 
     def test_all_modules_listed_in_main_init(self):
