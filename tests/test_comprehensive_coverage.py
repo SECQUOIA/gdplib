@@ -12,7 +12,6 @@ import importlib
 import sys
 import os
 
-# (Line removed)
 # Add the gdplib directory to the path for testing
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
