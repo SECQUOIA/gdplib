@@ -9,41 +9,54 @@ from setuptools import setup, find_packages
 
 
 kwargs = dict(
-    name='gdplib',
+    name="gdplib",
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "Pyomo>=5.6.1",
+        "setuptools>=39.0.1",
+        "pandas>=1.0.1",
+        "matplotlib>=2.2.2",
+        "scipy>=1.0.0",
+        "pint>=0.15.0",
+        "openpyxl>=3.0.0",
+    ],
     extras_require={},
     package_data={
         # If any package contains *.template or *.json files, include them:
-        '': ['*.template', '*.json']
+        "": ["*.template", "*.json"]
     },
     scripts=[],
-    author='Qi Chen',
-    author_email='qichen@andrew.cmu.edu',
-    maintainer='Qi Chen',
+    author="Qi Chen",
+    author_email="qichen@andrew.cmu.edu",
+    maintainer="Qi Chen",
     url="https://github.com/grossmann-group/gdplib",
-    license='BSD 3-clause',
+    license="BSD 3-clause",
     description="GDPlib open source model library for Generalized Disjunctive Programming",
     long_description=__doc__,
     data_files=[],
     keywords=["pyomo", "generalized disjunctive programming"],
     classifiers=[
-        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    python_requires=">=3.9, <3.13",
 )
 
 try:
-    setup(setup_requires=['setuptools_scm'], use_scm_version=True, **kwargs)
+    setup(setup_requires=["setuptools_scm"], use_scm_version=True, **kwargs)
 except (ImportError, LookupError):
-    default_version = '1.0.0'
+    default_version = "1.0.0"
     warning(
-        'Cannot use .git version: package setuptools_scm not installed '
-        'or .git directory not present.'
+        "Cannot use .git version: package setuptools_scm not installed "
+        "or .git directory not present."
     )
-    print('Defaulting to version: {}'.format(default_version))
+    print("Defaulting to version: {}".format(default_version))
     setup(**kwargs)

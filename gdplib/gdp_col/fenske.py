@@ -29,28 +29,28 @@ def calculate_Fenske(xD, xB):
     """
     m = ConcreteModel()
     min_T, max_T = 300, 400
-    m.comps = Set(initialize=['benzene', 'toluene'])
-    m.trays = Set(initialize=['condenser', 'reboiler'])
+    m.comps = Set(initialize=["benzene", "toluene"])
+    m.trays = Set(initialize=["condenser", "reboiler"])
     m.Kc = Var(
         m.comps,
         m.trays,
-        doc='Phase equilibrium constant',
+        doc="Phase equilibrium constant",
         domain=NonNegativeReals,
         initialize=1,
         bounds=(0, 1000),
     )
     m.T = Var(
-        m.trays, doc='Temperature [K]', domain=NonNegativeReals, bounds=(min_T, max_T)
+        m.trays, doc="Temperature [K]", domain=NonNegativeReals, bounds=(min_T, max_T)
     )
-    m.T['condenser'].fix(82 + 273.15)
-    m.T['reboiler'].fix(108 + 273.15)
-    m.P = Var(doc='Pressure [bar]', bounds=(0, 5))
+    m.T["condenser"].fix(82 + 273.15)
+    m.T["reboiler"].fix(108 + 273.15)
+    m.P = Var(doc="Pressure [bar]", bounds=(0, 5))
     m.P.fix(1.01)
     m.T_ref = 298.15
     m.gamma = Var(
         m.comps,
         m.trays,
-        doc='liquid activity coefficient of component on tray',
+        doc="liquid activity coefficient of component on tray",
         domain=NonNegativeReals,
         bounds=(0, 10),
         initialize=1,
@@ -58,7 +58,7 @@ def calculate_Fenske(xD, xB):
     m.Pvap = Var(
         m.comps,
         m.trays,
-        doc='pure component vapor pressure of component on tray in bar',
+        doc="pure component vapor pressure of component on tray in bar",
         domain=NonNegativeReals,
         bounds=(1e-3, 5),
         initialize=0.4,
@@ -66,27 +66,27 @@ def calculate_Fenske(xD, xB):
     m.Pvap_X = Var(
         m.comps,
         m.trays,
-        doc='Related to fraction of critical temperature (1 - T/Tc)',
+        doc="Related to fraction of critical temperature (1 - T/Tc)",
         bounds=(0.25, 0.5),
         initialize=0.4,
     )
 
     m.pvap_const = {
-        'benzene': {
-            'A': -6.98273,
-            'B': 1.33213,
-            'C': -2.62863,
-            'D': -3.33399,
-            'Tc': 562.2,
-            'Pc': 48.9,
+        "benzene": {
+            "A": -6.98273,
+            "B": 1.33213,
+            "C": -2.62863,
+            "D": -3.33399,
+            "Tc": 562.2,
+            "Pc": 48.9,
         },
-        'toluene': {
-            'A': -7.28607,
-            'B': 1.38091,
-            'C': -2.83433,
-            'D': -2.79168,
-            'Tc': 591.8,
-            'Pc': 41.0,
+        "toluene": {
+            "A": -7.28607,
+            "B": 1.38091,
+            "C": -2.83433,
+            "D": -2.79168,
+            "Tc": 591.8,
+            "Pc": 41.0,
         },
     }
 
@@ -132,8 +132,8 @@ def calculate_Fenske(xD, xB):
         """
         k = m.pvap_const[c]
         x = m.Pvap_X[c, t]
-        return (log(m.Pvap[c, t]) - log(k['Pc'])) * (1 - x) == (
-            k['A'] * x + k['B'] * x**1.5 + k['C'] * x**3 + k['D'] * x**6
+        return (log(m.Pvap[c, t]) - log(k["Pc"])) * (1 - x) == (
+            k["A"] * x + k["B"] * x**1.5 + k["C"] * x**3 + k["D"] * x**6
         )
 
     @m.Constraint(m.comps, m.trays)
@@ -156,7 +156,7 @@ def calculate_Fenske(xD, xB):
             The relationship between the one minus the reduced temperature variable (Pvap_X) for each component in a tray, and the actual temperature of the tray, normalized by the critical temperature of the component (Tc).
         """
         k = m.pvap_const[c]
-        return m.Pvap_X[c, t] == 1 - m.T[t] / k['Tc']
+        return m.Pvap_X[c, t] == 1 - m.T[t] / k["Tc"]
 
     @m.Constraint(m.comps, m.trays)
     def gamma_calc(_, c, t):
@@ -198,7 +198,7 @@ def calculate_Fenske(xD, xB):
         Pyomo.Constraint
             The relative volatility of benzene to toluene is the ratio of the phase equilibrium constants of benzene to toluene on the tray.
         """
-        return m.Kc['benzene', t] == (m.Kc['toluene', t] * m.relative_volatility[t])
+        return m.Kc["benzene", t] == (m.Kc["toluene", t] * m.relative_volatility[t])
 
     @m.Expression()
     def fenske(_):
@@ -218,18 +218,18 @@ def calculate_Fenske(xD, xB):
         return log((xD / (1 - xD)) * (xB / (1 - xB))) / (
             log(
                 sqrt(
-                    m.relative_volatility['condenser']
-                    * m.relative_volatility['reboiler']
+                    m.relative_volatility["condenser"]
+                    * m.relative_volatility["reboiler"]
                 )
             )
         )
 
-    SolverFactory('ipopt').solve(m, tee=True)
+    SolverFactory("ipopt").solve(m, tee=True)
     from pyomo.util.infeasible import log_infeasible_constraints
 
     log_infeasible_constraints(m, tol=1e-3)
     m.fenske.display()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     m = calculate_Fenske(0.95, 0.95)

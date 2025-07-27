@@ -1,0 +1,31 @@
+{
+  "projectInfo": {
+    "name": "GDPlib",
+    "description": "Open-source Python library for Generalized Disjunctive Programming models",
+    "type": "python-library",
+    "domain": "optimization",
+    "framework": "pyomo"
+  },
+  "codeStyle": {
+    "formatter": "black",
+    "linter": "flake8",
+    "typeChecker": "none",
+    "docstringStyle": "numpy"
+  },
+  "dependencies": {
+    "primary": ["pyomo", "pandas", "matplotlib"],
+    "optional": ["scipy", "pint", "openpyxl"],
+    "dev": ["pytest", "black"]
+  },
+  "testFramework": "pytest",
+  "cicd": {
+    "platform": "github-actions",
+    "workflows": ["lint", "test"]
+  },
+  "guidelines": {
+    "modelStructure": "Each model in separate subdirectory with build_model() function",
+    "imports": "Relative imports within modules, absolute for main scripts",
+    "compatibility": "Maintain backward compatibility with existing interfaces",
+    "documentation": "Include README.md for each model with mathematical description"
+  }
+}

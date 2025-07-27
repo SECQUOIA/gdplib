@@ -52,13 +52,13 @@ def build_model(use_cafaro_approximation, num_stages):
         A Pyomo concrete model representing the heat exchange model based on the specified number of stages and the use of Cafaro approximation, if applicable. The model is ready to be solved using an optimization solver to determine optimal heat integration strategies.
     """
     m = ConcreteModel()
-    m.hot_process_streams = Set(initialize=['H1', 'H2'], doc="Hot process streams")
-    m.cold_process_streams = Set(initialize=['C1', 'C2'], doc="Cold process streams")
+    m.hot_process_streams = Set(initialize=["H1", "H2"], doc="Hot process streams")
+    m.cold_process_streams = Set(initialize=["C1", "C2"], doc="Cold process streams")
     m.process_streams = (
         m.hot_process_streams | m.cold_process_streams
     )  # All process streams
-    m.hot_utility_streams = Set(initialize=['steam'], doc="Hot utility streams")
-    m.cold_utility_streams = Set(initialize=['water'], doc="Cold utility streams")
+    m.hot_utility_streams = Set(initialize=["steam"], doc="Hot utility streams")
+    m.cold_utility_streams = Set(initialize=["water"], doc="Cold utility streams")
     m.hot_streams = Set(
         initialize=m.hot_process_streams | m.hot_utility_streams, doc="Hot streams"
     )
@@ -86,24 +86,24 @@ def build_model(use_cafaro_approximation, num_stages):
         m.streams,
         doc="Inlet temperature of stream [K]",
         initialize={
-            'H1': 443,
-            'H2': 423,
-            'C1': 293,
-            'C2': 353,
-            'steam': 450,
-            'water': 293,
+            "H1": 443,
+            "H2": 423,
+            "C1": 293,
+            "C2": 353,
+            "steam": 450,
+            "water": 293,
         },
     )
     m.T_out = Param(
         m.streams,
         doc="Outlet temperature of stream [K]",
         initialize={
-            'H1': 333,
-            'H2': 303,
-            'C1': 408,
-            'C2': 413,
-            'steam': 450,
-            'water': 313,
+            "H1": 333,
+            "H2": 303,
+            "C1": 408,
+            "C2": 413,
+            "steam": 450,
+            "water": 313,
         },
     )
 
@@ -119,7 +119,7 @@ def build_model(use_cafaro_approximation, num_stages):
     m.overall_FCp = Param(
         m.process_streams,
         doc="Flow times heat capacity of stream [kW / K]",
-        initialize={'H1': 30, 'H2': 15, 'C1': 20, 'C2': 40},
+        initialize={"H1": 30, "H2": 15, "C1": 20, "C2": 40},
     )
     m.utility_usage = Var(
         m.utility_streams,
@@ -163,7 +163,7 @@ def build_model(use_cafaro_approximation, num_stages):
     m.utility_unit_cost = Param(
         m.utility_streams,
         doc="Annual unit cost of utilities [$/kW]",
-        initialize={'steam': 80, 'water': 20},
+        initialize={"steam": 80, "water": 20},
     )
 
     m.module_sizes = Set(initialize=[10, 50, 100], doc="Available module sizes.")
@@ -185,7 +185,7 @@ def build_model(use_cafaro_approximation, num_stages):
     m.exchanger_area_cost_factor = Param(
         m.valid_matches,
         default=1000,
-        initialize={('steam', cold): 1200 for cold in m.cold_process_streams},
+        initialize={("steam", cold): 1200 for cold in m.cold_process_streams},
         doc="1200 for heaters. 1000 for all other exchangers.",
     )
     m.area_cost_exponent = Param(default=0.6, doc="Area cost exponent.")
@@ -218,7 +218,7 @@ def build_model(use_cafaro_approximation, num_stages):
         Pyomo.Parameter
             The area cost factor for the specified module size and stream pair. It returns a higher value for steam (1300) compared to other hot streams (1100), reflecting specific cost adjustments based on utility type.
         """
-        if hot == 'steam':
+        if hot == "steam":
             return 1300
         else:
             return 1100
@@ -257,7 +257,7 @@ def build_model(use_cafaro_approximation, num_stages):
     m.U = Param(
         m.valid_matches,
         default=0.8,
-        initialize={('steam', cold): 1.2 for cold in m.cold_process_streams},
+        initialize={("steam", cold): 1.2 for cold in m.cold_process_streams},
         doc="Overall heat transfer coefficient."
         "1.2 for heaters. 0.8 for everything else. The unit is [kW/m^2/K].",
     )

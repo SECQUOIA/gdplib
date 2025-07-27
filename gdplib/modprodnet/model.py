@@ -172,15 +172,15 @@ def display_conventional(m, writer, sheet_name):
             ),
             columns=("Month", "Production", "Demand", "Capacity"),
         )
-        .set_index('Month')
+        .set_index("Month")
         .round(2)
     )
     df.to_excel(writer, sheet_name)
-    print('Conventional Profit', round(value(m.profit)))
-    print('Conventional Revenue', round(value(sum(m.revenue[:]))))
-    print('Conventional Size', round(value(m.conv_size)))
-    print('Conventional Build Cost', round(value(m.conv_cost)))
-    print('Conventional Salvage Value', round(value(m.conv_salvage_val)))
+    print("Conventional Profit", round(value(m.profit)))
+    print("Conventional Revenue", round(value(sum(m.revenue[:]))))
+    print("Conventional Size", round(value(m.conv_size)))
+    print("Conventional Build Cost", round(value(m.conv_cost)))
+    print("Conventional Salvage Value", round(value(m.conv_salvage_val)))
     print()
 
 
@@ -209,47 +209,47 @@ def display_modular(m, writer, sheet_name):
                 "Sold Modules",
             ),
         )
-        .set_index('Month')
+        .set_index("Month")
         .round(2)
     )
     df.to_excel(writer, sheet_name)
-    print('Modular Profit', round(value(m.profit)))
-    print('Modular Revenue', round(value(sum(m.revenue[:]))))
+    print("Modular Profit", round(value(m.profit)))
+    print("Modular Revenue", round(value(sum(m.revenue[:]))))
     print(
-        'Modular Revenue before conventional startup',
+        "Modular Revenue before conventional startup",
         round(value(sum(m.revenue[mo] for mo in m.months if mo < 12))),
     )
-    print('Modular Build Cost', round(value(sum(m.module_buy_cost[:]))))
-    print('Modules Purchased', round(value(sum(m.modules_purchased[:]))))
+    print("Modular Build Cost", round(value(sum(m.module_buy_cost[:]))))
+    print("Modules Purchased", round(value(sum(m.modules_purchased[:]))))
     print(
-        'Modular Nondiscount Cost',
+        "Modular Nondiscount Cost",
         round(value(m.module_base_cost * sum(m.modules_purchased[:]))),
     )
-    print('Modular Sale Credit', round(value(sum(m.module_sell_value[:]))))
-    print('Modular Final Salvage Credit', round(value(m.module_final_salvage)))
+    print("Modular Sale Credit", round(value(sum(m.module_sell_value[:]))))
+    print("Modular Final Salvage Credit", round(value(m.module_final_salvage)))
     print()
 
 
 if __name__ == "__main__":
-    cases = ['Growth', 'Dip', 'Decay']
+    cases = ["Growth", "Dip", "Decay"]
     conv_size_vals = {}
-    with pd.ExcelWriter('cap_expand_config.xlsx') as writer:
+    with pd.ExcelWriter("cap_expand_config.xlsx") as writer:
         for case in cases:
             print(case)
             m = build_model(case)
             m.conventional.indicator_var.fix(1)
             m.modular.deactivate()
-            TransformationFactory('gdp.bigm').apply_to(m, bigM=7000)
-            SolverFactory('gams').solve(m, solver='baron')
+            TransformationFactory("gdp.bigm").apply_to(m, bigM=7000)
+            SolverFactory("gams").solve(m, solver="baron")
             conv_size_vals[case] = value(m.conv_size)
-            display_conventional(m, writer, 'conv_%s' % case)
+            display_conventional(m, writer, "conv_%s" % case)
             del m
 
             m = build_model(case)
             m.modular.indicator_var.fix(1)
             m.conventional.deactivate()
-            TransformationFactory('gdp.chull').apply_to(m)
-            SolverFactory('gurobi').solve(m)
-            display_modular(m, writer, 'mod_%s' % case)
+            TransformationFactory("gdp.chull").apply_to(m)
+            SolverFactory("gurobi").solve(m)
+            display_modular(m, writer, "mod_%s" % case)
 
     # Run conventional case with fixed values

@@ -84,7 +84,7 @@ T = pd.read_csv(os.path.join(wnd_dir, "T.csv"), index_col=0)
 # TU mass balances in the disjunct.
 
 
-def build_model(approximation='none'):
+def build_model(approximation="none"):
     """
     Builds a Pyomo ConcreteModel for Water Network Design.
     Generates a Pyomo model for the water network design problem with the specified approximation for the capital cost term of the active treatment units.
@@ -96,48 +96,48 @@ def build_model(approximation='none'):
 
     """
     print(f"Using {approximation} approximation for the capital cost term.")
-    m = pyo.ConcreteModel('Water Network Design')
+    m = pyo.ConcreteModel("Water Network Design")
 
     # ============================================================================
     #     Sets
     # =============================================================================
 
-    m.contaminant = pyo.Set(doc='Set of contaminants', initialize=T.index.tolist())
+    m.contaminant = pyo.Set(doc="Set of contaminants", initialize=T.index.tolist())
 
-    m.FSU = pyo.Set(doc='Set of feed splitters', initialize=feed.index.tolist())
+    m.FSU = pyo.Set(doc="Set of feed splitters", initialize=feed.index.tolist())
 
     m.feed = pyo.Set(
-        doc='Set of feedstreams',
-        initialize=['f' + str(nf) for nf in pyo.RangeSet(len(m.FSU))],
+        doc="Set of feedstreams",
+        initialize=["f" + str(nf) for nf in pyo.RangeSet(len(m.FSU))],
     )
 
-    m.TU = pyo.Set(doc='Set of treatment units, TU', initialize=TU.index.tolist())
+    m.TU = pyo.Set(doc="Set of treatment units, TU", initialize=TU.index.tolist())
 
     m.inTU = pyo.Set(
         doc="Inlet TU Port",
-        initialize=['mt' + str(ntu) for ntu in pyo.RangeSet(len(m.TU))],
+        initialize=["mt" + str(ntu) for ntu in pyo.RangeSet(len(m.TU))],
     )
 
     m.outTU = pyo.Set(
         doc="Outlet TU Port",
-        initialize=['st' + str(ntu) for ntu in pyo.RangeSet(len(m.TU))],
+        initialize=["st" + str(ntu) for ntu in pyo.RangeSet(len(m.TU))],
     )
 
     m.TUport = pyo.Set(doc="Inlet and Outlet TU Ports", initialize=m.inTU | m.outTU)
 
     m.units = pyo.Set(
         doc="Superstructure Units",
-        initialize=m.feed | m.FSU | m.TU | m.TUport | ['dm'] | ['sink'],
+        initialize=m.feed | m.FSU | m.TU | m.TUport | ["dm"] | ["sink"],
     )
 
     m.splitters = pyo.Set(
         doc="Set of splitters", within=m.units, initialize=m.FSU | m.outTU
     )
 
-    m.mixers = pyo.Set(doc="Set of mixers", within=m.units, initialize=['dm'] | m.inTU)
+    m.mixers = pyo.Set(doc="Set of mixers", within=m.units, initialize=["dm"] | m.inTU)
 
     def _streams_filter(m, val):
-        """
+        r"""
         This function filters the streams based on one-to-one port pairing.
         The expression re.findall(r'\d+', x) returns a list of all the digits in the string x.
         The expression re.findall(r'\d+', y) returns a list of all the digits in the string y.
@@ -156,7 +156,7 @@ def build_model(approximation='none'):
             True if the ports digits are the same, False otherwise
         """
         x, y = val
-        return re.findall(r'\d+', x) == re.findall(r'\d+', y)
+        return re.findall(r"\d+", x) == re.findall(r"\d+", y)
 
     m.MU_TU_streams = pyo.Set(
         doc="MU to TU 1-1 port pairing",
@@ -184,11 +184,11 @@ def build_model(approximation='none'):
     m.streams = pyo.Set(
         doc="Set of feasible streams",
         initialize=m.feed_streams
-        | m.FSU * ['dm']
+        | m.FSU * ["dm"]
         | m.FSU * m.inTU
         | m.TU_streams
-        | m.outTU * ['dm']
-        | [('dm', 'sink')],
+        | m.outTU * ["dm"]
+        | [("dm", "sink")],
     )
 
     def _from_stream_filter(m, val):
@@ -211,10 +211,10 @@ def build_model(approximation='none'):
             True if the inlet port is a splitter or the inlet and outlet ports are the discharge mixer and the sink, respectively, False otherwise
         """
         x, y = val
-        return x in m.splitters or (x, y) == ('dm', 'sink')
+        return x in m.splitters or (x, y) == ("dm", "sink")
 
     m.from_splitters = pyo.Set(
-        doc='Streams from splitters',
+        doc="Streams from splitters",
         within=m.streams,
         initialize=m.streams,
         filter=_from_stream_filter,
@@ -244,7 +244,7 @@ def build_model(approximation='none'):
         return y in m.splitters or (x, y) in m.feed_streams
 
     m.to_splitters = pyo.Set(
-        doc='Streams to splitters',
+        doc="Streams to splitters",
         within=m.streams,
         initialize=m.streams,
         filter=_to_stream_filter,
@@ -257,26 +257,26 @@ def build_model(approximation='none'):
     m.removal_ratio = pyo.Param(
         m.contaminant,
         m.TU,
-        doc='Removal ratio for contaminant j in treatment unit t',
+        doc="Removal ratio for contaminant j in treatment unit t",
         within=pyo.NonNegativeReals,
         initialize=lambda _, j, k: TU.loc[k, j],
     )
     m.theta = pyo.Param(
         m.TU,
         within=pyo.NonNegativeReals,
-        doc='Cost parameter theta for unit TU',
-        initialize=lambda _, k: TU.loc[k, 'theta'],
+        doc="Cost parameter theta for unit TU",
+        initialize=lambda _, k: TU.loc[k, "theta"],
     )
     m.beta = pyo.Param(
         m.TU,
         within=pyo.NonNegativeReals,
-        doc='Cost parameter beta for unit TU',
-        initialize=lambda _, k: TU.loc[k, 'beta'],
+        doc="Cost parameter beta for unit TU",
+        initialize=lambda _, k: TU.loc[k, "beta"],
     )
     m.gamma = pyo.Param(
         m.TU,
         within=pyo.NonNegativeReals,
-        doc='Cost parameter gamma for unit TU',
+        doc="Cost parameter gamma for unit TU",
         default=0,
         initialize=0,
     )
@@ -295,7 +295,7 @@ def build_model(approximation='none'):
     )
 
     # Concentration of component j in feedstream i
-    for j, i, k in m.contaminant * (m.FSU * ['dm'] | m.FSU * m.inTU | m.feed_streams):
+    for j, i, k in m.contaminant * (m.FSU * ["dm"] | m.FSU * m.inTU | m.feed_streams):
         if i in m.feed:
             m.conc[j, i, k].fix(feed.loc[k, j])
         else:
@@ -306,27 +306,27 @@ def build_model(approximation='none'):
         doc="Flowrate",
         domain=pyo.NonNegativeReals,
         bounds=lambda _, i, k: (
-            (None, feed.loc[i, 'flow_rate'])
+            (None, feed.loc[i, "flow_rate"])
             if i in m.FSU
             # else (None,100), # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
-            else (0, feed['flow_rate'].sum())
+            else (0, feed["flow_rate"].sum())
         ),
     )
 
     # Fix the flow rates of the feed streams
-    [m.flow[i, k].fix(feed.loc[k, 'flow_rate']) for i, k in m.feed_streams]
+    [m.flow[i, k].fix(feed.loc[k, "flow_rate"]) for i, k in m.feed_streams]
     # Fix the flow rate from the mixer to the sink
-    m.flow['dm', 'sink'].fix(feed['flow_rate'].sum())
+    m.flow["dm", "sink"].fix(feed["flow_rate"].sum())
 
     m.costTU = pyo.Var(
         m.TU,
         domain=pyo.NonNegativeReals,
-        doc='CTUk cost of TU',
+        doc="CTUk cost of TU",
         bounds=lambda _, tu: (
             0,
-            m.beta[tu] * feed['flow_rate'].sum()
+            m.beta[tu] * feed["flow_rate"].sum()
             + m.gamma[tu]
-            + m.theta[tu] * feed['flow_rate'].sum() ** 0.7,
+            + m.theta[tu] * feed["flow_rate"].sum() ** 0.7,
         ),
     )
 
@@ -474,23 +474,23 @@ def build_model(approximation='none'):
         Constraint
             The constraint that the concentration of the contaminant in the outlet stream is less than or equal to the specified limit.
         """
-        return m._conc_into['dm', j] <= T.loc[j].values[0] * 10
+        return m._conc_into["dm", j] <= T.loc[j].values[0] * 10
 
     @m.Disjunct(m.TU)
     def unit_exists(disj, unit):
-        '''Disjunct: Unit exists.
+        """Disjunct: Unit exists.
         This disjunct specifies that the unit exists.
-        '''
+        """
         pass
 
     @m.Disjunct(m.TU)
     def unit_absent(no_unit, unit):
-        '''Disjunct: Unit absent.
-        This disjunct specifies that the unit is absent.'''
+        """Disjunct: Unit absent.
+        This disjunct specifies that the unit is absent."""
 
         @no_unit.Constraint(m.inTU)
         def _no_flow_in(disj, mt):
-            '''Constraint: No flow enters the unit when the unit is inactive.
+            """Constraint: No flow enters the unit when the unit is inactive.
 
             This constraint ensures that no flow enters the unit when the unit is inactive.
             Flow from the feed splitters and mixers to the unit is set to zero when the unit is inactive.
@@ -506,28 +506,28 @@ def build_model(approximation='none'):
             -------
             Constraint
                 The constraint that no flow enters the unit when the unit is inactive.
-            '''
+            """
             if (mt, unit) in m.MU_TU_streams:
                 return m._flow_into[mt] == 0
             return pyo.Constraint.Skip
 
-        @no_unit.Constraint(doc='Cost inactive TU')
+        @no_unit.Constraint(doc="Cost inactive TU")
         def _no_cost(disj):
-            '''Constraint: Cost of inactive unit.
+            """Constraint: Cost of inactive unit.
             This constraint ensures that the cost of the inactive unit is zero.
 
             Returns
             -------
             Constraint
                 The constraint enforcing the cost of the inactive unit to be zero.
-            '''
+            """
             return m.costTU[unit] == 0
 
         pass
 
     @m.Disjunction(m.TU)
     def unit_exists_or_not(m, unit):
-        '''Disjunction: Unit exists or not.
+        """Disjunction: Unit exists or not.
         This disjunction specifies if the treatment unit exists or does not exist.
 
         Parameters
@@ -541,7 +541,7 @@ def build_model(approximation='none'):
         -------
         Disjunction
             The disjunction specifying if the treatment unit exists or does not exist.
-        '''
+        """
         return [m.unit_exists[unit], m.unit_absent[unit]]
 
     # Yunit is a Boolean variable that indicates if the unit is active.
@@ -607,7 +607,7 @@ def build_model(approximation='none'):
                 True if the port if source and destination are the same and the destination is the treatment unit, False otherwise
             """
             x, y = val
-            return re.findall(r'\d+', x) == re.findall(r'\d+', y) and y == unit
+            return re.findall(r"\d+", x) == re.findall(r"\d+", y) and y == unit
 
         unit_exists.MU_TU_streams = pyo.Set(
             doc="MU to TU 1-1 port pairing",
@@ -620,7 +620,7 @@ def build_model(approximation='none'):
             doc="TU streams flowrate",
             domain=pyo.NonNegativeReals,
             # bounds=lambda _,i,k:(TU.loc[unit,'L'],100) # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
-            bounds=lambda _, i, k: (TU.loc[unit, 'L'], feed['flow_rate'].sum()),
+            bounds=lambda _, i, k: (TU.loc[unit, "L"], feed["flow_rate"].sum()),
         )
 
         unit_exists.conc = pyo.Var(
@@ -633,7 +633,7 @@ def build_model(approximation='none'):
         )
 
         # Adding the mass balances for the active treatment units
-        unit_exists.balances_con = pyo.ConstraintList(doc='TU Material balances')
+        unit_exists.balances_con = pyo.ConstraintList(doc="TU Material balances")
         # The flowrate at the inlet of the treatment unit is equal to the flowrate at the outlet of the treatment unit.
         [
             unit_exists.balances_con.add(
@@ -692,7 +692,7 @@ def build_model(approximation='none'):
         ]
         # Setting inlet flowrate bounds for the active treatment units.
         unit_exists.flow_bound = pyo.ConstraintList(
-            doc='Flowrate bounds to/from active TU'
+            doc="Flowrate bounds to/from active TU"
         )
         [
             unit_exists.flow_bound.add(
@@ -708,12 +708,12 @@ def build_model(approximation='none'):
 
         # Approximation of the concave capital cost term for the active treatment units in the objective function.
 
-        if approximation == 'quadratic_zero_origin':
+        if approximation == "quadratic_zero_origin":
             # New variable for potential term in capital cost.  Z = sum(Q)**0.7, Z >= 0
             unit_exists.cost_var = pyo.Var(
                 m.TU,
                 domain=pyo.NonNegativeReals,
-                initialize=lambda _, unit: TU.loc[unit, 'L'] ** 0.7,
+                initialize=lambda _, unit: TU.loc[unit, "L"] ** 0.7,
                 bounds=(0, 100**0.7),
                 doc="New var for potential term in capital cost",
             )
@@ -765,7 +765,7 @@ def build_model(approximation='none'):
                 return _func(x, *popt)
 
             # Z^(1/0.7)=sum(Q)
-            @unit_exists.Constraint(doc='New var potential term in capital cost cstr.')
+            @unit_exists.Constraint(doc="New var potential term in capital cost cstr.")
             def _cost_nv(unit_exists):
                 """Constraint: New variable potential term in capital cost.
                 The constraint ensures that the new variable potential term in the capital cost is equal to the flow rate entering the treatment unit.
@@ -841,10 +841,10 @@ def build_model(approximation='none'):
             unit_exists.cost_var = pyo.Var(
                 unit_exists.MU_TU_streams,
                 domain=pyo.NonNegativeReals,
-                initialize=lambda _, mt, unit: TU.loc[unit, 'L'] ** 0.7,
+                initialize=lambda _, mt, unit: TU.loc[unit, "L"] ** 0.7,
                 bounds=lambda _, mt, unit: (
-                    TU.loc[unit, 'L'] ** 0.7,
-                    feed['flow_rate'].sum() ** 0.7,
+                    TU.loc[unit, "L"] ** 0.7,
+                    feed["flow_rate"].sum() ** 0.7,
                 ),
                 # bounds= lambda _,mt,unit: (TU.loc[unit,'L']**0.7,100**0.7), # Upper bound for the flow rate from Ruiz and Grossmann (2009) is 100
                 doc="New var for potential term in capital cost",
@@ -886,9 +886,9 @@ def build_model(approximation='none'):
                 unit_exists.cost_var,
                 unit_exists.flow,
                 pw_pts=bpts,
-                pw_constr_type='EQ',
+                pw_constr_type="EQ",
                 f_rule=_func,
-                pw_repn='INC',
+                pw_repn="INC",
             )
 
             # Setting bounds for the INC_delta variable which is a binary variable that indicates the piecewise linear segment.
@@ -896,7 +896,7 @@ def build_model(approximation='none'):
                 unit_exists.ComputeObj[i, j].INC_delta.setub(1)
                 unit_exists.ComputeObj[i, j].INC_delta.setlb(0)
 
-        @unit_exists.Constraint(doc='Cost active TU')
+        @unit_exists.Constraint(doc="Cost active TU")
         def costTU(unit_exists):
             """Constraint: Cost of active treatment unit.
             The constraint defines the cost of the active treatment unit as the sum of an investment cost and an operating cost.
@@ -919,13 +919,13 @@ def build_model(approximation='none'):
                 The constraint that the cost of the active treatment unit is equal to the sum of an investment cost and an operating cost.
             """
             for mt, t in unit_exists.streams:
-                if approximation == 'quadratic_zero_origin':
+                if approximation == "quadratic_zero_origin":
                     new_var = unit_exists.cost_var[unit]
-                elif approximation == 'quadratic_nonzero_origin':
+                elif approximation == "quadratic_nonzero_origin":
                     new_var = _g(unit_exists.flow[mt, unit])
-                elif approximation == 'piecewise':
+                elif approximation == "piecewise":
                     new_var = unit_exists.cost_var[mt, unit]
-                elif approximation == 'none':
+                elif approximation == "none":
                     new_var = unit_exists.flow[mt, unit] ** 0.7
                 if t == unit:
                     return (

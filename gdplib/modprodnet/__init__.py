@@ -4,6 +4,14 @@ from .quarter_distributed import build_modular_model as build_quarter_distribute
 
 
 def build_model(case="Growth"):
+    """Build a modular production network model.
+
+    Args:
+        case: Model case (Growth, Dip, Decay, Distributed, QuarterDistributed)
+
+    Returns:
+        Pyomo model object
+    """
     if case in ["Growth", "Dip", "Decay"]:
         return _capacity_expansion(case)
     elif case == "Distributed":
@@ -14,4 +22,4 @@ def build_model(case="Growth"):
         raise ValueError("Invalid case: {}".format(case))
 
 
-__all__ = ['build_model']
+__all__ = ["build_model"]

@@ -83,15 +83,15 @@ def build_model():
 
     # C
     # c in GAMS
-    model.Contracts = Set(doc='Set of available contracts')
+    model.Contracts = Set(doc="Set of available contracts")
 
     # I
     # i in GAMS
-    model.Processes = Set(doc='Set of processes in the network')
+    model.Processes = Set(doc="Set of processes in the network")
 
     # J
     # j in GAMS
-    model.Streams = Set(doc='Set of streams in the network')
+    model.Streams = Set(doc="Set of streams in the network")
 
     ##################
     # Parameters
@@ -99,11 +99,11 @@ def build_model():
 
     # Q_it
     # excap(i) in GAMS
-    model.Capacity = Param(model.Processes, doc='Capacity of process i')
+    model.Capacity = Param(model.Processes, doc="Capacity of process i")
 
     # u_ijt
     # cov(i) in GAMS
-    model.ProcessConstants = Param(model.Processes, doc='Process constants')
+    model.ProcessConstants = Param(model.Processes, doc="Process constants")
 
     # a_jt^U and d_jt^U
     # spdm(j,t) in GAMS
@@ -111,20 +111,20 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         default=0,
-        doc='Supply and demand upper bounds',
+        doc="Supply and demand upper bounds",
     )
 
     # d_jt^L
     # lbdm(j, t) in GAMS
     model.DemandLB = Param(
-        model.Streams, model.TimePeriods, default=0, doc='Demand lower bounds'
+        model.Streams, model.TimePeriods, default=0, doc="Demand lower bounds"
     )
 
     # delta_it
     # delta(i, t) in GAMS
     # operating cost of process i at time t
     model.OperatingCosts = Param(
-        model.Processes, model.TimePeriods, doc='Operating cost of process i at time t'
+        model.Processes, model.TimePeriods, doc="Operating cost of process i at time t"
     )
 
     # prices of raw materials under FP contract and selling prices of products
@@ -134,7 +134,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         default=0,
-        doc='Prices of raw materials under FP contract and selling prices of products',
+        doc="Prices of raw materials under FP contract and selling prices of products",
     )
 
     # Price for quantities less than min amount under discount contract
@@ -142,7 +142,7 @@ def build_model():
     model.RegPrice_Discount = Param(
         model.Streams,
         model.TimePeriods,
-        doc='Price for quantities less than min amount under discount contract',
+        doc="Price for quantities less than min amount under discount contract",
     )
 
     # Discounted price for the quantity purchased exceeding the min amount
@@ -150,7 +150,7 @@ def build_model():
     model.DiscountPrice_Discount = Param(
         model.Streams,
         model.TimePeriods,
-        doc='Discounted price for the quantity purchased exceeding the min amount',
+        doc="Discounted price for the quantity purchased exceeding the min amount",
     )
 
     # Price for quantities below min amount
@@ -158,7 +158,7 @@ def build_model():
     model.RegPrice_Bulk = Param(
         model.Streams,
         model.TimePeriods,
-        doc='Price for quantities below min amount under bulk contract',
+        doc="Price for quantities below min amount under bulk contract",
     )
 
     # Price for quantities above min amount
@@ -166,7 +166,7 @@ def build_model():
     model.DiscountPrice_Bulk = Param(
         model.Streams,
         model.TimePeriods,
-        doc='Price for quantities above minimum amount under bulk contract',
+        doc="Price for quantities above minimum amount under bulk contract",
     )
 
     # prices with length contract
@@ -176,7 +176,7 @@ def build_model():
         model.Contracts_Length,
         model.TimePeriods,
         default=0,
-        doc='Prices with length contract',
+        doc="Prices with length contract",
     )
 
     # sigmad_jt
@@ -186,7 +186,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         default=0,
-        doc='Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract',
+        doc="Minimum quantity of chemical j that must be bought before receiving a Discount under discount contract",
     )
 
     # min quantity to receive discount under bulk contract
@@ -195,7 +195,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         default=0,
-        doc='Minimum quantity of chemical j that must be bought before receiving a Discount under bulk contract',
+        doc="Minimum quantity of chemical j that must be bought before receiving a Discount under bulk contract",
     )
 
     # min quantity to receive discount under length contract
@@ -204,14 +204,14 @@ def build_model():
         model.Streams,
         model.Contracts_Length,
         default=0,
-        doc='Minimum quantity of chemical j that must be bought before receiving a Discount under length contract',
+        doc="Minimum quantity of chemical j that must be bought before receiving a Discount under length contract",
     )
 
     # main products of process i
     # These are 1 (true) if stream j is the main product of process i, false otherwise.
     # jm(j, i) in GAMS
     model.MainProducts = Param(
-        model.Streams, model.Processes, default=0, doc='Main products of process i'
+        model.Streams, model.Processes, default=0, doc="Main products of process i"
     )
 
     # theta_jt
@@ -220,26 +220,26 @@ def build_model():
     model.ShortfallPenalty = Param(
         model.Products,
         model.TimePeriods,
-        doc='Shortfall penalty of product j at time t',
+        doc="Shortfall penalty of product j at time t",
     )
 
     # shortfall upper bound
     # sfub(j, t) in GAMS
     model.ShortfallUB = Param(
-        model.Products, model.TimePeriods, default=0, doc='Shortfall upper bound'
+        model.Products, model.TimePeriods, default=0, doc="Shortfall upper bound"
     )
 
     # epsilon_jt
     # cinv(j, t) in GAMS
     # inventory cost of material j at time t
     model.InventoryCost = Param(
-        model.Streams, model.TimePeriods, doc='Inventory cost of material j at time t'
+        model.Streams, model.TimePeriods, doc="Inventory cost of material j at time t"
     )
 
     # invub(j, t) in GAMS
     # inventory upper bound
     model.InventoryLevelUB = Param(
-        model.Streams, model.TimePeriods, default=0, doc='Inventory upper bound'
+        model.Streams, model.TimePeriods, default=0, doc="Inventory upper bound"
     )
 
     ## UPPER BOUNDS HARDCODED INTO GAMS MODEL
@@ -290,62 +290,62 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         initialize=getAmountUBs,
-        doc='Upper bound on amount purchased under fixed price contract',
+        doc="Upper bound on amount purchased under fixed price contract",
     )
     model.AmountPurchasedUB_Discount = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getAmountUBs,
-        doc='Upper bound on amount purchased under discount contract',
+        doc="Upper bound on amount purchased under discount contract",
     )
     model.AmountPurchasedBelowMinUB_Discount = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getAmountUBs,
-        doc='Upper bound on amount purchased below min amount for discount under discount contract',
+        doc="Upper bound on amount purchased below min amount for discount under discount contract",
     )
     model.AmountPurchasedAboveMinUB_Discount = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getAmountUBs,
-        doc='Upper bound on amount purchased above min amount for discount under discount contract',
+        doc="Upper bound on amount purchased above min amount for discount under discount contract",
     )
     model.AmountPurchasedUB_FD = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getAmountUBs,
-        doc='Upper bound on amount purchased under fixed duration contract',
+        doc="Upper bound on amount purchased under fixed duration contract",
     )
     model.AmountPurchasedUB_Bulk = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getAmountUBs,
-        doc='Upper bound on amount purchased under bulk contract',
+        doc="Upper bound on amount purchased under bulk contract",
     )
 
     model.CostUB_FP = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getCostUBs,
-        doc='Upper bound on cost of fixed price contract',
+        doc="Upper bound on cost of fixed price contract",
     )
     model.CostUB_FD = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getCostUBs,
-        doc='Upper bound on cost of fixed duration contract',
+        doc="Upper bound on cost of fixed duration contract",
     )
     model.CostUB_Discount = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getCostUBs,
-        doc='Upper bound on cost of discount contract',
+        doc="Upper bound on cost of discount contract",
     )
     model.CostUB_Bulk = Param(
         model.Streams,
         model.TimePeriods,
         initialize=getCostUBs,
-        doc='Upper bound on cost of bulk contract',
+        doc="Upper bound on cost of bulk contract",
     )
 
     ####################
@@ -354,7 +354,7 @@ def build_model():
 
     # prof in GAMS
     # will be objective
-    model.Profit = Var(doc='Profit')
+    model.Profit = Var(doc="Profit")
 
     # f(j, t) in GAMS
     # mass flow rates in tons per time interval t
@@ -362,7 +362,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         within=NonNegativeReals,
-        doc='Mass flow rates in tons per time interval t',
+        doc="Mass flow rates in tons per time interval t",
     )
 
     # V_jt
@@ -393,7 +393,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=getInventoryBounds,
-        doc='Inventory level of material j at time period t',
+        doc="Inventory level of material j at time period t",
     )
 
     # SF_jt
@@ -424,7 +424,7 @@ def build_model():
         model.Products,
         model.TimePeriods,
         bounds=getShortfallBounds,
-        doc='Shortfall of demand for material j at time period t',
+        doc="Shortfall of demand for material j at time period t",
     )
 
     # amounts purchased under different contracts
@@ -456,7 +456,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_FP_bounds,
-        doc='Amount of raw material j bought under fixed price contract at time period t',
+        doc="Amount of raw material j bought under fixed price contract at time period t",
     )
 
     # spd(j, t) in GAMS
@@ -485,7 +485,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_Discount_Total_bounds,
-        doc='Total amount of material j bought under discount contract at time period t',
+        doc="Total amount of material j bought under discount contract at time period t",
     )
 
     # Amount purchased below min amount for discount under discount contract
@@ -515,7 +515,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_Discount_BelowMin_bounds,
-        doc='Amount purchased below min amount for discount under discount contract',
+        doc="Amount purchased below min amount for discount under discount contract",
     )
 
     # spd2(j, t) in GAMS
@@ -545,7 +545,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_Discount_AboveMin_bounds,
-        doc='Amount purchased above min amount for discount under discount contract',
+        doc="Amount purchased above min amount for discount under discount contract",
     )
 
     # Amount purchased under bulk contract
@@ -575,7 +575,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_bulk_bounds,
-        doc='Amount purchased under bulk contract',
+        doc="Amount purchased under bulk contract",
     )
 
     # spl(j, t) in GAMS
@@ -605,7 +605,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_FD_bounds,
-        doc='Amount purchased under Fixed Duration contract',
+        doc="Amount purchased under Fixed Duration contract",
     )
 
     # costs
@@ -637,7 +637,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_CostUBs_FD,
-        doc='Cost of variable length contract',
+        doc="Cost of variable length contract",
     )
 
     # costpf(j, t) in GAMS
@@ -667,7 +667,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_CostUBs_FP,
-        doc='Cost of fixed price contract',
+        doc="Cost of fixed price contract",
     )
 
     # costpd(j, t) in GAMS
@@ -697,7 +697,7 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_CostUBs_Discount,
-        doc='Cost of discount contract',
+        doc="Cost of discount contract",
     )
 
     # costpb(j, t) in GAMS
@@ -727,21 +727,21 @@ def build_model():
         model.Streams,
         model.TimePeriods,
         bounds=get_CostUBs_Bulk,
-        doc='Cost of bulk contract',
+        doc="Cost of bulk contract",
     )
 
     # binary variables
 
     model.BuyFPContract = RangeSet(0, 1)  # buy fixed price contract
     model.BuyDiscountContract = Set(
-        initialize=('BelowMin', 'AboveMin', 'NotSelected'), doc='Buy discount contract'
+        initialize=("BelowMin", "AboveMin", "NotSelected"), doc="Buy discount contract"
     )
     model.BuyBulkContract = Set(
-        initialize=('BelowMin', 'AboveMin', 'NotSelected'), doc='Buy bulk contract'
+        initialize=("BelowMin", "AboveMin", "NotSelected"), doc="Buy bulk contract"
     )
     model.BuyFDContract = Set(
-        initialize=('1Month', '2Month', '3Month', 'NotSelected'),
-        doc='Buy fixed duration contract',
+        initialize=("1Month", "2Month", "3Month", "NotSelected"),
+        doc="Buy fixed duration contract",
     )
 
     ################
@@ -813,7 +813,7 @@ def build_model():
             salesIncome - purchaseCost - productionCost - inventoryCost - shortfallCost
         )
 
-    model.profit = Objective(rule=profit_rule, sense=maximize, doc='Maximize profit')
+    model.profit = Objective(rule=profit_rule, sense=maximize, doc="Maximize profit")
 
     # flow of raw materials is the total amount purchased (across all contracts)
     def raw_material_flow_rule(model, j, t):
@@ -846,7 +846,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=raw_material_flow_rule,
-        doc='Material flow balance for each raw material j in each time period t',
+        doc="Material flow balance for each raw material j in each time period t",
     )
 
     def discount_amount_total_rule(model, j, t):
@@ -877,7 +877,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=discount_amount_total_rule,
-        doc='Total discounted purchase amount of material j in time period t is the sum of amounts bought below and above the discount threshold',
+        doc="Total discounted purchase amount of material j in time period t is the sum of amounts bought below and above the discount threshold",
     )
 
     # mass balance equations for each node
@@ -906,7 +906,7 @@ def build_model():
     model.mass_balance1 = Constraint(
         model.TimePeriods,
         rule=mass_balance_rule1,
-        doc='Mass balance equation for the first node in the process network',
+        doc="Mass balance equation for the first node in the process network",
     )
 
     def mass_balance_rule2(model, t):
@@ -933,7 +933,7 @@ def build_model():
     model.mass_balance2 = Constraint(
         model.TimePeriods,
         rule=mass_balance_rule2,
-        doc='Mass balance equation for the second node in the process network',
+        doc="Mass balance equation for the second node in the process network",
     )
 
     def mass_balance_rule3(model, t):
@@ -960,7 +960,7 @@ def build_model():
     model.mass_balance3 = Constraint(
         model.TimePeriods,
         rule=mass_balance_rule3,
-        doc='Mass balance equation for the third node in the process network',
+        doc="Mass balance equation for the third node in the process network",
     )
 
     def mass_balance_rule4(model, t):
@@ -987,7 +987,7 @@ def build_model():
     model.mass_balance4 = Constraint(
         model.TimePeriods,
         rule=mass_balance_rule4,
-        doc='Mass balance equation for Process 2 in the process network',
+        doc="Mass balance equation for Process 2 in the process network",
     )
 
     # process input/output constraints
@@ -1015,7 +1015,7 @@ def build_model():
     model.process_balance1 = Constraint(
         model.TimePeriods,
         rule=process_balance_rule1,
-        doc='Input/output balance equation for Process 1 in the process network',
+        doc="Input/output balance equation for Process 1 in the process network",
     )
 
     def process_balance_rule2(model, t):
@@ -1043,7 +1043,7 @@ def build_model():
     model.process_balance2 = Constraint(
         model.TimePeriods,
         rule=process_balance_rule2,
-        doc='Input/output balance equation for Process 2 in the process network',
+        doc="Input/output balance equation for Process 2 in the process network",
     )
 
     def process_balance_rule3(model, t):
@@ -1073,7 +1073,7 @@ def build_model():
     model.process_balance3 = Constraint(
         model.TimePeriods,
         rule=process_balance_rule3,
-        doc='Input/output balance equation 1 for Process 3 in the process network',
+        doc="Input/output balance equation 1 for Process 3 in the process network",
     )
 
     def process_balance_rule4(model, t):
@@ -1103,7 +1103,7 @@ def build_model():
     model.process_balance4 = Constraint(
         model.TimePeriods,
         rule=process_balance_rule4,
-        doc='Input/output balance equation 2 for Process 3 in the process network',
+        doc="Input/output balance equation 2 for Process 3 in the process network",
     )
 
     # process capacity constraints
@@ -1131,7 +1131,7 @@ def build_model():
     model.process_capacity1 = Constraint(
         model.TimePeriods,
         rule=process_capacity_rule1,
-        doc='Capacity constraint for Process 1 in the process network',
+        doc="Capacity constraint for Process 1 in the process network",
     )
 
     def process_capacity_rule2(model, t):
@@ -1157,7 +1157,7 @@ def build_model():
     model.process_capacity2 = Constraint(
         model.TimePeriods,
         rule=process_capacity_rule2,
-        doc='Capacity constraint for Process 2 in the process network',
+        doc="Capacity constraint for Process 2 in the process network",
     )
 
     def process_capacity_rule3(model, t):
@@ -1183,7 +1183,7 @@ def build_model():
     model.process_capacity3 = Constraint(
         model.TimePeriods,
         rule=process_capacity_rule3,
-        doc='Capacity constraint for Process 3 in the process network',
+        doc="Capacity constraint for Process 3 in the process network",
     )
 
     # Inventory balance of final products
@@ -1217,7 +1217,7 @@ def build_model():
     model.inventory_balance1 = Constraint(
         model.TimePeriods,
         rule=inventory_balance1,
-        doc='Inventory balance for material associated with stream 12 at the first inventory node',
+        doc="Inventory balance for material associated with stream 12 at the first inventory node",
     )
 
     def inventory_balance_rule2(model, t):
@@ -1250,7 +1250,7 @@ def build_model():
     model.inventory_balance2 = Constraint(
         model.TimePeriods,
         rule=inventory_balance_rule2,
-        doc='Inventory balance for material associated with stream 13 at the second inventory node',
+        doc="Inventory balance for material associated with stream 13 at the second inventory node",
     )
 
     def inventory_balance_rule3(model, t):
@@ -1286,7 +1286,7 @@ def build_model():
     model.inventory_balance3 = Constraint(
         model.TimePeriods,
         rule=inventory_balance_rule3,
-        doc='Inventory balance for material associated with stream 13 at the second inventory node',
+        doc="Inventory balance for material associated with stream 13 at the second inventory node",
     )
 
     # Max capacities of inventories
@@ -1315,7 +1315,7 @@ def build_model():
         model.Products,
         model.TimePeriods,
         rule=inventory_capacity_rule,
-        doc='Maximum inventory capacity for each material j at each time period t',
+        doc="Maximum inventory capacity for each material j at each time period t",
     )
 
     # Shortfall calculation
@@ -1347,7 +1347,7 @@ def build_model():
         model.Products,
         model.TimePeriods,
         rule=shortfall_rule,
-        doc='Shortfall calculation for each product j in each time period t',
+        doc="Shortfall calculation for each product j in each time period t",
     )
 
     # maximum shortfall allowed
@@ -1376,7 +1376,7 @@ def build_model():
         model.Products,
         model.TimePeriods,
         rule=shortfall_max_rule,
-        doc='Maximum shortfall allowed for each product j in each time period t',
+        doc="Maximum shortfall allowed for each product j in each time period t",
     )
 
     # maximum capacities of suppliers
@@ -1405,7 +1405,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=supplier_capacity_rule,
-        doc='Maximum supply capacity for each raw material j in each time period t',
+        doc="Maximum supply capacity for each raw material j in each time period t",
     )
 
     # demand upper bound
@@ -1433,7 +1433,7 @@ def build_model():
         model.Products,
         model.TimePeriods,
         rule=demand_UB_rule,
-        doc='Maximum demand allowed for each product j in each time period t',
+        doc="Maximum demand allowed for each product j in each time period t",
     )
 
     # demand lower bound
@@ -1461,7 +1461,7 @@ def build_model():
         model.Products,
         model.TimePeriods,
         rule=demand_LB_rule,
-        doc='Minimum demand required for each product j in each time period t',
+        doc="Minimum demand required for each product j in each time period t",
     )
 
     # FIXED PRICE CONTRACT
@@ -1505,7 +1505,7 @@ def build_model():
         model.TimePeriods,
         model.BuyFPContract,
         rule=FP_contract_disjunct_rule,
-        doc='Disjunctive constraints for Fixed Price contract buying options',
+        doc="Disjunctive constraints for Fixed Price contract buying options",
     )
 
     # Fixed price disjunction
@@ -1535,7 +1535,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FP_contract_rule,
-        doc='Disjunction for Fixed Price contract buying options',
+        doc="Disjunction for Fixed Price contract buying options",
     )
 
     # cost constraint for fixed price contract (independent constraint)
@@ -1564,7 +1564,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FP_contract_cost_rule,
-        doc='Cost constraint for Fixed Price contract',
+        doc="Cost constraint for Fixed Price contract",
     )
 
     # DISCOUNT CONTRACT
@@ -1589,7 +1589,7 @@ def build_model():
 
         """
         model = disjunct.model()
-        if buy == 'BelowMin':
+        if buy == "BelowMin":
             disjunct.belowMin = Constraint(
                 expr=model.AmountPurchasedBelowMin_Discount[j, t]
                 <= model.MinAmount_Discount[j, t]
@@ -1597,7 +1597,7 @@ def build_model():
             disjunct.aboveMin = Constraint(
                 expr=model.AmountPurchasedAboveMin_Discount[j, t] == 0
             )
-        elif buy == 'AboveMin':
+        elif buy == "AboveMin":
             disjunct.belowMin = Constraint(
                 expr=model.AmountPurchasedBelowMin_Discount[j, t]
                 == model.MinAmount_Discount[j, t]
@@ -1605,7 +1605,7 @@ def build_model():
             disjunct.aboveMin = Constraint(
                 expr=model.AmountPurchasedAboveMin_Discount[j, t] >= 0
             )
-        elif buy == 'NotSelected':
+        elif buy == "NotSelected":
             disjunct.belowMin = Constraint(
                 expr=model.AmountPurchasedBelowMin_Discount[j, t] == 0
             )
@@ -1620,7 +1620,7 @@ def build_model():
         model.TimePeriods,
         model.BuyDiscountContract,
         rule=discount_contract_disjunct_rule,
-        doc='Disjunctive constraints for Discount contract buying options',
+        doc="Disjunctive constraints for Discount contract buying options",
     )
 
     # Discount contract disjunction
@@ -1653,7 +1653,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=discount_contract_rule,
-        doc='Disjunction for Discount contract buying options',
+        doc="Disjunction for Discount contract buying options",
     )
 
     # cost constraint for discount contract (independent constraint)
@@ -1689,7 +1689,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=discount_cost_rule,
-        doc='Cost constraint for Discount contract',
+        doc="Cost constraint for Discount contract",
     )
 
     # BULK CONTRACT
@@ -1715,7 +1715,7 @@ def build_model():
 
         """
         model = disjunct.model()
-        if buy == 'BelowMin':
+        if buy == "BelowMin":
             disjunct.amount = Constraint(
                 expr=model.AmountPurchased_Bulk[j, t] <= model.MinAmount_Bulk[j, t]
             )
@@ -1723,7 +1723,7 @@ def build_model():
                 expr=model.Cost_Bulk[j, t]
                 == model.RegPrice_Bulk[j, t] * model.AmountPurchased_Bulk[j, t]
             )
-        elif buy == 'AboveMin':
+        elif buy == "AboveMin":
             disjunct.amount = Constraint(
                 expr=model.AmountPurchased_Bulk[j, t] >= model.MinAmount_Bulk[j, t]
             )
@@ -1731,7 +1731,7 @@ def build_model():
                 expr=model.Cost_Bulk[j, t]
                 == model.DiscountPrice_Bulk[j, t] * model.AmountPurchased_Bulk[j, t]
             )
-        elif buy == 'NotSelected':
+        elif buy == "NotSelected":
             disjunct.amount = Constraint(expr=model.AmountPurchased_Bulk[j, t] == 0)
             disjunct.price = Constraint(expr=model.Cost_Bulk[j, t] == 0)
         else:
@@ -1742,7 +1742,7 @@ def build_model():
         model.TimePeriods,
         model.BuyBulkContract,
         rule=bulk_contract_disjunct_rule,
-        doc='Disjunctive constraints for Bulk contract buying options',
+        doc="Disjunctive constraints for Bulk contract buying options",
     )
 
     # Bulk contract disjunction
@@ -1775,7 +1775,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=bulk_contract_rule,
-        doc='Disjunction for Bulk contract buying options',
+        doc="Disjunction for Bulk contract buying options",
     )
 
     # FIXED DURATION CONTRACT
@@ -1807,7 +1807,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FD_1mo_contract,
-        doc='1-month fixed duration contract',
+        doc="1-month fixed duration contract",
     )
 
     def FD_2mo_contract(disjunct, j, t):
@@ -1846,7 +1846,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FD_2mo_contract,
-        doc='2-month fixed duration contract',
+        doc="2-month fixed duration contract",
     )
 
     def FD_3mo_contract(disjunct, j, t):
@@ -1895,7 +1895,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FD_3mo_contract,
-        doc='3-month fixed duration contract',
+        doc="3-month fixed duration contract",
     )
 
     def FD_no_contract(disjunct, j, t):
@@ -1926,7 +1926,7 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FD_no_contract,
-        doc='No fixed duration contract',
+        doc="No fixed duration contract",
     )
 
     def FD_contract(model, j, t):
@@ -1958,16 +1958,16 @@ def build_model():
         model.RawMaterials,
         model.TimePeriods,
         rule=FD_contract,
-        doc='Fixed duration contract scenarios',
+        doc="Fixed duration contract scenarios",
     )
-    model = model.create_instance(join(this_file_dir(), 'med_term_purchasing.dat'))
+    model = model.create_instance(join(this_file_dir(), "med_term_purchasing.dat"))
     return model
 
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(
-        m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
+    TransformationFactory("gdp.bigm").apply_to(m)
+    SolverFactory("gams").solve(
+        m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
     )
     m.profit.display()
