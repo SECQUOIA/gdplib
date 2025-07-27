@@ -45,8 +45,9 @@ if __name__ == "__main__":
             all_reports[instance] = report_df
 
             # Generate individual model size report (Markdown)
-            report_df.columns = ["Number"]  # Change column name for individual report
-            report_df.to_markdown("gdplib/" + instance + "/" + "model_size_report.md")
+            individual_report_df = report_df.copy()
+            individual_report_df.columns = ["Number"]  # Change column name for individual report
+            individual_report_df.to_markdown("gdplib/" + instance + "/" + "model_size_report.md")
         except Exception as e:
             print(f"Error processing {instance}: {str(e)}")
             continue
@@ -61,32 +62,31 @@ if __name__ == "__main__":
         combined_df = combined_df.sort_index(axis=1)
 
         # Generate the combined report
-    combined_report = "## Model Size Comparison\n\n"
-    combined_report += "The following table shows the size metrics for all models in GDPlib:\n\n"
-    combined_report += combined_df.to_markdown()
-    combined_report += "\n\nThis table was automatically generated using the `generate_model_size_report.py` script.\n"
+        combined_report = "## Model Size Comparison\n\n"
+        combined_report += "The following table shows the size metrics for all models in GDPlib:\n\n"
+        combined_report += combined_df.to_markdown()
+        combined_report += "\n\nThis table was automatically generated using the `generate_model_size_report.py` script.\n"
 
-    # Read current README content
-    with open("README.md", "r") as f:
-        readme_content = f.read()
+        # Read current README content
+        with open("README.md", "r") as f:
+            readme_content = f.read()
 
-    # Find the position to insert the table (after "## Model Size Example")
-    size_example_pos = readme_content.find("## Model Size Example")
-    if size_example_pos == -1:
-        raise ValueError("The section '## Model Size Example' was not found in README.md.")
-    
-    if size_example_pos == -1:
-        print("Warning: '## Model Size Example' section not found in README.md. Appending report to the end of the file.")
-        new_readme = readme_content + "\n\n" + combined_report
-    else:
-        next_section_pos = readme_content.find("##", size_example_pos + 1)
-        # Create new README content
-        new_readme = (
-            readme_content[:size_example_pos] +
-            combined_report +
-            "\n\n" +
-            readme_content[next_section_pos:]
-        )
-    # Write updated README
-    with open("README.md", "w") as f:
-        f.write(new_readme)
+        # Find the position to insert the table (after "## Model Size Example")
+        size_example_pos = readme_content.find("## Model Size Example")
+        
+        if size_example_pos == -1:
+            print("Warning: '## Model Size Example' section not found in README.md. Appending report to the end of the file.")
+            new_readme = readme_content + "\n\n" + combined_report
+        else:
+            next_section_pos = readme_content.find("##", size_example_pos + 1)
+            # Create new README content
+            new_readme = (
+                readme_content[:size_example_pos] +
+                combined_report +
+                "\n\n" +
+                readme_content[next_section_pos:]
+            )
+        
+        # Write updated README
+        with open("README.md", "w") as f:
+            f.write(new_readme)
