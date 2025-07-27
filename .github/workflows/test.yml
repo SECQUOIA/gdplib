@@ -75,6 +75,13 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN || '' }}
           verbose: true
+          # Enable coverage comparison for PRs (delta reporting)
+          override_branch: ${{ github.event.pull_request.base.ref }}
+          override_commit: ${{ github.event.pull_request.base.sha }}
+          override_pr: ${{ github.event.pull_request.number }}
+          override_build: ${{ github.run_number }}
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   test-installation:
     name: test-pip-installation

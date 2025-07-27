@@ -25,9 +25,25 @@ coverage:
         only_pulls: true
 
 comment:
-  layout: "reach,diff,flags,tree"
+  layout: "reach,diff,flags,files,footer"
   behavior: default
-  require_changes: no
+  require_changes: yes
+  require_base: yes
+  require_head: yes
+  
+  # Custom layout for better coverage delta reporting
+  template: |
+    ## [Codecov]({{ codecov_url }}) Report
+    > Merging [{{ head_sha | truncate(7) }}]({{ head_commit_url }}) into [{{ base_sha | truncate(7) }}]({{ base_commit_url }}) will {{ impact_statement }}.
+    
+    [![Codecov]({{ badge_url }})]({{ codecov_url }})
+    
+    ### Coverage Summary
+    - **Coverage**: {{ coverage }}% ({{ coverage_delta }})
+    - **Complexity**: {{ complexity }}% ({{ complexity_delta }})
+    
+    ### Coverage by File 
+    {{ table }}
 
 ignore:
   - "tests/"
