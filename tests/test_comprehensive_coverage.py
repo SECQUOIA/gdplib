@@ -11,7 +11,7 @@ import pytest
 import importlib
 import sys
 import os
-import traceback
+# (Line removed)
 from io import StringIO
 
 # Add the gdplib directory to the path for testing
