@@ -259,7 +259,7 @@ def build_model():
     # Only one choice for parallel units is feasible
     @m.LogicalConstraint(m.j)
     def lim(m, j):
-        r"""
+        """
         Only one choice for parallel units is feasible.
         Equation:
             sum_{k \in K} Y_{k,j} = 1 for j = mixer, reactor, centrifuge
