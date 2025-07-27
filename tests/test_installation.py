@@ -83,5 +83,4 @@ class TestInstallation:
             ), f"Invalid requirement format: {req}"
 
 
-if __name__ == "__main__":
-    pytest.main([__file__])
+# Removed the `if __name__ == "__main__":` block to avoid interfering with pytest's test discovery.
