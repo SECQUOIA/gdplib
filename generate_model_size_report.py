@@ -67,7 +67,7 @@ if __name__ == "__main__":
         combined_df = combined_df.sort_index(axis=1)
 
         # Generate the combined report
-        combined_report = "## Model Size Example\n\n"
+        combined_report = "## Model Size Comparison\n\n"
         combined_report += (
             "The following table shows the size metrics for all models in GDPlib:\n\n"
         )
