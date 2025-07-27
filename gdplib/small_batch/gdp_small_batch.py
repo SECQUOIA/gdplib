@@ -217,7 +217,7 @@ def build_model():
     # Constraint for production time
     @m.Constraint()
     def time(m):
-        r"""
+        """
         Production time constraint.
         Equation:
             sum_{i \in I} q_i * \exp(tl_i - b_i) \leq h
