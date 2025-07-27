@@ -143,7 +143,7 @@ def build_model():
     )
 
     def _streams_filter(m, val):
-        """
+        r"""
         This function filters the 1-1 port pairing.
         x and y are the ports of the RED units unzipped from the tuple val.
         The expression re.findall(r'\d+', x) returns a list of all the digits in the string x.

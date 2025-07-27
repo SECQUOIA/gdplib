@@ -8,7 +8,12 @@ that all dependencies are correctly specified and installed.
 import pytest
 import subprocess
 import sys
-import pkg_resources
+
+try:
+    from importlib.metadata import distribution, PackageNotFoundError
+except ImportError:
+    # For Python < 3.8 compatibility
+    from importlib_metadata import distribution, PackageNotFoundError
 
 
 class TestInstallation:
@@ -28,8 +33,8 @@ class TestInstallation:
         missing_packages = []
         for package in required_packages:
             try:
-                pkg_resources.get_distribution(package)
-            except pkg_resources.DistributionNotFound:
+                distribution(package)
+            except PackageNotFoundError:
                 missing_packages.append(package)
 
         if missing_packages:
@@ -41,8 +46,8 @@ class TestInstallation:
             import gdplib
 
             # Verify it's installed as a package
-            pkg_resources.get_distribution("gdplib")
-        except pkg_resources.DistributionNotFound:
+            distribution("gdplib")
+        except PackageNotFoundError:
             pytest.skip("gdplib not installed as package (development mode)")
         except ImportError:
             pytest.fail("gdplib package cannot be imported")

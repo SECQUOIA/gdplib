@@ -166,7 +166,7 @@ def build_model():
     # Volume requirement in stage j
     @m.Constraint(m.i, m.j)
     def vol(m, i, j):
-        """
+        r"""
         Volume Requirement for Stage j.
         Equation
         --------
@@ -191,7 +191,7 @@ def build_model():
     # Cycle time for each product i
     @m.Constraint(m.i, m.j)
     def cycle(m, i, j):
-        """
+        r"""
         Cycle time for each product i.
 
         Equation
@@ -217,7 +217,7 @@ def build_model():
     # Constraint for production time
     @m.Constraint()
     def time(m):
-        """
+        r"""
         Production time constraint.
         Equation:
             sum_{i \in I} q_i * \exp(tl_i - b_i) \leq h
@@ -237,7 +237,7 @@ def build_model():
     # Relating number of units to 0-1 variables
     @m.Constraint(m.j)
     def units(m, j):
-        """
+        r"""
         Relating number of units to 0-1 variables.
         Equation:
             n_j = sum_{k \in K} coeffval_{k,j} for j = mixer, reactor, centrifuge
@@ -259,7 +259,7 @@ def build_model():
     # Only one choice for parallel units is feasible
     @m.LogicalConstraint(m.j)
     def lim(m, j):
-        """
+        r"""
         Only one choice for parallel units is feasible.
         Equation:
             sum_{k \in K} Y_{k,j} = 1 for j = mixer, reactor, centrifuge
