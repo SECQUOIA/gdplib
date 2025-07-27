@@ -71,4 +71,4 @@ class TestBasicFunctionality:
             pytest.skip(f"Model construction failed: {e}")
 
 
-# Removed the `if __name__ == "__main__"` block to adhere to pytest best practices.
+# (Line intentionally left blank for clarity and to maintain spacing.)
