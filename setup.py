@@ -47,7 +47,7 @@ kwargs = dict(
         "Operating System :: OS Independent",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    python_requires=">=3.9",
+    python_requires=">=3.9, <3.13",
 )
 
 try:
