@@ -135,4 +135,3 @@ class TestModelConstruction:
             pytest.skip(f"GDP column model construction failed: {e}")
 
 
-# Removed the `if __name__ == "__main__":` block to adhere to pytest best practices.
