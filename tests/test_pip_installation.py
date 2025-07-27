@@ -125,4 +125,3 @@ class TestPipInstallation:
             pytest.skip(f"Model construction failed (may require solver): {e}")
 
 
-# Removed the `if __name__ == "__main__":` block to adhere to pytest best practices.
