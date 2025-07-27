@@ -14,10 +14,20 @@ syngas_dir = os.path.dirname(os.path.realpath(__file__))
 
 
 def build_model():
-    """Build a syngas production process superstructure model.
+    """
+    Build a syngas production process superstructure model.
+
+    This function creates a Pyomo ConcreteModel representing the superstructure
+    of a syngas production process. The model includes sets for syngas process
+    technologies, chemical species, process units, utilities, auxiliary equipment,
+    and other components involved in the process. It is designed for optimization
+    of the syngas production process.
+
+    Parameters:
+        None
 
     Returns:
-        Pyomo model object for syngas production process optimization
+        ConcreteModel: A Pyomo model object for syngas production process optimization.
     """
     m = ConcreteModel()
 
