@@ -156,5 +156,3 @@ class TestModelFunctionality:
             assert Disjunction is not None
         except ImportError:
             pytest.fail("Pyomo GDP constructs not available")
-
-

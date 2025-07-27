@@ -133,5 +133,3 @@ class TestModelConstruction:
             pytest.skip("GDP column module not available")
         except Exception as e:
             pytest.skip(f"GDP column model construction failed: {e}")
-
-

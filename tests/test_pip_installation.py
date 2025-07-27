@@ -123,5 +123,3 @@ class TestPipInstallation:
                 pytest.fail(f"Import failed: {e}")
         except Exception as e:
             pytest.skip(f"Model construction failed (may require solver): {e}")
-
-

@@ -282,5 +282,3 @@ class TestComprehensiveCoverage:
 
         except ImportError:
             pytest.skip("Coverage package not available")
-
-

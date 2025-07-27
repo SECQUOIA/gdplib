@@ -137,7 +137,7 @@ def build_model(approximation="none"):
     m.mixers = pyo.Set(doc="Set of mixers", within=m.units, initialize=["dm"] | m.inTU)
 
     def _streams_filter(m, val):
-        """
+        r"""
         This function filters the streams based on one-to-one port pairing.
         The expression re.findall(r'\d+', x) returns a list of all the digits in the string x.
         The expression re.findall(r'\d+', y) returns a list of all the digits in the string y.

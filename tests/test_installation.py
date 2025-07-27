@@ -81,5 +81,3 @@ class TestInstallation:
             assert (
                 ">=" in req or "==" in req or ">" in req or "<" in req
             ), f"Invalid requirement format: {req}"
-
-
