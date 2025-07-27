@@ -284,4 +284,3 @@ class TestComprehensiveCoverage:
             pytest.skip("Coverage package not available")
 
 
-# Removed the `if __name__ == "__main__"` block to adhere to pytest best practices.
