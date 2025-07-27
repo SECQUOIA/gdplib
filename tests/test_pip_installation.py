@@ -95,7 +95,7 @@ class TestPipInstallation:
                 f"gdplib import failed despite dependencies being available: {e}"
             )
 
-    def test_simulate_pip_install_scenario(self):
+    def test_pip_install_scenario(self):
         """Simulate the scenario that would happen during pip install."""
         # This tests the scenario where someone does pip install gdplib
         # and then tries to import it

@@ -45,7 +45,7 @@ class TestComprehensiveCoverage:
         "water_network",
     ]
 
-    def test_coverage_statistics_report(self, capsys):
+    def test_coverage_statistics_report(self):
         """Generate and display comprehensive coverage statistics."""
         print("\n" + "=" * 80)
         print("GDPlib Comprehensive Test Coverage Report")

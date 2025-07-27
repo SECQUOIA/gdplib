@@ -84,6 +84,7 @@ class TestModelStructure:
             has_readme = any(os.path.exists(readme) for readme in readme_files)
             if not has_readme:
                 import warnings
+
                 warnings.warn(
                     f"{module_name} directory has no README file (recommended but not required)",
                     UserWarning,
