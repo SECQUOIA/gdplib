@@ -29,22 +29,23 @@ The library includes the following models:
 
 Each model directory contains its own README.md with detailed model descriptions and specific usage instructions.
 
-## Model Size Example
+## Model Size Comparison
 
-Here's an example of model size metrics for the Jobshop model:
+The following table shows the size metrics for all models in GDPlib:
 
-| Component             |   Number |
-|:----------------------|---------:|
-| variables             |       10 |
-| binary_variables      |        6 |
-| integer_variables     |        0 |
-| continuous_variables  |        4 |
-| disjunctions          |        3 |
-| disjuncts             |        6 |
-| constraints           |        9 |
-| nonlinear_constraints |        0 |
+| Component             |   batch_processing |   biofuel |   cstr |   disease_model |   ex1_linan_2023 |   gdp_col |   hda |   jobshop |   med_term_purchasing |   methanol |   modprodnet |   positioning |   small_batch |   spectralog |   stranded_gas |   syngas |   water_network |
+|:----------------------|-------------------:|----------:|-------:|----------------:|-----------------:|----------:|------:|----------:|----------------------:|-----------:|-------------:|--------------:|--------------:|-------------:|---------------:|---------:|----------------:|
+| variables             |                288 |     36840 |     76 |            1250 |               12 |       442 |  1158 |        10 |                  1165 |        287 |          488 |            56 |            37 |          128 |          57810 |      367 |             395 |
+| binary_variables      |                138 |       516 |     20 |              52 |               10 |        30 |    12 |         6 |                   216 |          8 |            2 |            50 |            18 |           60 |            192 |       46 |              10 |
+| integer_variables     |                  0 |      4356 |      0 |               0 |                0 |         0 |     0 |         0 |                     0 |          0 |          363 |             0 |             0 |            0 |          45360 |        0 |               0 |
+| continuous_variables  |                150 |     31968 |     56 |            1198 |                2 |       412 |  1146 |         4 |                   949 |        279 |          123 |             6 |            19 |           68 |          12258 |      321 |             385 |
+| disjunctions          |                  9 |       252 |     10 |              26 |                2 |        15 |     6 |         3 |                    72 |          4 |            1 |            25 |             9 |           30 |             96 |       23 |               5 |
+| disjuncts             |                 18 |       516 |     20 |              52 |               10 |        30 |    12 |         6 |                   216 |          8 |            2 |            50 |            18 |           60 |            192 |       46 |              10 |
+| constraints           |                601 |     12884 |    100 |             831 |               10 |       610 |   728 |         9 |                   762 |        429 |          486 |            30 |            34 |          158 |          14959 |      543 |             329 |
+| nonlinear_constraints |                  1 |        12 |     17 |               0 |                0 |       262 |   151 |         0 |                     0 |         55 |            1 |            25 |             1 |            8 |             18 |       48 |              33 |
 
-You can generate size reports for other models using the `generate_model_size_report.py` script.
+This table was automatically generated using the `generate_model_size_report.py` script.
+
 
 ## Installation
 
