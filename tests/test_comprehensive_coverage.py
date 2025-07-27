@@ -13,7 +13,6 @@ import sys
 import os
 import traceback
 from io import StringIO
-import subprocess
 
 # Add the gdplib directory to the path for testing
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -272,35 +271,19 @@ class TestComprehensiveCoverage:
         if missing_modules:
             pytest.fail(f"Missing required external modules: {missing_modules}")
 
-    def test_run_coverage_analysis(self):
-        """Run pytest with coverage and capture results."""
+    def test_coverage_framework_available(self):
+        """Test that coverage tools are available for CI/CD."""
         try:
-            # Run coverage analysis
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "pytest",
-                    "--cov=gdplib",
-                    "--cov-report=term-missing",
-                    "--tb=no",
-                    "-q",
-                ],
-                capture_output=True,
-                text=True,
-                cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-            )
+            import coverage
 
-            print("\n" + "=" * 80)
-            print("Coverage Analysis Results")
-            print("=" * 80)
-            print(result.stdout)
-            if result.stderr:
-                print("STDERR:")
-                print(result.stderr)
+            # Test that coverage can be initialized
+            cov = coverage.Coverage()
+            assert cov is not None
 
-        except Exception as e:
-            pytest.skip(f"Coverage analysis failed: {e}")
+            print("Coverage framework is available and functional")
+
+        except ImportError:
+            pytest.skip("Coverage package not available")
 
 
 if __name__ == "__main__":
