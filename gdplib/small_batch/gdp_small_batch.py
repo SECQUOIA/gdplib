@@ -166,7 +166,7 @@ def build_model():
     # Volume requirement in stage j
     @m.Constraint(m.i, m.j)
     def vol(m, i, j):
-        r"""
+        """
         Volume Requirement for Stage j.
         Equation
         --------
