@@ -191,7 +191,7 @@ def build_model():
     # Cycle time for each product i
     @m.Constraint(m.i, m.j)
     def cycle(m, i, j):
-        r"""
+        """
         Cycle time for each product i.
 
         Equation
