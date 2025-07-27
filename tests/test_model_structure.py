@@ -158,4 +158,3 @@ class TestModelFunctionality:
             pytest.fail("Pyomo GDP constructs not available")
 
 
-# Removed the `if __name__ == "__main__":` block to adhere to pytest best practices.
