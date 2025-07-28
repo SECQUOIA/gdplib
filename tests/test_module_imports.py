@@ -86,50 +86,48 @@ class TestModuleImports:
                             f"{module_name}.build_model requires specific arguments"
                         )
                 except Exception as e:
-                    pytest.skip(f"{module_name}.build_model failed with error: {e}")
+                    err_msg = str(e)
+                    if (
+                        "No executable found for solver" in err_msg
+                        or "No 'gams' command" in err_msg
+                    ):
+                        pytest.skip(
+                            f"{module_name}.build_model requires external solver: {e}"
+                        )
+                    else:
+                        pytest.fail(
+                            f"{module_name}.build_model raised unexpected error: {e}"
+                        )
         except ImportError:
             pytest.skip(f"Module {module_name} not available")
 
 
 class TestModelConstruction:
-    """Test model construction for key modules."""
+    """Test model construction for all GDPlib modules."""
 
-    def test_cstr_model_construction(self):
-        """Test CSTR model construction specifically."""
+    MODELS = TestModuleImports.GDPLIB_MODULES
+
+    @pytest.mark.parametrize("module_name", MODELS)
+    def test_model_construction(self, module_name):
+        """Ensure that selected models can be built successfully."""
         try:
-            import gdplib.cstr
+            module = importlib.import_module(f"gdplib.{module_name}")
 
-            model = gdplib.cstr.build_model()
-            assert model is not None
-            # Basic model validation
-            assert hasattr(model, "component_objects")
-        except ImportError:
-            pytest.skip("CSTR module not available")
-        except Exception as e:
-            pytest.skip(f"CSTR model construction failed: {e}")
-
-    def test_biofuel_model_construction(self):
-        """Test biofuel model construction specifically."""
-        try:
-            import gdplib.biofuel
-
-            model = gdplib.biofuel.build_model()
+            model = module.build_model()
             assert model is not None
             assert hasattr(model, "component_objects")
         except ImportError:
-            pytest.skip("Biofuel module not available")
+            pytest.skip(f"{module_name} module not available")
         except Exception as e:
-            pytest.skip(f"Biofuel model construction failed: {e}")
-
-    def test_gdp_col_model_construction(self):
-        """Test GDP column model construction specifically."""
-        try:
-            import gdplib.gdp_col
-
-            model = gdplib.gdp_col.build_model()
-            assert model is not None
-            assert hasattr(model, "component_objects")
-        except ImportError:
-            pytest.skip("GDP column module not available")
-        except Exception as e:
-            pytest.skip(f"GDP column model construction failed: {e}")
+            err_msg = str(e)
+            if (
+                "No executable found for solver" in err_msg
+                or "No 'gams' command" in err_msg
+            ):
+                pytest.skip(
+                    f"{module_name} model construction requires external solver: {e}"
+                )
+            else:
+                pytest.fail(
+                    f"{module_name} model construction raised unexpected error: {e}"
+                )
