@@ -1,62 +1,16 @@
 #!/usr/bin/env python
 """
 GDPlib open source model library for Generalized Disjunctive Programming
+
+This file is maintained for backward compatibility.
+Modern installations should use `pip install -e .` which will use pyproject.toml.
 """
 import sys
 from logging import warning
 
-from setuptools import setup, find_packages
+from setuptools import setup
 
-
-kwargs = dict(
-    name="gdplib",
-    packages=find_packages(),
-    install_requires=[
-        "Pyomo>=5.6.1",
-        "setuptools>=39.0.1",
-        "pandas>=1.0.1",
-        "matplotlib>=2.2.2",
-        "scipy>=1.0.0",
-        "pint>=0.15.0",
-        "openpyxl>=3.0.0",
-    ],
-    extras_require={},
-    package_data={
-        # If any package contains *.template or *.json files, include them:
-        "": ["*.template", "*.json"]
-    },
-    scripts=[],
-    author="Qi Chen",
-    author_email="qichen@andrew.cmu.edu",
-    maintainer="Qi Chen",
-    url="https://github.com/grossmann-group/gdplib",
-    license="BSD 3-clause",
-    description="GDPlib open source model library for Generalized Disjunctive Programming",
-    long_description=__doc__,
-    data_files=[],
-    keywords=["pyomo", "generalized disjunctive programming"],
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: 3.10",
-        "Programming Language :: Python :: 3.11",
-        "Programming Language :: Python :: 3.12",
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: BSD License",
-        "Operating System :: OS Independent",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ],
-    python_requires=">=3.9, <3.13",
-)
-
-try:
-    setup(setup_requires=["setuptools_scm"], use_scm_version=True, **kwargs)
-except (ImportError, LookupError):
-    default_version = "1.0.0"
-    warning(
-        "Cannot use .git version: package setuptools_scm not installed "
-        "or .git directory not present."
-    )
-    print("Defaulting to version: {}".format(default_version))
-    setup(**kwargs)
+# For backward compatibility with legacy installations
+# The actual project configuration is now in pyproject.toml
+if __name__ == "__main__":
+    setup()

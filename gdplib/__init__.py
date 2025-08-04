@@ -1,3 +1,8 @@
+try:
+    from gdplib._version import __version__
+except ImportError:
+    __version__ = "unknown"
+
 import gdplib.mod_hens
 import gdplib.modprodnet
 import gdplib.biofuel
