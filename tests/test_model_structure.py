@@ -120,8 +120,8 @@ class TestModelFunctionality:
 
     def test_models_return_pyomo_objects(self):
         """Test that build_model functions return proper Pyomo model objects."""
-        # Test a few key models
-        test_modules = ["cstr", "biofuel", "gdp_col"]
+        # Test all available modules
+        test_modules = self.GDPLIB_MODULES
 
         for module_name in test_modules:
             try:
@@ -142,7 +142,9 @@ class TestModelFunctionality:
                         ), f"{module_name} model has no components"
 
                     except Exception as e:
-                        pytest.skip(f"{module_name} model construction failed: {e}")
+                        pytest.fail(
+                            f"{module_name} model construction raised unexpected error: {e}"
+                        )
             except ImportError:
                 pytest.skip(f"Module {module_name} not available")
 
