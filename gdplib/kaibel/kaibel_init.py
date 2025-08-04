@@ -3,8 +3,8 @@
                             temperature values.
             (written by E. Soraya Rawlings, esoraya@rwlngs.net)
 
-The separation of four components require a sequence of at least three distillation
-columns. Here, we calculate the minimum number of theoretical trays for the three
+The separation of four components requires a sequence of at least three distillation columns.
+Here, we calculate the minimum number of theoretical trays for the three
 columns. The sequence is shown in Figure 2.
 
          COLUMN 1              COLUMN 2              COLUMN 3

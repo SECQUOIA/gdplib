@@ -17,9 +17,9 @@ from os.path import join
 #
 # Jobshop example from http://www.gams.com/modlib/libhtml/logmip4.htm
 #
-# This model solves a jobshop scheduling, which has a set of jobs
-# which must be processed in sequence of stages but not all jobs
-# require all stages. A zero wait transfer policy is assumed between
+# This model solves a jobshop scheduling problem, which has a set of jobs
+# that must be processed in sequence of stages but not all jobs
+# require all stages. A zero-wait transfer policy is assumed between
 # stages. To obtain a feasible solution it is necessary to eliminate
 # all clashes between jobs. It requires that no two jobs be performed
 # at any stage at any time. The objective is to minimize the makespan,
@@ -75,7 +75,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             The job shop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -102,7 +102,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -135,7 +135,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -202,7 +202,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
         I : str
             job index
