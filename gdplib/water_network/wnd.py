@@ -658,7 +658,9 @@ def build_model(approximation="none"):
         ]
         # Treatment unit's mixer mass balance on the flowrate.
         [
-            unit_exists_block.balances_con.add(m._flow_into[mt] == unit_exists_block.flow[mt, unit])
+            unit_exists_block.balances_con.add(
+                m._flow_into[mt] == unit_exists_block.flow[mt, unit]
+            )
             for mt, t in unit_exists_block.streams
             if t == unit
         ]
@@ -666,7 +668,8 @@ def build_model(approximation="none"):
         [
             unit_exists_block.balances_con.add(
                 m._conc_into[mt, j]
-                == unit_exists_block.conc[j, mt, unit] * unit_exists_block.flow[mt, unit]
+                == unit_exists_block.conc[j, mt, unit]
+                * unit_exists_block.flow[mt, unit]
             )
             for mt, t in unit_exists_block.streams
             if t == unit
@@ -765,7 +768,9 @@ def build_model(approximation="none"):
                 return _func(x, *popt)
 
             # Z^(1/0.7)=sum(Q)
-            @unit_exists_block.Constraint(doc="New var potential term in capital cost cstr.")
+            @unit_exists_block.Constraint(
+                doc="New var potential term in capital cost cstr."
+            )
             def _cost_nv(unit_exists_block):
                 """Constraint: New variable potential term in capital cost.
                 The constraint ensures that the new variable potential term in the capital cost is equal to the flow rate entering the treatment unit.
