@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm[toml]>=6.2", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gdplib"
+dynamic = ["version"]
+description = "GDPlib open source model library for Generalized Disjunctive Programming"
+readme = "README.md"
+license = {text = "BSD 3-clause"}
+authors = [
+    {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},
+]
+maintainers = [
+    {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},
+]
+keywords = ["pyomo", "generalized disjunctive programming"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10", 
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: BSD License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.9, <3.13"
+dependencies = [
+    "Pyomo>=5.6.1",
+    "setuptools>=39.0.1",
+    "pandas>=1.0.1",
+    "matplotlib>=2.2.2",
+    "scipy>=1.0.0",
+    "pint>=0.15.0",
+    "openpyxl>=3.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/grossmann-group/gdplib"
+Repository = "https://github.com/grossmann-group/gdplib"
+
+[tool.setuptools]
+packages = {find = {}}
+
+[tool.setuptools.package-data]
+"*" = ["*.template", "*.json"]
+
+[tool.setuptools_scm]
+write_to = "gdplib/_version.py"

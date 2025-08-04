@@ -105,7 +105,7 @@ class TestComprehensiveCoverage:
             [v for v in execution_results.values() if v == "✅ RUNNABLE"]
         )
 
-        print(f"\nModule Import Statistics:")
+        print("\nModule Import Statistics:")
         print(f"  Total Modules: {total_modules}")
         print(
             f"  Successful Imports: {successful_imports}/{total_modules} ({successful_imports/total_modules*100:.1f}%)"
@@ -117,7 +117,7 @@ class TestComprehensiveCoverage:
             f"  Runnable Models: {runnable_models}/{total_modules} ({runnable_models/total_modules*100:.1f}%)"
         )
 
-        print(f"\nDetailed Results:")
+        print("\nDetailed Results:")
         print(f"{'Module':<25} {'Import':<15} {'build_model':<15} {'Execution':<20}")
         print("-" * 80)
 
@@ -233,8 +233,8 @@ class TestComprehensiveCoverage:
     def test_gdp_constructs_available(self):
         """Test that GDP-specific constructs are available."""
         try:
-            from pyomo.gdp import Disjunct, Disjunction
-            from pyomo.environ import ConcreteModel, Var, Constraint
+            from pyomo.gdp import Disjunct
+            from pyomo.environ import ConcreteModel, Var
 
             # Test basic GDP model creation
             model = ConcreteModel()
