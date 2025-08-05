@@ -6,26 +6,25 @@ import pandas as pd
 
 if __name__ == "__main__":
     instance_list = [
-        # Start with a small set of well-working models
+        "batch_processing",
+        "biofuel",
+        "cstr",
+        "disease_model",
+        "ex1_linan_2023",
+        "gdp_col",
+        "hda",
         "jobshop",
+        "kaibel",
+        "med_term_purchasing",
+        "methanol",
+        "mod_hens",
+        "modprodnet",
+        "positioning",
+        "small_batch",
+        "spectralog",
+        "stranded_gas",
+        "syngas",
         "water_network",
-        # "batch_processing",
-        # "biofuel",
-        # "cstr",
-        # "disease_model",
-        # "ex1_linan_2023",
-        # "gdp_col",
-        # "hda",
-        # "kaibel",
-        # "med_term_purchasing",
-        # "methanol",
-        # "mod_hens",
-        # "modprodnet",
-        # "positioning",
-        # "small_batch",
-        # "spectralog",
-        # "stranded_gas",
-        # "syngas",
     ]
     current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     timelimit = 600
@@ -71,7 +70,15 @@ if __name__ == "__main__":
         combined_report += (
             "The following table shows the size metrics for all models in GDPlib:\n\n"
         )
-        combined_report += combined_df.to_markdown()
+
+        # Create a modified version of the DataFrame with linked column headers
+        linked_df = combined_df.copy()
+        linked_columns = []
+        for col in linked_df.columns:
+            linked_columns.append(f"[{col}](./gdplib/{col}/)")
+        linked_df.columns = linked_columns
+
+        combined_report += linked_df.to_markdown()
         combined_report += "\n\nThis table was automatically generated using the `generate_model_size_report.py` script.\n"
 
         # Read current README content
