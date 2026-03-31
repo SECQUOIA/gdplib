@@ -34,7 +34,7 @@ def convert_json_to_data(obj) -> dict:
     else:
         return obj
     
-def build_model(data):
+def build_model(data: dict):
     
     # PYOMO MODEL
     m = pyo.ConcreteModel()
