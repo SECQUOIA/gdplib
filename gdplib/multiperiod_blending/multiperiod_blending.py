@@ -64,7 +64,7 @@ def convert_json_to_data(obj) -> dict:
         return obj
 
 
-def build_model(data: dict):
+def build_model(data: dict = None):
     """
     Build the multiperiod blending problem (MPBP) as a Pyomo GDP model.
 
@@ -79,6 +79,17 @@ def build_model(data: dict):
     m : pyo.ConcreteModel
         Pyomo GDP model ready for transformation (e.g., ``gdp.bigm``) and solution.
     """
+
+    if data is None:
+        import os
+        default_path = os.path.join(
+            os.path.dirname(__file__),
+            "instances_json",
+            "mpbp_6.json",
+        )
+        with open(default_path, "r") as f:
+            data = convert_json_to_data(json.load(f))
+
 
     # PYOMO MODEL
     m = pyo.ConcreteModel()
@@ -508,11 +519,11 @@ def build_model(data: dict):
 
 if __name__ == "__main__":
     # Opening instance
-    with open("instances_json/mpbp_6.json", "r") as f:
-        json_obj = json.load(f)
-    d = convert_json_to_data(json_obj)
+    # with open("instances_json/mpbp_6.json", "r") as f:
+    #     json_obj = json.load(f)
+    # d = convert_json_to_data(json_obj)
 
-    m = build_model(d)  # building model
+    m = build_model()  # building model
     pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
     pyo.TransformationFactory("gdp.bigm").apply_to(m)
 
