@@ -41,6 +41,7 @@ class TestComprehensiveCoverage:
         "stranded_gas",
         "syngas",
         "water_network",
+        "multiperiod_blending"
     ]
 
     def test_coverage_statistics_report(self):
