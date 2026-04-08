@@ -466,7 +466,7 @@ def build_model(data: dict = None):
         elif nout in m.B:
             return m.X_nb[nin, nout, t].indicator_var.implies(
                 m.YB_not[nin, t].indicator_var
-            )  # TODO Not in formulation
+            )  
         else:
             return pyo.LogicalConstraint.Skip
 
@@ -479,7 +479,7 @@ def build_model(data: dict = None):
         else:
             return pyo.Constraint.Skip
 
-    @m.Constraint(m.R, m.A, m.T)  # TODO: Is it forall t?
+    @m.Constraint(m.R, m.A, m.T)  
     def ftil_bn_fix(m, r, nin, nout, t):
         """For blending-origin arcs, fix F_til[r, nin, nout, t] == F[nin, nout, t] when r == nin."""
         if nin in m.B and r == nin:
