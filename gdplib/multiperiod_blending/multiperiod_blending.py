@@ -14,7 +14,7 @@ The objective maximizes net profit: demand revenue minus supply cost, variable
 arc costs, and fixed arc activation costs over all time periods.
 
 References:
-    > Lotero, I., Trespalacios, F., Grossmann, I. E., Papageorgiou, D. J., & Cheon, M.-S. (2016). An MILP-MINLP decomposition method for the global optimization of a source based model of the multiperiod blending problem. Computers &amp; Chemical Engineering, 87, 13–35. https://doi.org/10.1016/j.compchemeng.2015.12.017 
+    > Lotero, I., Trespalacios, F., Grossmann, I. E., Papageorgiou, D. J., & Cheon, M.-S. (2016). An MILP-MINLP decomposition method for the global optimization of a source based model of the multiperiod blending problem. Computers & Chemical Engineering, 87, 13–35. https://doi.org/10.1016/j.compchemeng.2015.12.017 
 """
 
 import ast
