@@ -97,6 +97,7 @@ def build_model(data: dict = None):
 
     if data is None:
         import os
+
         default_path = os.path.join(
             os.path.dirname(__file__),
             "instances_json",
@@ -104,7 +105,6 @@ def build_model(data: dict = None):
         )
         with open(default_path, "r") as f:
             data = convert_json_to_data(json.load(f))
-
 
     # PYOMO MODEL
     m = pyo.ConcreteModel()
@@ -480,7 +480,7 @@ def build_model(data: dict = None):
         elif nout in m.B:
             return m.X_nb[nin, nout, t].indicator_var.implies(
                 m.YB_not[nin, t].indicator_var
-            )  
+            )
         else:
             return pyo.LogicalConstraint.Skip
 
@@ -493,7 +493,7 @@ def build_model(data: dict = None):
         else:
             return pyo.Constraint.Skip
 
-    @m.Constraint(m.R, m.A, m.T)  
+    @m.Constraint(m.R, m.A, m.T)
     def ftil_bn_fix(m, r, nin, nout, t):
         """For blending-origin arcs, fix F_til[r, nin, nout, t] == F[nin, nout, t] when r == nin."""
         if nin in m.B and r == nin:
@@ -535,7 +535,9 @@ def build_model(data: dict = None):
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Solve the multiperiod blending problem.")
+    parser = argparse.ArgumentParser(
+        description="Solve the multiperiod blending problem."
+    )
     parser.add_argument(
         "--instance",
         default="instances_json/mpbp_6.json",
