@@ -519,9 +519,9 @@ def build_model(data: dict = None):
 
 if __name__ == "__main__":
     # Opening instance
-    # with open("instances_json/mpbp_6.json", "r") as f:
-    #     json_obj = json.load(f)
-    # d = convert_json_to_data(json_obj)
+    with open("instances_json/mpbp_6.json", "r") as f:
+        json_obj = json.load(f)
+    d = convert_json_to_data(json_obj)
 
     m = build_model()  # building model
     pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
