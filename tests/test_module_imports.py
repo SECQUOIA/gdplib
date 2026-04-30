@@ -38,6 +38,7 @@ class TestModuleImports:
         "ex1_linan_2023",
         "small_batch",
         "cstr",
+        "membrane",
         "reverse_electrodialysis",
     ]
 

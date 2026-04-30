@@ -31,6 +31,7 @@ class TestComprehensiveCoverage:
         "jobshop",
         "kaibel",
         "med_term_purchasing",
+        "membrane",
         "methanol",
         "mod_hens",
         "modprodnet",
