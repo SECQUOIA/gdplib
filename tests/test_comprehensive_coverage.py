@@ -32,6 +32,7 @@ class TestComprehensiveCoverage:
         "disease_model",
         "ex1_linan_2023",
         "gdp_col",
+        "grid",
         "hda",
         "jobshop",
         "kaibel",

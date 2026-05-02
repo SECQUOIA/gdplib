@@ -22,6 +22,7 @@ class TestModelStructure:
         "spectralog",
         "stranded_gas",
         "gdp_col",
+        "grid",
         "hda",
         "kaibel",
         "methanol",
