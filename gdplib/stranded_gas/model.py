@@ -38,10 +38,40 @@ from pyomo.environ import (
 from gdplib.stranded_gas.util import alphanum_sorted
 from pyomo.environ import TerminationCondition as tc
 
+_CASE_MODULE_TYPES = {
+    "Gas_100": ("U100",),
+    "Gas_250": ("U250",),
+    "Gas_500": ("U500",),
+    "Gas_small": ("U100", "U250"),
+    "Gas_large": ("U250", "U500"),
+}
 
-def build_model():
+
+def _module_types_for_case(case, module_sheet):
+    if case is None:
+        return module_sheet.columns.tolist()
+
+    try:
+        case_module_types = _CASE_MODULE_TYPES[case]
+    except KeyError:
+        valid_cases = ", ".join(sorted(_CASE_MODULE_TYPES))
+        raise ValueError(
+            f"Invalid stranded_gas case {case!r}. Expected one of: {valid_cases}"
+        ) from None
+
+    return [mtype for mtype in module_sheet.columns if mtype in case_module_types]
+
+
+def build_model(case=None):
     """
     Constructs a Pyomo ConcreteModel for optimizing a modular stranded gas processing network. The model is designed to convert stranded gas into gasoline using a modular and intensified GTL process. It incorporates the economic dynamics of module investments, gas processing, and product transportation.
+
+    Parameters
+    ----------
+    case : str, optional
+        Optional documented module-size variant. Accepted values are ``Gas_100``,
+        ``Gas_250``, ``Gas_500``, ``Gas_small``, and ``Gas_large``. If omitted,
+        the unrestricted base model is built.
 
     Returns
     -------
@@ -88,7 +118,8 @@ def build_model():
         os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None
     )
     module_sheet = xlsx_data["modules"].set_index("Type")
-    m.module_types = Set(initialize=module_sheet.columns.tolist(), doc="Module types")
+    module_types = _module_types_for_case(case, module_sheet)
+    m.module_types = Set(initialize=module_types, doc="Module types")
 
     @m.Param(m.module_types)
     def module_base_cost(m, mtype):
@@ -1218,21 +1249,4 @@ def build_model():
 
 
 if __name__ == "__main__":
-    m = build_model()
-
-    # Restrict number of module types; A, R, S, U
-    # valid_modules = ['A500', 'A1000', 'A2000', 'A5000']
-    # valid_modules = ['A500', 'R500', 'A5000', 'R5000']
-    # valid_modules = ['U500', 'U5000']
-    # valid_modules = ['U100', 'U250']
-    # valid_modules = ['U1000']
-    # valid_modules = ['U500']
-    valid_modules = ["U250"]
-    # valid_modules = ['U100']
-    for mtype in m.module_types - valid_modules:
-        m.gas_consumption[:, mtype, :].fix(0)
-        m.num_modules[mtype, :, :].fix(0)
-        m.modules_transferred[mtype, :, :, :].fix(0)
-        m.modules_purchased[mtype, :, :].fix(0)
-        m.mtype_exists[mtype].deactivate()
-        m.mtype_absent[mtype].binary_indicator_var.fix(1)
+    m = build_model("Gas_250")
