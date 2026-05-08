@@ -105,6 +105,19 @@ These instructions apply to the whole repository.
 - Package modules may use relative imports. Scripts intended to run as `__main__` should use absolute imports, as described in the README.
 - Keep data files package-local and access them with paths relative to the module file.
 - Preserve existing public import paths and model-builder names unless the user explicitly asks for an API break.
+- When a change claims to simplify or reduce a GDP/Pyomo model, distinguish
+  between Pyomo modeling-layer objects and the solver-facing transformed model.
+  Report both when relevant: logical components such as `BooleanVarData`,
+  numeric variables, binary variables, constraints, disjunctions, disjuncts,
+  and transformed model size after the intended GDP transformation.
+- For logical or GDP rewrites, test the supported transformation path in the
+  committed environment. Prefer direct `gdp.bigm` smoke tests when that is the
+  intended path; do not add optional dependencies such as `sympy` solely to test
+  a transformation path that the project does not otherwise require.
+- For scalable model changes, verify the documented/default instance and at
+  least one larger instance when practical. If semantics should be unchanged,
+  compare transformed model counts or generated algebraic representations where
+  feasible.
 
 ## Packaging
 
