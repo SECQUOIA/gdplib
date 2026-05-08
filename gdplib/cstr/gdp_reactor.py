@@ -842,9 +842,7 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
         Pyomo.LogicalConstraint
             Logical constraint for the existence of only one recycle stream.
         """
-        return pyo.exactly(
-            1, [m.YR_is_recycle[n].indicator_var for n in range(1, NT + 1)]
-        )
+        return pyo.exactly(1, [m.YR_is_recycle[n].indicator_var for n in m.N])
 
     m.one_recycle = pyo.LogicalConstraint(
         rule=one_recycle_rule, doc="There is only one recycle stream"
@@ -907,7 +905,6 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
 if __name__ == "__main__":
     m = build_model(NT=5)
-    pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
     pyo.TransformationFactory("gdp.bigm").apply_to(m)
     pyo.SolverFactory("gams").solve(
         m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
