@@ -22,6 +22,8 @@ These instructions apply to the whole repository.
   pixi run test
   pixi run lint
   ```
+- If `pixi` is not on `PATH`, check whether a local Pixi binary exists (for
+  example `$HOME/.pixi/bin/pixi`) before falling back to the pip workflow.
 - On macOS or Windows, use the pip workflow below unless the task explicitly
   expands Pixi platform support and regenerates `pixi.lock`.
 - Do not add Pixi platforms casually. Adding `osx-64`, `osx-arm64`, `win-64`,
@@ -68,6 +70,31 @@ These instructions apply to the whole repository.
 - For new or substantially changed models, include relevant mathematical
   formulation details, usage examples, and source references in the model
   README or module documentation.
+- Use `### Solution` consistently for README solution sections. For a single
+  verified objective value, prefer:
+  `Best known objective value: <value> (optimal)`. For multiple formulations or
+  instances, use `Best known objective values:` followed by one entry per case.
+  If a value is not proven optimal, say "best known" rather than "optimal" and
+  include the solver status or gap when known.
+- When adding or changing documented solution values, try to reproduce them with
+  the model's existing solve path or a focused Pyomo script, preferably inside
+  the Pixi environment. Record the model instance/formulation, transformation,
+  solver interface, solver, termination condition, objective value, and any gap
+  or infeasibility evidence in the PR or issue discussion.
+- Keep solver-backed solution verification separate from default model
+  construction tests. GAMS, BARON, IPOPT, and similar tools are optional, so do
+  not make default imports, model construction, or CI tests depend on them
+  unless the task explicitly asks for solver-specific behavior.
+- If a model cannot be solved because of a missing solver, timeout, infeasible
+  result, or runtime error, search existing GitHub issues first. Update the
+  relevant issue when one exists; otherwise create a new issue with the exact
+  command, environment, solver stack, termination condition or traceback, and
+  model/formulation attempted.
+- A future structured solution-record format is tracked in
+  https://github.com/SECQUOIA/gdplib/issues/105. The intended direction is
+  inspired by MINLPLib solution metadata: objective sense/value, best primal and
+  dual bounds, infeasibility, solver and solve metadata, model instance or
+  formulation, and optionally nonzero primal variable values.
 - For Pyomo code, follow the import style already used by the local module.
 
 ## Model and API Conventions
