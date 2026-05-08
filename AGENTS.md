@@ -5,8 +5,13 @@ These instructions apply to the whole repository.
 ## Project Scope
 
 - GDPlib is a Python model library for Generalized Disjunctive Programming examples and benchmarks built with Pyomo.
+- GDPlib is licensed under the BSD 3-clause license. Keep new contributions
+  compatible with that license.
 - Supported Python versions are 3.10, 3.11, and 3.12. Keep `pyproject.toml`, `setup.py`, CI, and environment manifests aligned when changing support.
 - Treat optimization solvers as optional external tools. Do not make model construction, imports, or default tests require GAMS, IPOPT, or another solver unless the task explicitly asks for solver-specific behavior.
+- Models often represent chemical-engineering or operations-research
+  optimization problems. Preserve the model's reference source and benchmarking
+  intent when making changes.
 
 ## Environment
 
@@ -45,6 +50,21 @@ These instructions apply to the whole repository.
   flake8 gdplib/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
   typos --config ./.github/workflows/typos.toml
   ```
+
+## Coding and Documentation Style
+
+- Follow the style of the surrounding module, while keeping changed Python code
+  compatible with the repository Black and flake8 checks.
+- Use type hints where they clarify public helper APIs, but do not introduce
+  large annotation-only refactors in model files.
+- Keep docstrings accurate. Use NumPy/SciPy-style `Parameters` and `Returns`
+  sections only for actual callable signatures; document constructor-created
+  model attributes as implementation notes, module documentation, or model
+  README content.
+- For new or substantially changed models, include relevant mathematical
+  formulation details, usage examples, and source references in the model
+  README or module documentation.
+- For Pyomo code, follow the import style already used by the local module.
 
 ## Model and API Conventions
 
