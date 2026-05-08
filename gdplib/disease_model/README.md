@@ -3,7 +3,9 @@ This is the SIR disease model using a low/high transmission parameter. The model
 
 ## Problem details
 
-### Optimal Solution
+### Solution
+
+Best known objective value: 304.4162107198316 (optimal)
 
 ### Size
 

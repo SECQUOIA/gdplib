@@ -3,9 +3,9 @@
 The model is designed to minimize the total cost associated with the design and operation of a plant consisting of multiple parallel processing units with intermediate storage tanks. It involves determining the optimal number and sizes of processing units, batch sizes for different products at various stages, and sizes and placements of storage tanks to ensure operational efficiency while meeting production requirements within a specified time horizon.
 
 ## Problem Details
-### Optimal Solution
+### Solution
 
-TODO
+Best known objective value: 679365.3347987866 (optimal)
 
 ### Size
 

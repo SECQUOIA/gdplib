@@ -12,6 +12,7 @@ This model maximizes profit in a short-term horizon in which various contracts a
 
 ### Solution
 
+Best known objective value: 6797.539701513403 (optimal)
 
 ### Size
 | Component             |   Number |

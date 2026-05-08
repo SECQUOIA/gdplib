@@ -4,7 +4,9 @@ This model solves a jobshop scheduling, which has a set of jobs which must be pr
 
 ## Problem Details
 
-### Optimal Solution
+### Solution
+
+Best known objective value: 11.0 (optimal)
 
 ### Size
 
