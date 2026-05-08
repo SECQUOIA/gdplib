@@ -4,7 +4,6 @@ from pyomo.contrib.fbbt.fbbt import fbbt, compute_bounds_on_expr
 import logging
 import pyomo.gdp as gdp
 
-
 assert sys.version_info.major == 3
 assert sys.version_info.minor >= 6
 
