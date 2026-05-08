@@ -1,0 +1,10 @@
+| Component             |   conventional |   single_module_integer |   multiple_module_integer |   mixed_integer |   single_module_discrete |   multiple_module_discrete |   mixed_discrete |
+|:----------------------|---------------:|------------------------:|--------------------------:|----------------:|-------------------------:|---------------------------:|-----------------:|
+| Variables             |            338 |                     501 |                       498 |             498 |                     4761 |                       3802 |             3802 |
+| Binary variables      |             64 |                     131 |                       128 |             128 |                     2147 |                       1728 |             1728 |
+| Integer variables     |              0 |                      96 |                        96 |              96 |                        0 |                          0 |                0 |
+| Continuous variables  |            274 |                     274 |                       274 |             274 |                     2614 |                       2074 |             2074 |
+| Disjunctions          |             32 |                      65 |                        64 |              64 |                       33 |                         64 |               64 |
+| Disjuncts             |             64 |                     131 |                       128 |             128 |                       67 |                        128 |              128 |
+| Constraints           |            370 |                     565 |                       562 |             562 |                     8786 |                       5362 |             5362 |
+| Nonlinear constraints |             96 |                      96 |                        96 |              96 |                       32 |                         96 |               96 |

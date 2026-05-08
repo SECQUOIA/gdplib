@@ -42,6 +42,8 @@ Tristán, C., Fallanza, M., Ibáñez, R., & Ortiz, I. (2020). Recovery of salini
 """
 
 # Importing libraries
+from types import SimpleNamespace
+
 import pyomo.environ as pyo
 from pint import UnitRegistry
 
@@ -59,6 +61,7 @@ from scipy.constants import physical_constants
 from .REDstack import build_REDstack
 
 wnd_dir = os.path.dirname(os.path.realpath(__file__))
+DEFAULT_STACK_GROSS_POWER_UB = 40.0e3
 
 # The financial_param dataframe contains the financial parameters
 # The stack_param dataframe contains the stack parameters
@@ -83,9 +86,16 @@ with pd.ExcelFile(os.path.join(wnd_dir, "data.xlsx")) as xls:
 # T = pd.read_csv(os.path.join(wnd_dir, "T.csv"))
 
 
-def build_model():
+def build_model(solve_stack=True):
     """Builds the RED GDP model
     This function builds the RED GDP model using Pyomo's ConcreteModel class.
+
+    Parameters
+    ----------
+    solve_stack : bool
+        If True, solve the stand-alone RED stack model with GAMS/IPOPTH to
+        initialize and bound stack power. If False, skip the solve and use the
+        stand-alone stack gross power upper bound for model construction.
 
     Returns
     -------
@@ -94,7 +104,12 @@ def build_model():
     """
     # m_stack stores the solution of the RED stack model that maximizes the net power output of the RED stack for a given feed flow rate, concentration, and temperature, and stack parameters.
     # The resulting gross power output is used to initialize and set the upper bound of the NP variable in the RED GDP model.
-    m_stack = build_REDstack()
+    if solve_stack:
+        m_stack = build_REDstack()
+    else:
+        m_stack = SimpleNamespace(
+            GP=SimpleNamespace(value=DEFAULT_STACK_GROSS_POWER_UB)
+        )
 
     m = pyo.ConcreteModel("RED GDP model")
 
