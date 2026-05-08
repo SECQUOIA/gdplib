@@ -12,23 +12,20 @@ The MINLP formulation of this problem is available in GAMS https://www.gams.com/
 This model was reimplemented by Yunshan Liu @Yunshan-Liu .
 
 ## Problem Details
-### Solution
+### Optimal Solution
 
 Best known objective value: 5801.27
 
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| HDA Model | 721 | 12 | 0 | 0 | 709 | 728 | 151 | 12 | 6 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |     1158 |
+| Binary variables      |       12 |
+| Integer variables     |        0 |
+| Continuous variables  |     1146 |
+| Disjunctions          |        6 |
+| Disjuncts             |       12 |
+| Constraints           |      728 |
+| Nonlinear constraints |      151 |

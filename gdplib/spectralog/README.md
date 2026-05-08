@@ -13,12 +13,13 @@ Source paper (Example 2):
 Optimal objective value: 12.0893
 
 ### Size
-- Variables: 128
-    - Boolean: 60
-    - Binary: 0
-    - Integer: 0
-    - Continuous: 68
-- Constraints: 158
-    - Nonlinear: 8
-- Disjuncts: 60
-- Disjunctions: 30
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |      128 |
+| Binary variables      |       60 |
+| Integer variables     |        0 |
+| Continuous variables  |       68 |
+| Disjunctions          |       30 |
+| Disjuncts             |       60 |
+| Constraints           |      158 |
+| Nonlinear constraints |        8 |

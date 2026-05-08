@@ -247,7 +247,8 @@ if __name__ == "__main__":
         # "small_batch",
         # "spectralog",
         # "stranded_gas",
-        # "syngas"
+        # "syngas",
+        # "water_network",
     ]
     strategy_list = [
         # "gdp.bigm",
