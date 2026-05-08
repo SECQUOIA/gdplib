@@ -12,13 +12,9 @@ References:
 """
 
 import pyomo.environ as pe
-import sys
 from pyomo.contrib.fbbt.fbbt import fbbt, compute_bounds_on_expr
 import logging
 import pyomo.gdp as gdp
-
-assert sys.version_info.major == 3
-assert sys.version_info.minor >= 6
 
 
 class InfeasibleError(Exception):
@@ -64,92 +60,11 @@ def fix_vars_with_equal_bounds(m, tol=1e-8):
 
 class MethanolModel(object):
     def __init__(self):
-        """
-        Build a class for a methanol production model. Initialize the model and set the parameters.
+        """Initialize the Pyomo model and fixed parameter values.
 
-        Parameters
-        ----------
-        model : Pyomo.ConcreteModel
-            The main model for the methanol production process.
-        alpha : float
-            Compressor coefficient.
-        eta : float
-            Compressor efficiency.
-        gamma : float
-            Ratio of constant pressure heat capacity to constant volume heat capacity.
-        cp : float
-            Heat capacity. [kJ/kg-mol-K]
-        heat_of_reaction : float
-            Heat of reaction. [kJ/kg-mol]
-        volume_conversion : dict
-            Conversion factors for different reactor volumes.
-        reactor_volume : float
-            Volume of the reactor. [m**3]
-        electricity_cost : float
-            Cost of electricity.  [$/10kWh]
-        cooling_cost : float
-            Cost of water for cooling. [$/1e9 kJ]
-        heating_cost : float
-            Cost of steam for heating. [$/1e9 kJ]
-        purity_demand : float
-            Purity demand in product stream.
-        demand : float
-            Flowrate restriction on product flow.
-        flow_feed_lb : float
-            Lower bound on feed flowrate. [kg-mol/sec]
-        flow_feed_ub : float
-            Upper bound on feed flowrate. [kg-mol/sec]
-        flow_feed_temp : float
-            Feed temperature. [100 K]
-        flow_feed_pressure : float
-            Feed pressure. [MPa]
-        cost_flow_1 : float
-            Cost of feed 1. [$/ton of methanol]
-        cost_flow_2 : float
-            Cost of feed 2. [$/ton of methanol]
-        price_of_product : float
-            Price of product [$/ton of methanol]
-        price_of_byproduct : float
-            Price of byproduct (purge stream) [$/ton of methanol]
-        cheap_reactor_fixed_cost : float
-            Fixed cost of the cheap reactor. [$1e3/yr]
-        cheap_reactor_variable_cost : float
-            Variable cost of the cheap reactor. [$1e3/m**3]
-        expensive_reactor_fixed_cost : float
-            Fixed cost of the expensive reactor. [$1e3/yr]
-        expensive_reactor_variable_cost : float
-            Variable cost of the expensive reactor. [$1e3/m**3]
-        heat_unit_match : float
-            Heat unit scaling factor.
-        capacity_redundancy : float (not used in the model)
-            Capacity redundancy.
-        antoine_unit_trans: float
-            Antoine unit conversion factor. [Torr/MPa]
-        K : float
-           K-value; equilibrium ratio/distribution coefficient.
-        delta_H : float
-            Heat of reaction value. [kJ/kg-mol]
-        reactor_relation : float
-            Reactor relation (ratio of outlet pressure to inlet pressure).
-        purity_demand : float
-            Purity demand. [90%]
-        fix_electricity_cost : float
-            Fixed cost of electricity. [$/10kWh]
-        two_stage_fix_cost : float
-            Fixed cost of two stage compressor. [$1e3/yr]
-        inlet_streams : dict
-            Inlet streams.
-        outlet_streams : dict
-            Outlet streams.
-        vapor_outlets : dict
-            Vapor outlets.
-        liquid_outlets : dict
-            Liquid outlets.
-
-
-        Returns
-        -------
-        None
+        The process description and references are documented in the module
+        docstring. Constructor-created attributes are implementation details
+        used by the model builder methods.
         """
 
         self.model = m = pe.ConcreteModel()  # main model

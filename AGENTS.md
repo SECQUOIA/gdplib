@@ -10,12 +10,15 @@ These instructions apply to the whole repository.
 
 ## Environment
 
-- Prefer Pixi for reproducible development environments:
+- Prefer the committed Pixi environment for reproducible Linux development
+  (`linux-64`):
   ```bash
   pixi install
   pixi run test
   pixi run lint
   ```
+- On macOS or Windows, use the pip workflow below unless the task explicitly
+  expands Pixi platform support and regenerates `pixi.lock`.
 - The legacy pip workflow is still supported:
   ```bash
   pip install -r requirements.txt

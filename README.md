@@ -31,7 +31,10 @@ pip install -e .
 
 ### Development Setup
 
-For development work, use the Pixi environment when available:
+For development work on Linux, use the Pixi environment when available. The
+committed Pixi lock currently targets `linux-64`; on other platforms, use the
+pip workflow below or add the appropriate Pixi platform and regenerate the lock
+file.
 
 ```bash
 pixi install
