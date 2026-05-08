@@ -1,13 +1,13 @@
 """
-methanol.py 
-Example 3 from Reference [1]. This model describes a profit maximization for a methanol production process with 90 [%] minimum purity and 1000 [tons/day] production requirements. The structure contains 19 units; two feedstocks, two compressor types (single stage, double stage) in the reactor feed stream and the recycle streams, two reactors, four coolers, three heaters and a flash separator. 
-The model enforces constraints to ensure that the product purity meets the minimum requirement, the production flowrate is within the specified range, and the temperature and pressure conditions in the process units are maintained within the operational limits. 
+methanol.py
+Example 3 from Reference [1]. This model describes a profit maximization for a methanol production process with 90 [%] minimum purity and 1000 [tons/day] production requirements. The structure contains 19 units; two feedstocks, two compressor types (single stage, double stage) in the reactor feed stream and the recycle streams, two reactors, four coolers, three heaters and a flash separator.
+The model enforces constraints to ensure that the product purity meets the minimum requirement, the production flowrate is within the specified range, and the temperature and pressure conditions in the process units are maintained within the operational limits.
 The disjunctions in the model define the operational modes for feedstocks, compressors, and reactors. There are two alternative feedstocks (cheap or expensive), two alternative compressor types (single stage or double stage) in the reactor feed stream and the recycle stream, and two alternative reactors (lower or higher conversion and cost--denoted as cheap or expensive respectively).
-The objective of the model is to maximize profit by minimizing costs and maximizing revenue, including feedstock costs, product prices, reactor costs, electricity costs, and cooling and heating costs. 
+The objective of the model is to maximize profit by minimizing costs and maximizing revenue, including feedstock costs, product prices, reactor costs, electricity costs, and cooling and heating costs.
 
 References:
     [1] Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. Computers and Chemical Engineering, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
-    [2] Vecchietti, A., 2011. LOGMIP. URL HTTP://WWW.LOGMIP.CERIDE.GOV.AR/ 
+    [2] Vecchietti, A., 2011. LOGMIP. URL HTTP://WWW.LOGMIP.CERIDE.GOV.AR/
     [3] Pedrozo et al. Hybrid Model Generation For Superstructure Optimization with Generalized Disjunctive Programming, Comp. and Chem. Eng., 107473, 2021
 """
 
@@ -16,7 +16,6 @@ import sys
 from pyomo.contrib.fbbt.fbbt import fbbt, compute_bounds_on_expr
 import logging
 import pyomo.gdp as gdp
-
 
 assert sys.version_info.major == 3
 assert sys.version_info.minor >= 6
@@ -1242,6 +1241,29 @@ def enumerate_solutions():
                     )
     time_elapsed = time.time() - since
     print('The code run {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
+
+    return m
+
+
+def build_model():
+    """Build a methanol synthesis process model.
+
+    Returns
+    -------
+    Pyomo.ConcreteModel
+        Methanol synthesis process model with Big-M suffixes populated on
+        active disjunct constraints.
+    """
+    m = MethanolModel().model
+    for _d in m.component_data_objects(
+        gdp.Disjunct, descend_into=True, active=True, sort=True
+    ):
+        _d.BigM = pe.Suffix()
+        for _c in _d.component_data_objects(
+            pe.Constraint, descend_into=True, active=True, sort=True
+        ):
+            lb, ub = compute_bounds_on_expr(_c.body)
+            _d.BigM[_c] = max(abs(lb), abs(ub))
 
     return m
 

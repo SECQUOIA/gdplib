@@ -14,14 +14,14 @@ This model was reimplemented by Yunshan Liu @Yunshan-Liu .
 ## Problem Details
 ### Solution
 
-Best known objective value: 5966.51
+Best known objective value: 5801.27
 
 
 ### Size
 
 | Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
 |-----------|------|------|-----|-----|------|------|----|------|--------|
-| HDA Model | 733 | 12 | 0 | 0 | 721 | 728 | 151 | 12 | 6 |
+| HDA Model | 721 | 12 | 0 | 0 | 709 | 728 | 151 | 12 | 6 |
 
 - ``vars``: variables
 - ``Bool``: Boolean variables

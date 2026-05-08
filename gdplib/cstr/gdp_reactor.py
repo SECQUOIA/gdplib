@@ -17,7 +17,7 @@ from pyomo.gdp import Disjunct, Disjunction
 from pyomo.opt.base.solvers import SolverFactory
 
 
-def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
+def build_model(NT: int = 5) -> pyo.ConcreteModel():
     """
     Build the CSTR superstructure model of size NT.
     NT is the number of reactors in series.
@@ -915,7 +915,7 @@ def build_cstrs(NT: int = 5) -> pyo.ConcreteModel():
 
 
 if __name__ == "__main__":
-    m = build_cstrs()
+    m = build_model()
     pyo.TransformationFactory("core.logical_to_linear").apply_to(m)
     pyo.TransformationFactory("gdp.bigm").apply_to(m)
     pyo.SolverFactory("gams").solve(
