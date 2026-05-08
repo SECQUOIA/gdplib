@@ -24,6 +24,10 @@ These instructions apply to the whole repository.
   ```
 - On macOS or Windows, use the pip workflow below unless the task explicitly
   expands Pixi platform support and regenerates `pixi.lock`.
+- Do not add Pixi platforms casually. Adding `osx-64`, `osx-arm64`, `win-64`,
+  or another platform should also regenerate `pixi.lock` and verify
+  `pixi install`, `pixi run test`, and `pixi run lint` on that platform, or be
+  tracked as follow-up work.
 - The legacy pip workflow is still supported:
   ```bash
   pip install -r requirements.txt
@@ -80,3 +84,6 @@ These instructions apply to the whole repository.
 - Runtime dependencies belong in `pyproject.toml`, `setup.py`, and `requirements.txt`.
 - Development-only tools belong in `requirements-dev.txt` and the Pixi environment.
 - Add solver packages only to optional environments or documentation unless they are required for default imports and tests.
+- Packaging tests can regenerate `gdplib/_version.py` and the editable package
+  entry in `pixi.lock`. Do not commit that churn unless the task is explicitly
+  about versioning, release metadata, or regenerating the Pixi lock.
