@@ -14,7 +14,8 @@ authors = [
     {name = "SECQUOIA"},
 ]
 maintainers = [
-    {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},
+    {name = "David E. Bernal Neira", email = "dbernaln@purdue.edu"},
+    {name = "SECQUOIA"},
 ]
 keywords = ["pyomo", "generalized disjunctive programming"]
 classifiers = [
