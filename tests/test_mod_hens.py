@@ -26,7 +26,7 @@ MOD_HENS_CASES = [
 
 @pytest.mark.parametrize("case", MOD_HENS_CASES)
 def test_build_model_accepts_supported_cases(case):
-    model = build_model(case)
+    model = build_model(case, cafaro_approx=False)
 
     assert model is not None
     assert hasattr(model, "component_objects")
