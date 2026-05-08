@@ -10,6 +10,8 @@ readme = "README.md"
 license = {text = "BSD 3-clause"}
 authors = [
     {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},
+    {name = "David E. Bernal Neira", email = "dbernaln@purdue.edu"},
+    {name = "SECQUOIA"},
 ]
 maintainers = [
     {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},

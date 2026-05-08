@@ -1,7 +1,11 @@
 [workspace]
 name = "gdplib"
 description = "Development environment for GDPlib"
-authors = ["Qi Chen <qichen@andrew.cmu.edu>"]
+authors = [
+    "Qi Chen <qichen@andrew.cmu.edu>",
+    "David E. Bernal Neira <dbernaln@purdue.edu>",
+    "SECQUOIA",
+]
 channels = ["conda-forge"]
 # This committed Pixi environment is Linux-only. Use the README pip workflow on
 # other platforms, or add the platform here and regenerate pixi.lock.
