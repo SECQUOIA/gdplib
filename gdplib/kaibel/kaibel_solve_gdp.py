@@ -2232,7 +2232,7 @@ def _build_top_equations(disj, n_tray):
             m.D[comp] if n_tray == m.con_tray else 0
         ) == 0
 
-    @disj.Constraint(doc="Top scetion 4 energy balances")
+    @disj.Constraint(doc="Top section 4 energy balances")
     def _top_energy_balances(disj):
         """
         Energy balances for the top section in the column.
@@ -2367,7 +2367,7 @@ def _build_top_equations(disj, n_tray):
         """
         return sum(m.y[4, n_tray, comp] for comp in m.comp) - 1 == m.erry[4, n_tray]
 
-    @disj.Constraint(m.comp, doc="Top scetion 4 vapor composition")
+    @disj.Constraint(m.comp, doc="Top section 4 vapor composition")
     def top_vapor_composition(disj, comp):
         """
         Vapor composition for the top section in the column.
