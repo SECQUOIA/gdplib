@@ -1,5 +1,9 @@
 # GDPlib
 
+[![codecov](https://codecov.io/gh/SECQUOIA/gdplib/branch/main/graph/badge.svg)](https://codecov.io/gh/SECQUOIA/gdplib)
+[![Tests](https://github.com/SECQUOIA/gdplib/workflows/Test/badge.svg)](https://github.com/SECQUOIA/gdplib/actions?query=workflow%3ATest)
+[![Lint](https://github.com/SECQUOIA/gdplib/workflows/Lint/badge.svg)](https://github.com/SECQUOIA/gdplib/actions?query=workflow%3ALint)
+
 We envision GDPlib as an open library of GDP models to provide examples for prospective modelers, and to provide a benchmarking set for algorithm developers.
 We invite contributions to this library from the community, provided under the same BSD-3-clause or compatible license.
 
@@ -18,7 +22,56 @@ To update GDPlib:
 pip install --upgrade gdplib
 ```
 
-For a developer install, please clone this repository, activate the correct python environment, and run `python setup.py develop` on the `setup.py` file in this directory.
+For a developer install, please clone this repository, activate the correct python environment, and run:
+
+```bash
+pip install -r requirements.txt
+pip install -e .
+```
+
+### Development Setup
+
+For development work on Linux, use the Pixi environment when available. The
+committed Pixi lock currently targets `linux-64`; on other platforms, use the
+pip workflow below or add the appropriate Pixi platform and regenerate the lock
+file.
+
+```bash
+pixi install
+pixi run test
+pixi run lint
+```
+
+For a pip-based setup:
+
+1. **Install development dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   pip install -e .
+   ```
+
+2. **Set up GitHub Copilot with custom instructions:**
+   - The repository includes custom Copilot instructions in `.github/copilot-instructions.md`
+   - Project-specific configurations are available in `.copilot/`
+
+3. **Run tests:**
+   ```bash
+   pytest tests/ -v --tb=short
+   ```
+
+4. **Code formatting and linting:**
+   ```bash
+   black -S -C --target-version py310 --check --diff .
+   flake8 gdplib/ --count --select=E9,F63,F7,F82 --show-source --statistics
+   flake8 gdplib/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+   ```
+
+   The `typos` CLI used by CI is included in the Pixi environment. Install it separately before running the spell check from a pip-only environment:
+
+   ```bash
+   typos --config ./.github/workflows/typos.toml
+   ```
 
 ## Model descriptions
 

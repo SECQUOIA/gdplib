@@ -17,9 +17,9 @@ from os.path import join
 #
 # Jobshop example from http://www.gams.com/modlib/libhtml/logmip4.htm
 #
-# This model solves a jobshop scheduling, which has a set of jobs
-# which must be processed in sequence of stages but not all jobs
-# require all stages. A zero wait transfer policy is assumed between
+# This model solves a jobshop scheduling problem, which has a set of jobs
+# that must be processed in sequence of stages but not all jobs
+# require all stages. A zero-wait transfer policy is assumed between
 # stages. To obtain a feasible solution it is necessary to eliminate
 # all clashes between jobs. It requires that no two jobs be performed
 # at any stage at any time. The objective is to minimize the makespan,
@@ -56,10 +56,10 @@ def build_model():
     Raman & Grossmann, Modelling and computational techniques for logic based integer programming, Computers and Chemical Engineering 18, 7, p.563-578, 1994.
     Aldo Vecchietti, LogMIP User's Manual, http://www.logmip.ceride.gov.ar/, 2007
     """
-    model = AbstractModel('Jobshop Scheduling Model')
+    model = AbstractModel("Jobshop Scheduling Model")
 
-    model.JOBS = Set(ordered=True, doc='Set of jobs')
-    model.STAGES = Set(ordered=True, doc='Set of stages')
+    model.JOBS = Set(ordered=True, doc="Set of jobs")
+    model.STAGES = Set(ordered=True, doc="Set of stages")
     model.I_BEFORE_K = RangeSet(0, 1)
 
     # Task durations
@@ -75,7 +75,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             The job shop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -92,7 +92,7 @@ def build_model():
         model.JOBS,
         within=NonNegativeReals,
         bounds=t_bounds,
-        doc='Start time of each job',
+        doc="Start time of each job",
     )
 
     # Auto-generate the L set (potential collisions between 2 jobs at any stage.
@@ -102,7 +102,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -124,7 +124,7 @@ def build_model():
         initialize=model.JOBS * model.JOBS * model.STAGES,
         dimen=3,
         filter=_L_filter,
-        doc='Set of potential collisions between 2 jobs at any stage',
+        doc="Set of potential collisions between 2 jobs at any stage",
     )
 
     # Makespan is greater than the start time of every job + that job's
@@ -135,7 +135,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             The jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
             A zero wait transfer policy is assumed between stages.
         I : str
@@ -151,8 +151,8 @@ def build_model():
     model.Feas = Constraint(
         model.JOBS,
         rule=_feas,
-        doc='Makespan is greater than the start time of every job + that job'
-        's total duration',
+        doc="Makespan is greater than the start time of every job + that job"
+        "s total duration",
     )
 
     # Disjunctions to prevent clashes at a stage: This creates a set of
@@ -192,7 +192,7 @@ def build_model():
         model.L,
         model.I_BEFORE_K,
         rule=_NoClash,
-        doc='Disjunctions to prevent clashes at a stage',
+        doc="Disjunctions to prevent clashes at a stage",
     )
 
     # Define the disjunctions: either job I occurs before K or K before I
@@ -202,7 +202,7 @@ def build_model():
 
         Parameters
         ----------
-        model : Pyomo.Abstractmodel
+        model : Pyomo.AbstractModel
             jobshop scheduling model, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages.
         I : str
             job index
@@ -221,21 +221,21 @@ def build_model():
     model.disj = Disjunction(
         model.L,
         rule=_disj,
-        doc='Define the disjunctions: either job I occurs before K or K before I',
+        doc="Define the disjunctions: either job I occurs before K or K before I",
     )
 
     # minimize makespan
     model.makespan = Objective(
-        expr=model.ms, doc='Objective Function: Minimize the makespan'
+        expr=model.ms, doc="Objective Function: Minimize the makespan"
     )
-    model = model.create_instance(join(this_file_dir(), 'jobshop-small.dat'))
+    model = model.create_instance(join(this_file_dir(), "jobshop-small.dat"))
     return model
 
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(
-        m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
+    TransformationFactory("gdp.bigm").apply_to(m)
+    SolverFactory("gams").solve(
+        m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
     )
     m.makespan.display()

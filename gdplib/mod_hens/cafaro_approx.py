@@ -60,6 +60,6 @@ def calculate_cafaro_coefficients(area1, area2, exponent):
     m.c1 = Constraint(expr=area1**exponent == m.k * log(m.b * area1 + 1))
     m.c2 = Constraint(expr=area2**exponent == m.k * log(m.b * area2 + 1))
 
-    SolverFactory('ipopt').solve(m)
+    SolverFactory("ipopt").solve(m)
 
     return value(m.k), value(m.b)

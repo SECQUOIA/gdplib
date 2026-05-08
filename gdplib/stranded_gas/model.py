@@ -1,10 +1,10 @@
 """
 model.py
-Pyomo ConcreteModel for optimizing a modular stranded gas processing network. 
+Pyomo ConcreteModel for optimizing a modular stranded gas processing network.
 
-The model is designed to convert stranded gas into gasoline using a modular and intensified GTL process. 
+The model is designed to convert stranded gas into gasoline using a modular and intensified GTL process.
 It incorporates the economic dynamics of module investments, gas processing, and product transportation.
-Constraints manage the balance of gas supply and consumption, module availability and movement, and production capacities at potential sites. 
+Constraints manage the balance of gas supply and consumption, module availability and movement, and production capacities at potential sites.
 Disjunctions delineate operational scenarios, such as the existence or absence of pipelines and the activation status of sites, enabling dynamic and flexible system configuration.
 The objective function aims to maximize the network's net profit by optimizing revenue from gasoline sales while minimizing operational and capital expenditures across the network.
 
@@ -38,10 +38,40 @@ from pyomo.environ import (
 from gdplib.stranded_gas.util import alphanum_sorted
 from pyomo.environ import TerminationCondition as tc
 
+_CASE_MODULE_TYPES = {
+    "Gas_100": ("U100",),
+    "Gas_250": ("U250",),
+    "Gas_500": ("U500",),
+    "Gas_small": ("U100", "U250"),
+    "Gas_large": ("U250", "U500"),
+}
 
-def build_model():
+
+def _module_types_for_case(case, module_sheet):
+    if case is None:
+        return module_sheet.columns.tolist()
+
+    try:
+        case_module_types = _CASE_MODULE_TYPES[case]
+    except KeyError:
+        valid_cases = ", ".join(sorted(_CASE_MODULE_TYPES))
+        raise ValueError(
+            f"Invalid stranded_gas case {case!r}. Expected one of: {valid_cases}"
+        ) from None
+
+    return [mtype for mtype in module_sheet.columns if mtype in case_module_types]
+
+
+def build_model(case=None):
     """
     Constructs a Pyomo ConcreteModel for optimizing a modular stranded gas processing network. The model is designed to convert stranded gas into gasoline using a modular and intensified GTL process. It incorporates the economic dynamics of module investments, gas processing, and product transportation.
+
+    Parameters
+    ----------
+    case : str, optional
+        Optional documented module-size variant. Accepted values are ``Gas_100``,
+        ``Gas_250``, ``Gas_500``, ``Gas_small``, and ``Gas_large``. If omitted,
+        the unrestricted base model is built.
 
     Returns
     -------
@@ -52,7 +82,7 @@ def build_model():
     ----------
     [1] Chen, Q., & Grossmann, I. E. (2019). Economies of numbers for a modular stranded gas processing network: Modeling and optimization. In Computer Aided Chemical Engineering (Vol. 47, pp. 257-262). Elsevier. DOI: 10.1016/B978-0-444-64241-7.50100-3
     """
-    m = ConcreteModel('Stranded gas production')
+    m = ConcreteModel("Stranded gas production")
     m.BigM = Suffix(direction=Suffix.LOCAL)
 
     m.periods_per_year = Param(initialize=4, doc="Quarters per year")
@@ -87,8 +117,9 @@ def build_model():
     xlsx_data = pd.read_excel(
         os.path.join(os.path.dirname(__file__), "data.xlsx"), sheet_name=None
     )
-    module_sheet = xlsx_data['modules'].set_index('Type')
-    m.module_types = Set(initialize=module_sheet.columns.tolist(), doc="Module types")
+    module_sheet = xlsx_data["modules"].set_index("Type")
+    module_types = _module_types_for_case(case, module_sheet)
+    m.module_types = Set(initialize=module_types, doc="Module types")
 
     @m.Param(m.module_types)
     def module_base_cost(m, mtype):
@@ -107,7 +138,7 @@ def build_model():
         Pyomo.Parameter
             A float representing the base cost of a module of the given type.
         """
-        return float(module_sheet[mtype]['Capital Cost [MM$]'])
+        return float(module_sheet[mtype]["Capital Cost [MM$]"])
 
     @m.Param(
         m.module_types, doc="Natural gas consumption per module of this type [MMSCF/d]"
@@ -128,7 +159,7 @@ def build_model():
         Pyomo.Parameter
             A float representing the natural gas consumption per module of the given type.
         """
-        return float(module_sheet[mtype]['Nat Gas [MMSCF/d]'])
+        return float(module_sheet[mtype]["Nat Gas [MMSCF/d]"])
 
     @m.Param(m.module_types, doc="Gasoline production per module of this type [kBD]")
     def gasoline_production(m, mtype):
@@ -147,7 +178,7 @@ def build_model():
         Pyomo.Parameter
             A float representing the gasoline production per module of the given type.
         """
-        return float(module_sheet[mtype]['Gasoline [kBD]'])
+        return float(module_sheet[mtype]["Gasoline [kBD]"])
 
     @m.Param(
         m.module_types,
@@ -169,9 +200,9 @@ def build_model():
         Pyomo.Parameter
             A float representing the overall conversion of natural gas into gasoline per module of the given type.
         """
-        return float(module_sheet[mtype]['Conversion [kB/MMSCF]'])
+        return float(module_sheet[mtype]["Conversion [kB/MMSCF]"])
 
-    site_sheet = xlsx_data['sites'].set_index('Potential site')
+    site_sheet = xlsx_data["sites"].set_index("Potential site")
     m.potential_sites = Set(initialize=site_sheet.index.tolist(), doc="Potential sites")
     m.site_pairs = Set(
         doc="Pairs of potential sites",
@@ -196,7 +227,7 @@ def build_model():
         Pyomo.Parameter
             An integer representing the x-coordinate of the potential site.
         """
-        return float(site_sheet['x'][site])
+        return float(site_sheet["x"][site])
 
     @m.Param(m.potential_sites)
     def site_y(m, site):
@@ -215,9 +246,9 @@ def build_model():
         Pyomo.Parameter
             An integer representing the y-coordinate of the potential site.
         """
-        return float(site_sheet['y'][site])
+        return float(site_sheet["y"][site])
 
-    well_sheet = xlsx_data['wells'].set_index('Well')
+    well_sheet = xlsx_data["wells"].set_index("Well")
     m.well_clusters = Set(initialize=well_sheet.index.tolist(), doc="Well clusters")
 
     @m.Param(m.well_clusters)
@@ -237,7 +268,7 @@ def build_model():
         Pyomo.Parameter
             An integer representing the x-coordinate of the well cluster.
         """
-        return float(well_sheet['x'][well])
+        return float(well_sheet["x"][well])
 
     @m.Param(m.well_clusters)
     def well_y(m, well):
@@ -256,19 +287,19 @@ def build_model():
         Pyomo.Parameter
             An integer representing the y-coordinate of the well cluster.
         """
-        return float(well_sheet['y'][well])
+        return float(well_sheet["y"][well])
 
-    sched_sheet = xlsx_data['well-schedule']
+    sched_sheet = xlsx_data["well-schedule"]
     decay_curve = [1] + [
         3.69 * exp(-1.31 * (t + 1) ** 0.292) for t in range(m.project_life * 12)
     ]
     well_profiles = {well: [0 for _ in decay_curve] for well in m.well_clusters}
     for _, well_info in sched_sheet.iterrows():
-        start_time = int(well_info['Month'])
+        start_time = int(well_info["Month"])
         prod = [0] * start_time + decay_curve[: len(decay_curve) - start_time]
-        prod = [x * float(well_info['max prod [MMSCF/d]']) for x in prod]
-        current_profile = well_profiles[well_info['well-cluster']]
-        well_profiles[well_info['well-cluster']] = [
+        prod = [x * float(well_info["max prod [MMSCF/d]"]) for x in prod]
+        current_profile = well_profiles[well_info["well-cluster"]]
+        well_profiles[well_info["well-cluster"]] = [
             val + prod[i] for i, val in enumerate(current_profile)
         ]
 
@@ -293,7 +324,7 @@ def build_model():
         """
         return sum(well_profiles[well][t * 3 : t * 3 + 2]) / 3
 
-    mkt_sheet = xlsx_data['markets'].set_index('Market')
+    mkt_sheet = xlsx_data["markets"].set_index("Market")
     m.markets = Set(initialize=mkt_sheet.index.tolist(), doc="Markets")
 
     @m.Param(m.markets)
@@ -313,7 +344,7 @@ def build_model():
         Pyomo.Parameter
             An integer representing the x-coordinate of the market.
         """
-        return float(mkt_sheet['x'][mkt])
+        return float(mkt_sheet["x"][mkt])
 
     @m.Param(m.markets)
     def mkt_y(m, mkt):
@@ -332,7 +363,7 @@ def build_model():
         Pyomo.Parameter
             An integer representing the y-coordinate of the market.
         """
-        return float(mkt_sheet['y'][mkt])
+        return float(mkt_sheet["y"][mkt])
 
     @m.Param(m.markets, doc="Gasoline demand [kBD]")
     def mkt_demand(m, mkt):
@@ -351,7 +382,7 @@ def build_model():
         Pyomo.Parameter
             A float representing the demand for gasoline in the market in the given time period.
         """
-        return float(mkt_sheet['demand [kBD]'][mkt])
+        return float(mkt_sheet["demand [kBD]"][mkt])
 
     m.sources = Set(initialize=m.well_clusters | m.potential_sites, doc="Sources")
     m.destinations = Set(initialize=m.potential_sites | m.markets, doc="Destinations")
@@ -1218,21 +1249,4 @@ def build_model():
 
 
 if __name__ == "__main__":
-    m = build_model()
-
-    # Restrict number of module types; A, R, S, U
-    # valid_modules = ['A500', 'A1000', 'A2000', 'A5000']
-    # valid_modules = ['A500', 'R500', 'A5000', 'R5000']
-    # valid_modules = ['U500', 'U5000']
-    # valid_modules = ['U100', 'U250']
-    # valid_modules = ['U1000']
-    # valid_modules = ['U500']
-    valid_modules = ['U250']
-    # valid_modules = ['U100']
-    for mtype in m.module_types - valid_modules:
-        m.gas_consumption[:, mtype, :].fix(0)
-        m.num_modules[mtype, :, :].fix(0)
-        m.modules_transferred[mtype, :, :, :].fix(0)
-        m.modules_purchased[mtype, :, :].fix(0)
-        m.mtype_exists[mtype].deactivate()
-        m.mtype_absent[mtype].binary_indicator_var.fix(1)
+    m = build_model("Gas_250")
