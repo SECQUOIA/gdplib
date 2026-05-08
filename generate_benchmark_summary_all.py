@@ -2,7 +2,6 @@ import pandas as pd
 import json
 import os
 import glob
-import plotly.graph_objects as go
 
 
 def generate_benchmark_summary(folders):
