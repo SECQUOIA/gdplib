@@ -68,7 +68,7 @@ class TestBasicFunctionality:
         except (ImportError, AttributeError):
             pytest.skip("biofuel module or build_model not available")
         except Exception as e:
-            pytest.skip(f"Model construction failed: {e}")
+            pytest.fail(f"Model construction raised unexpected error: {e}")
 
 
 # (Line intentionally left blank for clarity and to maintain spacing.)
