@@ -1,11 +1,13 @@
 import os
 import sys
+from inspect import signature
 
 import pandas as pd
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from generate_model_size_report import (
+    MODEL_INSTANCES,
     build_combined_report,
     render_readme_section,
     update_readme_model_size_section,
@@ -64,3 +66,26 @@ def test_render_readme_section_uses_stable_heading():
 
     assert section.startswith("## Model Size Comparison\n\n")
     assert "generate_model_size_report.py" in section
+
+
+def test_reverse_electrodialysis_report_uses_solver_free_build_path():
+    from gdplib.reverse_electrodialysis import build_model
+
+    assert MODEL_INSTANCES["reverse_electrodialysis"] == [
+        {"label": "Number", "kwargs": {"solve_stack": False}}
+    ]
+    assert "solve_stack" in signature(build_model).parameters
+
+
+def test_reverse_electrodialysis_solver_free_build_skips_stack_solve(monkeypatch):
+    import gdplib.reverse_electrodialysis.REDprocess as redprocess
+
+    def fail_if_called():
+        raise AssertionError("stand-alone RED stack solve should not be called")
+
+    monkeypatch.setattr(redprocess, "build_REDstack", fail_if_called)
+
+    model = redprocess.build_model(solve_stack=False)
+
+    assert model is not None
+    assert len(list(model.component_objects())) > 0

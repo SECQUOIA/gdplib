@@ -76,7 +76,7 @@ MODEL_INSTANCES = {
         {"label": "QuarterDistributed", "args": ("QuarterDistributed",)},
     ],
     "positioning": [{"label": "Number"}],
-    "reverse_electrodialysis": [{"label": "Number"}],
+    "reverse_electrodialysis": [{"label": "Number", "kwargs": {"solve_stack": False}}],
     "small_batch": [{"label": "Number"}],
     "spectralog": [{"label": "Number"}],
     "stranded_gas": [
