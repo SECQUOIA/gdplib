@@ -15,19 +15,13 @@ Best known objective value: 99,709
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| Kaibel Column | 3605 | 178 | 0 | 0 | 3427 | 5715 | 2124 | 182 | 100 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
-
-
-
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |     4033 |
+| Binary variables      |      200 |
+| Integer variables     |        0 |
+| Continuous variables  |     3833 |
+| Disjunctions          |      100 |
+| Disjuncts             |      200 |
+| Constraints           |     5790 |
+| Nonlinear constraints |     2128 |

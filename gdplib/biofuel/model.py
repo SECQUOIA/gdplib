@@ -51,7 +51,7 @@ def build_model():
     [1] Lara, C. L., Trespalacios, F., & Grossmann, I. E. (2018). Global optimization algorithm for capacitated multi-facility continuous location-allocation problems. Journal of Global Optimization, 71(4), 871-889. https://doi.org/10.1007/s10898-018-0621-6
     [2] Chen, Q., & Grossmann, I. E. (2019). Effective generalized disjunctive programming models for modular process synthesis. Industrial & Engineering Chemistry Research, 58(15), 5873-5886. https://doi.org/10.1021/acs.iecr.8b04600
     """
-    m = ConcreteModel('Biofuel processing network')
+    m = ConcreteModel("Biofuel processing network")
     m.bigM = Suffix(direction=Suffix.LOCAL)
     m.bigM[None] = 7000
     m.time = RangeSet(0, 120, doc="months in 10 years")
@@ -1256,15 +1256,15 @@ if __name__ == "__main__":
     # for site, t in m.potential_sites * m.time:
     #     if t <= max(m.time) - 4:
     #         m.modular[site].removing_modules[t].deactivate()
-    TransformationFactory('gdp.bigm').apply_to(m, bigM=7000)
+    TransformationFactory("gdp.bigm").apply_to(m, bigM=7000)
     # res = SolverFactory('gurobi').solve(m, tee=True)
-    res = SolverFactory('gams').solve(
+    res = SolverFactory("gams").solve(
         m,
         tee=True,
-        solver='scip',
+        solver="scip",
         # solver='gurobi',
         # add_options=['option reslim = 1200;', 'option optcr=0.0001;'],
-        add_options=['option reslim = 1200;', 'OPTION threads=4;', 'option optcr=0.01'],
+        add_options=["option reslim = 1200;", "OPTION threads=4;", "option optcr=0.01"],
     )
     # res = SolverFactory('gdpopt').solve(
     #     m, tee=True,
@@ -1274,29 +1274,29 @@ if __name__ == "__main__":
     results = (
         pd.DataFrame(
             [
-                ['Total Cost', value(m.total_cost)],
-                ['Conv Build Cost', value(summation(m.conv_build_cost))],
-                ['Conv Salvage Value', value(summation(m.conv_salvage_value))],
-                ['Module Build Cost', value(summation(m.module_setup_cost))],
-                ['Module Salvage Value', value(summation(m.module_teardown_credit))],
+                ["Total Cost", value(m.total_cost)],
+                ["Conv Build Cost", value(summation(m.conv_build_cost))],
+                ["Conv Salvage Value", value(summation(m.conv_salvage_value))],
+                ["Module Build Cost", value(summation(m.module_setup_cost))],
+                ["Module Salvage Value", value(summation(m.module_teardown_credit))],
                 [
-                    'Raw Material Transport',
+                    "Raw Material Transport",
                     value(
                         summation(m.raw_material_transport_cost)
                         + summation(m.raw_material_fixed_transport_cost)
                     ),
                 ],
                 [
-                    'Product Transport',
+                    "Product Transport",
                     value(
                         summation(m.product_transport_cost)
                         + summation(m.product_fixed_transport_cost)
                     ),
                 ],
             ],
-            columns=['Quantity', 'Value [million $]'],
+            columns=["Quantity", "Value [million $]"],
         )
-        .set_index('Quantity')
+        .set_index("Quantity")
         .round(0)
     )
     print(results)
@@ -1335,49 +1335,49 @@ if __name__ == "__main__":
     plt.plot(
         [x for x in m.site_x.values()],
         [y for y in m.site_y.values()],
-        'k.',
+        "k.",
         markersize=12,
     )
     plt.plot(
         [x for x in m.market_x.values()],
         [y for y in m.market_y.values()],
-        'b.',
+        "b.",
         markersize=12,
     )
     plt.plot(
         [x for x in m.supplier_x.values()],
         [y for y in m.supplier_y.values()],
-        'r.',
+        "r.",
         markersize=12,
     )
     for mkt in m.markets:
         plt.annotate(
-            'm%s' % mkt,
+            "m%s" % mkt,
             (m.market_x[mkt], m.market_y[mkt]),
             (m.market_x[mkt] + 2, m.market_y[mkt] + 2),
-            fontsize='x-small',
+            fontsize="x-small",
         )
     for site in m.potential_sites:
         if m.site_inactive[site].binary_indicator_var.value == 0:
             plt.annotate(
-                'p%s' % site,
+                "p%s" % site,
                 (m.site_x[site], m.site_y[site]),
                 (m.site_x[site] + 2, m.site_y[site] + 2),
-                fontsize='x-small',
+                fontsize="x-small",
             )
         else:
             plt.annotate(
-                'x%s' % site,
+                "x%s" % site,
                 (m.site_x[site], m.site_y[site]),
                 (m.site_x[site] + 2, m.site_y[site] + 2),
-                fontsize='x-small',
+                fontsize="x-small",
             )
     for sup in m.suppliers:
         plt.annotate(
-            's%s' % sup,
+            "s%s" % sup,
             (m.supplier_x[sup], m.supplier_y[sup]),
             (m.supplier_x[sup] + 2, m.supplier_y[sup] + 2),
-            fontsize='x-small',
+            fontsize="x-small",
         )
     for sup, site in m.suppliers * m.potential_sites:
         if (
@@ -1391,7 +1391,7 @@ if __name__ == "__main__":
                 m.site_y[site] - m.supplier_y[sup],
                 width=0.8,
                 length_includes_head=True,
-                color='b',
+                color="b",
             )
     for site, mkt in m.potential_sites * m.markets:
         if (
@@ -1405,6 +1405,6 @@ if __name__ == "__main__":
                 m.market_y[mkt] - m.site_y[site],
                 width=0.8,
                 length_includes_head=True,
-                color='r',
+                color="r",
             )
     plt.show()

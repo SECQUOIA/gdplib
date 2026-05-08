@@ -104,9 +104,8 @@ def build_model():
     m.bounds = RangeSet(2, doc="Number of boundary condition values")
 
     m.candidate_trays_main = Set(
-        initialize=m.tray - [m.con_tray, m.reb_tray],
-        doc="Candidate trays for top and \
-                                 bottom sections 1 and 4",
+        initialize=m.tray - [m.con_tray, m.reb_tray], doc="Candidate trays for top and \
+                                 bottom sections 1 and 4"
     )
     m.candidate_trays_feed = Set(
         initialize=m.tray - [m.con_tray, m.feed_tray, m.reb_tray],
@@ -192,20 +191,20 @@ def build_model():
     for comp in m.comp:
         dHvapb[comp] = -(
             m.Rgas
-            * m.prop[comp, 'TC']
+            * m.prop[comp, "TC"]
             * (
-                m.prop[comp, 'vpA'] * (1 - m.Tref / m.prop[comp, 'TC'])
-                + m.prop[comp, 'vpB'] * (1 - m.Tref / m.prop[comp, 'TC']) ** 1.5
-                + m.prop[comp, 'vpC'] * (1 - m.Tref / m.prop[comp, 'TC']) ** 3
-                + m.prop[comp, 'vpD'] * (1 - m.Tref / m.prop[comp, 'TC']) ** 6
+                m.prop[comp, "vpA"] * (1 - m.Tref / m.prop[comp, "TC"])
+                + m.prop[comp, "vpB"] * (1 - m.Tref / m.prop[comp, "TC"]) ** 1.5
+                + m.prop[comp, "vpC"] * (1 - m.Tref / m.prop[comp, "TC"]) ** 3
+                + m.prop[comp, "vpD"] * (1 - m.Tref / m.prop[comp, "TC"]) ** 6
             )
             + m.Rgas
             * m.Tref
             * (
-                m.prop[comp, 'vpA']
-                + 1.5 * m.prop[comp, 'vpB'] * (1 - m.Tref / m.prop[comp, 'TC']) ** 0.5
-                + 3 * m.prop[comp, 'vpC'] * (1 - m.Tref / m.prop[comp, 'TC']) ** 2
-                + 6 * m.prop[comp, 'vpD'] * (1 - m.Tref / m.prop[comp, 'TC']) ** 5
+                m.prop[comp, "vpA"]
+                + 1.5 * m.prop[comp, "vpB"] * (1 - m.Tref / m.prop[comp, "TC"]) ** 0.5
+                + 3 * m.prop[comp, "vpC"] * (1 - m.Tref / m.prop[comp, "TC"]) ** 2
+                + 6 * m.prop[comp, "vpD"] * (1 - m.Tref / m.prop[comp, "TC"]) ** 5
             )
         )
 
@@ -213,16 +212,16 @@ def build_model():
     for b in m.bounds:
         for cp in m.cplv:
             cpb[b, cp] = m.cpc[cp] * (
-                (Tbounds[b] - m.Tref) * m.prop[kc[b], 'cpA', cp]
+                (Tbounds[b] - m.Tref) * m.prop[kc[b], "cpA", cp]
                 + (Tbounds[b] ** 2 - m.Tref**2)
-                * m.prop[kc[b], 'cpB', cp]
-                * m.cpc2['A', cp]
+                * m.prop[kc[b], "cpB", cp]
+                * m.cpc2["A", cp]
                 / 2
                 + (Tbounds[b] ** 3 - m.Tref**3)
-                * m.prop[kc[b], 'cpC', cp]
-                * m.cpc2['B', cp]
+                * m.prop[kc[b], "cpC", cp]
+                * m.cpc2["B", cp]
                 / 3
-                + (Tbounds[b] ** 4 - m.Tref**4) * m.prop[kc[b], 'cpD', cp] / 4
+                + (Tbounds[b] ** 4 - m.Tref**4) * m.prop[kc[b], "cpD", cp] / 4
             )
         hlb[b] = cpb[b, 1]
         hvb[b] = cpb[b, 2] + dHvapb[b]
@@ -253,17 +252,17 @@ def build_model():
                     m.cpdT0[sec, n_tray, comp, cp] = (
                         m.cpc[cp]
                         * (
-                            (m.T0[sec, n_tray] - m.Tref) * m.prop[comp, 'cpA', cp]
+                            (m.T0[sec, n_tray] - m.Tref) * m.prop[comp, "cpA", cp]
                             + (m.T0[sec, n_tray] ** 2 - m.Tref**2)
-                            * m.prop[comp, 'cpB', cp]
-                            * m.cpc2['A', cp]
+                            * m.prop[comp, "cpB", cp]
+                            * m.cpc2["A", cp]
                             / 2
                             + (m.T0[sec, n_tray] ** 3 - m.Tref**3)
-                            * m.prop[comp, 'cpC', cp]
-                            * m.cpc2['B', cp]
+                            * m.prop[comp, "cpC", cp]
+                            * m.cpc2["B", cp]
                             / 3
                             + (m.T0[sec, n_tray] ** 4 - m.Tref**4)
-                            * m.prop[comp, 'cpD', cp]
+                            * m.prop[comp, "cpD", cp]
                             / 4
                         )
                         / m.Hscale
@@ -288,16 +287,16 @@ def build_model():
             m.cpdTf[comp, cp] = (
                 m.cpc[cp]
                 * (
-                    (m.Tf - m.Tref) * m.prop[comp, 'cpA', cp]
+                    (m.Tf - m.Tref) * m.prop[comp, "cpA", cp]
                     + (m.Tf**2 - m.Tref**2)
-                    * m.prop[comp, 'cpB', cp]
-                    * m.cpc2['A', cp]
+                    * m.prop[comp, "cpB", cp]
+                    * m.cpc2["A", cp]
                     / 2
                     + (m.Tf**3 - m.Tref**3)
-                    * m.prop[comp, 'cpC', cp]
-                    * m.cpc2['B', cp]
+                    * m.prop[comp, "cpC", cp]
+                    * m.cpc2["B", cp]
                     / 3
-                    + (m.Tf**4 - m.Tref**4) * m.prop[comp, 'cpD', cp] / 4
+                    + (m.Tf**4 - m.Tref**4) * m.prop[comp, "cpD", cp] / 4
                 )
                 / m.Hscale
             )
@@ -445,7 +444,7 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc='Liquid enthalpy [J/mol]',
+        doc="Liquid enthalpy [J/mol]",
         bounds=(m.hllo, m.hlup),
         initialize=m.hl0,
     )
@@ -453,7 +452,7 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc='Vapor enthalpy [J/mol]',
+        doc="Vapor enthalpy [J/mol]",
         bounds=(m.hvlo, m.hvup),
         initialize=m.hv0,
     )
@@ -753,7 +752,7 @@ def build_model():
 
     @m.Constraint(doc="Side outlet 1 final liquid composition")
     def intermediate1_product(m):
-        '''
+        """
         This constraint ensures that the intermediate 1 final liquid composition is greater than or equal to the specified composition xspec_inter1, which is the final liquid composition for ethanol.
 
         Parameters
@@ -765,7 +764,7 @@ def build_model():
         -------
         Constraint
             The constraint that enforces the intermediate 1 final liquid composition is greater than or equal to the specified composition xspec_inter1, which is the final liquid composition for ethanol.
-        '''
+        """
         return m.x[3, m.sideout1_tray, 3] >= m.xspec_inter3
 
     @m.Constraint(doc="Side outlet 2 final liquid composition")
@@ -1455,19 +1454,19 @@ def _build_bottom_equations(disj, n_tray):
             * (
                 m.actv[1, n_tray, comp]
                 * (
-                    m.prop[comp, 'PC']
+                    m.prop[comp, "PC"]
                     * exp(
-                        m.prop[comp, 'TC']
+                        m.prop[comp, "TC"]
                         / m.T[1, n_tray]
                         * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 6
+                            m.prop[comp, "vpA"]
+                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"])
+                            + m.prop[comp, "vpB"]
+                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                            + m.prop[comp, "vpC"]
+                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 3
+                            + m.prop[comp, "vpD"]
+                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 6
                         )
                     )
                 )
@@ -1495,16 +1494,16 @@ def _build_bottom_equations(disj, n_tray):
         return m.hl[1, n_tray, comp] == (
             m.cpc[1]
             * (
-                (m.T[1, n_tray] - m.Tref) * m.prop[comp, 'cpA', 1]
+                (m.T[1, n_tray] - m.Tref) * m.prop[comp, "cpA", 1]
                 + (m.T[1, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 1]
-                * m.cpc2['A', 1]
+                * m.prop[comp, "cpB", 1]
+                * m.cpc2["A", 1]
                 / 2
                 + (m.T[1, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 1]
-                * m.cpc2['B', 1]
+                * m.prop[comp, "cpC", 1]
+                * m.cpc2["B", 1]
                 / 3
-                + (m.T[1, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 1] / 4
+                + (m.T[1, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 1] / 4
             )
             / m.Hscale
         )
@@ -1529,16 +1528,16 @@ def _build_bottom_equations(disj, n_tray):
         return m.hv[1, n_tray, comp] == (
             m.cpc[2]
             * (
-                (m.T[1, n_tray] - m.Tref) * m.prop[comp, 'cpA', 2]
+                (m.T[1, n_tray] - m.Tref) * m.prop[comp, "cpA", 2]
                 + (m.T[1, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 2]
-                * m.cpc2['A', 2]
+                * m.prop[comp, "cpB", 2]
+                * m.cpc2["A", 2]
                 / 2
                 + (m.T[1, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 2]
-                * m.cpc2['B', 2]
+                * m.prop[comp, "cpC", 2]
+                * m.cpc2["B", 2]
                 / 3
-                + (m.T[1, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 2] / 4
+                + (m.T[1, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 2] / 4
             )
             / m.Hscale
             + m.dHvap[comp]
@@ -1762,19 +1761,19 @@ def _build_feed_side_equations(disj, n_tray):
             * (
                 m.actv[2, n_tray, comp]
                 * (
-                    m.prop[comp, 'PC']
+                    m.prop[comp, "PC"]
                     * exp(
-                        m.prop[comp, 'TC']
+                        m.prop[comp, "TC"]
                         / m.T[2, n_tray]
                         * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 6
+                            m.prop[comp, "vpA"]
+                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"])
+                            + m.prop[comp, "vpB"]
+                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                            + m.prop[comp, "vpC"]
+                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 3
+                            + m.prop[comp, "vpD"]
+                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 6
                         )
                     )
                 )
@@ -1802,16 +1801,16 @@ def _build_feed_side_equations(disj, n_tray):
         return m.hl[2, n_tray, comp] == (
             m.cpc[1]
             * (
-                (m.T[2, n_tray] - m.Tref) * m.prop[comp, 'cpA', 1]
+                (m.T[2, n_tray] - m.Tref) * m.prop[comp, "cpA", 1]
                 + (m.T[2, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 1]
-                * m.cpc2['A', 1]
+                * m.prop[comp, "cpB", 1]
+                * m.cpc2["A", 1]
                 / 2
                 + (m.T[2, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 1]
-                * m.cpc2['B', 1]
+                * m.prop[comp, "cpC", 1]
+                * m.cpc2["B", 1]
                 / 3
-                + (m.T[2, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 1] / 4
+                + (m.T[2, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 1] / 4
             )
             / m.Hscale
         )
@@ -1836,16 +1835,16 @@ def _build_feed_side_equations(disj, n_tray):
         return m.hv[2, n_tray, comp] == (
             m.cpc[2]
             * (
-                (m.T[2, n_tray] - m.Tref) * m.prop[comp, 'cpA', 2]
+                (m.T[2, n_tray] - m.Tref) * m.prop[comp, "cpA", 2]
                 + (m.T[2, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 2]
-                * m.cpc2['A', 2]
+                * m.prop[comp, "cpB", 2]
+                * m.cpc2["A", 2]
                 / 2
                 + (m.T[2, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 2]
-                * m.cpc2['B', 2]
+                * m.prop[comp, "cpC", 2]
+                * m.cpc2["B", 2]
                 / 3
-                + (m.T[2, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 2] / 4
+                + (m.T[2, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 2] / 4
             )
             / m.Hscale
             + m.dHvap[comp]
@@ -2073,19 +2072,19 @@ def _build_product_side_equations(disj, n_tray):
             * (
                 m.actv[3, n_tray, comp]
                 * (
-                    m.prop[comp, 'PC']
+                    m.prop[comp, "PC"]
                     * exp(
-                        m.prop[comp, 'TC']
+                        m.prop[comp, "TC"]
                         / m.T[3, n_tray]
                         * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 6
+                            m.prop[comp, "vpA"]
+                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"])
+                            + m.prop[comp, "vpB"]
+                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                            + m.prop[comp, "vpC"]
+                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 3
+                            + m.prop[comp, "vpD"]
+                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 6
                         )
                     )
                 )
@@ -2113,16 +2112,16 @@ def _build_product_side_equations(disj, n_tray):
         return m.hl[3, n_tray, comp] == (
             m.cpc[1]
             * (
-                (m.T[3, n_tray] - m.Tref) * m.prop[comp, 'cpA', 1]
+                (m.T[3, n_tray] - m.Tref) * m.prop[comp, "cpA", 1]
                 + (m.T[3, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 1]
-                * m.cpc2['A', 1]
+                * m.prop[comp, "cpB", 1]
+                * m.cpc2["A", 1]
                 / 2
                 + (m.T[3, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 1]
-                * m.cpc2['B', 1]
+                * m.prop[comp, "cpC", 1]
+                * m.cpc2["B", 1]
                 / 3
-                + (m.T[3, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 1] / 4
+                + (m.T[3, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 1] / 4
             )
             / m.Hscale
         )
@@ -2147,16 +2146,16 @@ def _build_product_side_equations(disj, n_tray):
         return m.hv[3, n_tray, comp] == (
             m.cpc[2]
             * (
-                (m.T[3, n_tray] - m.Tref) * m.prop[comp, 'cpA', 2]
+                (m.T[3, n_tray] - m.Tref) * m.prop[comp, "cpA", 2]
                 + (m.T[3, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 2]
-                * m.cpc2['A', 2]
+                * m.prop[comp, "cpB", 2]
+                * m.cpc2["A", 2]
                 / 2
                 + (m.T[3, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 2]
-                * m.cpc2['B', 2]
+                * m.prop[comp, "cpC", 2]
+                * m.cpc2["B", 2]
                 / 3
-                + (m.T[3, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 2] / 4
+                + (m.T[3, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 2] / 4
             )
             / m.Hscale
             + m.dHvap[comp]
@@ -2233,7 +2232,7 @@ def _build_top_equations(disj, n_tray):
             m.D[comp] if n_tray == m.con_tray else 0
         ) == 0
 
-    @disj.Constraint(doc="Top scetion 4 energy balances")
+    @disj.Constraint(doc="Top section 4 energy balances")
     def _top_energy_balances(disj):
         """
         Energy balances for the top section in the column.
@@ -2368,7 +2367,7 @@ def _build_top_equations(disj, n_tray):
         """
         return sum(m.y[4, n_tray, comp] for comp in m.comp) - 1 == m.erry[4, n_tray]
 
-    @disj.Constraint(m.comp, doc="Top scetion 4 vapor composition")
+    @disj.Constraint(m.comp, doc="Top section 4 vapor composition")
     def top_vapor_composition(disj, comp):
         """
         Vapor composition for the top section in the column.
@@ -2392,19 +2391,19 @@ def _build_top_equations(disj, n_tray):
             * (
                 m.actv[4, n_tray, comp]
                 * (
-                    m.prop[comp, 'PC']
+                    m.prop[comp, "PC"]
                     * exp(
-                        m.prop[comp, 'TC']
+                        m.prop[comp, "TC"]
                         / m.T[4, n_tray]
                         * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 6
+                            m.prop[comp, "vpA"]
+                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"])
+                            + m.prop[comp, "vpB"]
+                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                            + m.prop[comp, "vpC"]
+                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 3
+                            + m.prop[comp, "vpD"]
+                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 6
                         )
                     )
                 )
@@ -2432,16 +2431,16 @@ def _build_top_equations(disj, n_tray):
         return m.hl[4, n_tray, comp] == (
             m.cpc[1]
             * (
-                (m.T[4, n_tray] - m.Tref) * m.prop[comp, 'cpA', 1]
+                (m.T[4, n_tray] - m.Tref) * m.prop[comp, "cpA", 1]
                 + (m.T[4, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 1]
-                * m.cpc2['A', 1]
+                * m.prop[comp, "cpB", 1]
+                * m.cpc2["A", 1]
                 / 2
                 + (m.T[4, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 1]
-                * m.cpc2['B', 1]
+                * m.prop[comp, "cpC", 1]
+                * m.cpc2["B", 1]
                 / 3
-                + (m.T[4, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 1] / 4
+                + (m.T[4, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 1] / 4
             )
             / m.Hscale
         )
@@ -2466,16 +2465,16 @@ def _build_top_equations(disj, n_tray):
         return m.hv[4, n_tray, comp] == (
             m.cpc[2]
             * (
-                (m.T[4, n_tray] - m.Tref) * m.prop[comp, 'cpA', 2]
+                (m.T[4, n_tray] - m.Tref) * m.prop[comp, "cpA", 2]
                 + (m.T[4, n_tray] ** 2 - m.Tref**2)
-                * m.prop[comp, 'cpB', 2]
-                * m.cpc2['A', 2]
+                * m.prop[comp, "cpB", 2]
+                * m.cpc2["A", 2]
                 / 2
                 + (m.T[4, n_tray] ** 3 - m.Tref**3)
-                * m.prop[comp, 'cpC', 2]
-                * m.cpc2['B', 2]
+                * m.prop[comp, "cpC", 2]
+                * m.cpc2["B", 2]
                 / 3
-                + (m.T[4, n_tray] ** 4 - m.Tref**4) * m.prop[comp, 'cpD', 2] / 4
+                + (m.T[4, n_tray] ** 4 - m.Tref**4) * m.prop[comp, "cpD", 2] / 4
             )
             / m.Hscale
             + m.dHvap[comp]

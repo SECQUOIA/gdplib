@@ -1,3 +1,8 @@
+try:
+    from gdplib._version import __version__
+except ImportError:
+    __version__ = "unknown"
+
 import gdplib.mod_hens
 import gdplib.modprodnet
 import gdplib.biofuel
@@ -17,3 +22,5 @@ import gdplib.water_network
 import gdplib.ex1_linan_2023
 import gdplib.small_batch
 import gdplib.cstr
+import gdplib.reverse_electrodialysis
+import gdplib.multiperiod_blending

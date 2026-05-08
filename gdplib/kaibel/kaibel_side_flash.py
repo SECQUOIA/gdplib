@@ -33,9 +33,9 @@ def calc_side_feed_flash(m):
         The updated Pyomo model with the calculated values, which include the vapor-liquid equilibrium, vapor pressure, and liquid and vapor compositions for the side feed.
 
     """
-    msf = ConcreteModel('SIDE FEED FLASH')  # Main side feed flash model
+    msf = ConcreteModel("SIDE FEED FLASH")  # Main side feed flash model
 
-    msf.nc = RangeSet(1, m.c, doc='Number of components')
+    msf.nc = RangeSet(1, m.c, doc="Number of components")
 
     m.xfi = (
         {}
@@ -43,37 +43,37 @@ def calc_side_feed_flash(m):
     for nc in msf.nc:
         m.xfi[nc] = 1 / m.c
 
-    msf.Tf = Param(doc='Side feed temperature in K', initialize=m.Tf0)
+    msf.Tf = Param(doc="Side feed temperature in K", initialize=m.Tf0)
     msf.xf = Var(
         msf.nc,
-        doc='Side feed liquid composition',
+        doc="Side feed liquid composition",
         domain=NonNegativeReals,
         bounds=(0, 1),
         initialize=m.xfi,
     )
     msf.yf = Var(
         msf.nc,
-        doc='Side feed vapor composition',
+        doc="Side feed vapor composition",
         domain=NonNegativeReals,
         bounds=(0, 1),
         initialize=m.xfi,
     )
     msf.Keqf = Var(
         msf.nc,
-        doc='Vapor-liquid equilibrium constant',
+        doc="Vapor-liquid equilibrium constant",
         domain=NonNegativeReals,
         bounds=(0, 10),
         initialize=0,
     )
     msf.Pvf = Var(
         msf.nc,
-        doc='Side feed vapor pressure in bar',
+        doc="Side feed vapor pressure in bar",
         domain=NonNegativeReals,
         bounds=(0, 10),
         initialize=0,
     )
     msf.q = Var(
-        doc='Vapor fraction', bounds=(0, 1), domain=NonNegativeReals, initialize=0
+        doc="Vapor fraction", bounds=(0, 1), domain=NonNegativeReals, initialize=0
     )
 
     @msf.Constraint(doc="Vapor fraction")
@@ -176,14 +176,14 @@ def calc_side_feed_flash(m):
         Pvf : float
             The vapor fraction for the given component considering the temperature (Tf) and the properties of the component set in the main model.
         """
-        return msf.Pvf[nc] == m.prop[nc, 'PC'] * exp(
-            m.prop[nc, 'TC']
+        return msf.Pvf[nc] == m.prop[nc, "PC"] * exp(
+            m.prop[nc, "TC"]
             / msf.Tf
             * (
-                m.prop[nc, 'vpA'] * (1 - msf.Tf / m.prop[nc, 'TC'])
-                + m.prop[nc, 'vpB'] * (1 - msf.Tf / m.prop[nc, 'TC']) ** 1.5
-                + m.prop[nc, 'vpC'] * (1 - msf.Tf / m.prop[nc, 'TC']) ** 3
-                + m.prop[nc, 'vpD'] * (1 - msf.Tf / m.prop[nc, 'TC']) ** 6
+                m.prop[nc, "vpA"] * (1 - msf.Tf / m.prop[nc, "TC"])
+                + m.prop[nc, "vpB"] * (1 - msf.Tf / m.prop[nc, "TC"]) ** 1.5
+                + m.prop[nc, "vpC"] * (1 - msf.Tf / m.prop[nc, "TC"]) ** 3
+                + m.prop[nc, "vpD"] * (1 - msf.Tf / m.prop[nc, "TC"]) ** 6
             )
         )
 
@@ -192,7 +192,7 @@ def calc_side_feed_flash(m):
     msf.OBJ = Objective(expr=1, sense=minimize)
 
     ####
-    SolverFactory('ipopt').solve(msf, tee=False)
+    SolverFactory("ipopt").solve(msf, tee=False)
 
     # Update the main model with the calculated values
     m.yfi = {}  # Vapor composition

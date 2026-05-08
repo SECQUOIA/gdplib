@@ -46,7 +46,7 @@ def build_require_modular(cafaro_approx, num_stages):
 
     # Optimize modular configurations based on cost
     for hot, cold in m.valid_matches:
-        lowest_price = float('inf')
+        lowest_price = float("inf")
         # Determine the least costly configuration for each size
         for size in sorted(m.possible_sizes, reverse=True):
             current_size_cost = (
@@ -83,7 +83,7 @@ def build_modular_option(cafaro_approx, num_stages):
 
     # Optimize for the least cost configuration across all stages and matches
     for hot, cold in m.valid_matches:
-        lowest_price = float('inf')
+        lowest_price = float("inf")
         for size in sorted(m.possible_sizes, reverse=True):
             current_size_cost = (
                 m.modular_size_cost[hot, cold, size]
