@@ -53,6 +53,11 @@ These instructions apply to the whole repository.
   ```bash
   pytest tests/test_module_imports.py -v --tb=short
   ```
+- When changing `build_model()` tests, make unexpected construction failures
+  fail the test. Inspect builder signatures before calling models that may
+  require arguments; only skip required-argument builders or unavailable
+  optional solvers. Do not catch `Exception` or `TypeError` from
+  `build_model()` and turn it into a skip.
 - Match CI formatting and linting:
   ```bash
   black -S -C --target-version py310 --check --diff .
