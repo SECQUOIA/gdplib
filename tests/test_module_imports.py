@@ -9,6 +9,8 @@ import pytest
 import importlib
 import sys
 import os
+import pyomo.environ as pyo
+from pyomo.gdp import Disjunction
 
 # Add the gdplib directory to the path for testing
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -108,6 +110,24 @@ class TestModelConstruction:
             pytest.skip("CSTR module not available")
         except Exception as e:
             pytest.skip(f"CSTR model construction failed: {e}")
+
+    def test_cstr_model_reformulates_with_bigm(self):
+        """Test CSTR logical and GDP components reformulate with big-M."""
+        import gdplib.cstr
+
+        model = gdplib.cstr.build_model()
+
+        assert any(
+            model.component_data_objects(pyo.LogicalConstraint, active=True)
+        ), "CSTR model should contain active logical constraints before reformulation"
+        assert any(
+            model.component_data_objects(Disjunction, active=True)
+        ), "CSTR model should contain active disjunctions before reformulation"
+
+        pyo.TransformationFactory("gdp.bigm").apply_to(model)
+
+        assert not any(model.component_data_objects(pyo.LogicalConstraint, active=True))
+        assert not any(model.component_data_objects(Disjunction, active=True))
 
     def test_biofuel_model_construction(self):
         """Test biofuel model construction specifically."""
