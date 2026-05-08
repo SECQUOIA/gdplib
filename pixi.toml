@@ -3,6 +3,8 @@ name = "gdplib"
 description = "Development environment for GDPlib"
 authors = ["Qi Chen <qichen@andrew.cmu.edu>"]
 channels = ["conda-forge"]
+# This committed Pixi environment is Linux-only. Use the README pip workflow on
+# other platforms, or add the platform here and regenerate pixi.lock.
 platforms = ["linux-64"]
 version = "0.1.0"
 
