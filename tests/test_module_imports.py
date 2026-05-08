@@ -15,6 +15,11 @@ from pyomo.gdp import Disjunction
 # Add the gdplib directory to the path for testing
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from build_model_test_utils import (  # noqa: E402
+    get_required_build_model_parameters,
+    is_missing_external_solver_error,
+)
+
 
 class TestModuleImports:
     """Test that all gdplib modules can be imported individually."""
@@ -75,25 +80,18 @@ class TestModuleImports:
                     build_func
                 ), f"{module_name}.build_model is not callable"
 
-                # Try to call build_model without arguments first
+                required_params = get_required_build_model_parameters(build_func)
+                if required_params:
+                    pytest.skip(
+                        f"{module_name}.build_model requires parameters: "
+                        f"{', '.join(required_params)}"
+                    )
+
                 try:
                     model = build_func()
                     assert model is not None, f"{module_name}.build_model returned None"
-                except TypeError:
-                    # Some models might require arguments, try with empty args
-                    try:
-                        model = build_func(*[])
-                        assert model is not None
-                    except Exception:
-                        pytest.skip(
-                            f"{module_name}.build_model requires specific arguments"
-                        )
                 except Exception as e:
-                    err_msg = str(e)
-                    if (
-                        "No executable found for solver" in err_msg
-                        or "No 'gams' command" in err_msg
-                    ):
+                    if is_missing_external_solver_error(e):
                         pytest.skip(
                             f"{module_name}.build_model requires external solver: {e}"
                         )
@@ -122,11 +120,7 @@ class TestModelConstruction:
         except ImportError:
             pytest.skip(f"{module_name} module not available")
         except Exception as e:
-            err_msg = str(e)
-            if (
-                "No executable found for solver" in err_msg
-                or "No 'gams' command" in err_msg
-            ):
+            if is_missing_external_solver_error(e):
                 pytest.skip(
                     f"{module_name} model construction requires external solver: {e}"
                 )

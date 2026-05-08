@@ -15,6 +15,11 @@ import os
 # Add the gdplib directory to the path for testing
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from build_model_test_utils import (  # noqa: E402
+    get_required_build_model_parameters,
+    is_missing_external_solver_error,
+)
+
 
 class TestComprehensiveCoverage:
     """Comprehensive tests for all GDPlib models ensuring importability and runnability."""
@@ -54,6 +59,7 @@ class TestComprehensiveCoverage:
         import_results = {}
         build_model_results = {}
         execution_results = {}
+        unexpected_execution_failures = {}
 
         for module_name in self.ALL_GDPLIB_MODULES:
             # Test import
@@ -67,29 +73,32 @@ class TestComprehensiveCoverage:
             # Test build_model availability
             if hasattr(module, "build_model"):
                 build_model_results[module_name] = "✅ AVAILABLE"
+                build_func = getattr(module, "build_model")
+                required_params = get_required_build_model_parameters(build_func)
+                if required_params:
+                    execution_results[module_name] = (
+                        f"REQUIRES_PARAMETERS: {', '.join(required_params)}"
+                    )
+                    continue
 
                 # Test build_model execution
                 try:
-                    model = module.build_model()
+                    model = build_func()
                     if model is not None:
                         execution_results[module_name] = "✅ RUNNABLE"
                     else:
                         execution_results[module_name] = "⚠️  RETURNS_NULL"
                 except Exception as e:
                     # Handle solver dependency issues gracefully
-                    error_msg = str(e)
-                    if (
-                        "ipopt" in error_msg.lower()
-                        or "gams" in error_msg.lower()
-                        or "solver" in error_msg.lower()
-                    ):
+                    if is_missing_external_solver_error(e):
                         execution_results[module_name] = (
-                            f"⚠️  REQUIRES_SOLVER: {error_msg.split(':')[0] if ':' in error_msg else 'External solver'}"
+                            f"⚠️  REQUIRES_SOLVER: {str(e).split(':')[0] if ':' in str(e) else 'External solver'}"
                         )
                     else:
                         execution_results[module_name] = (
                             f"❌ EXECUTION_FAILED: {str(e)[:50]}..."
                         )
+                        unexpected_execution_failures[module_name] = str(e)
             else:
                 build_model_results[module_name] = "❌ MISSING"
                 execution_results[module_name] = "N/A"
@@ -132,6 +141,12 @@ class TestComprehensiveCoverage:
             )
 
         # Assert that we have good coverage
+        assert (
+            not unexpected_execution_failures
+        ), "Unexpected build_model failures: " + "; ".join(
+            f"{module_name}: {error}"
+            for module_name, error in sorted(unexpected_execution_failures.items())
+        )
         assert (
             successful_imports >= total_modules * 0.8
         ), f"Less than 80% of modules importable: {successful_imports}/{total_modules}"
@@ -179,6 +194,13 @@ class TestComprehensiveCoverage:
 
             build_func = getattr(module, "build_model")
 
+            required_params = get_required_build_model_parameters(build_func)
+            if required_params:
+                pytest.skip(
+                    f"{module_name}.build_model requires parameters: "
+                    f"{', '.join(required_params)}"
+                )
+
             # Try to build the model
             try:
                 model = build_func()
@@ -193,22 +215,11 @@ class TestComprehensiveCoverage:
                 components = list(model.component_objects())
                 assert len(components) > 0, f"{module_name} model has no components"
 
-            except TypeError as e:
-                # Some models might require parameters
-                if "required positional argument" in str(e) or "missing" in str(e):
-                    pytest.skip(f"{module_name}.build_model requires parameters: {e}")
-                else:
-                    pytest.fail(f"{module_name}.build_model failed with TypeError: {e}")
             except Exception as e:
                 # Handle solver dependency issues gracefully
-                error_msg = str(e)
-                if (
-                    "ipopt" in error_msg.lower()
-                    or "gams" in error_msg.lower()
-                    or "solver" in error_msg.lower()
-                ):
+                if is_missing_external_solver_error(e):
                     pytest.skip(
-                        f"{module_name} requires external solver: {error_msg[:100]}"
+                        f"{module_name} requires external solver: {str(e)[:100]}"
                     )
                 else:
                     pytest.fail(f"{module_name}.build_model failed: {e}")
