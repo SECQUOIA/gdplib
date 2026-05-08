@@ -21,7 +21,7 @@ from os.path import join
 # maximizing profit. The four different contracts available are:
 # FIXED PRICE CONTRACT: buy as much as you want at constant price
 # DISCOUNT CONTRACT: quantities below minimum amount cost RegPrice. Any additional quantity
-# above min amount costs DiscoutPrice.
+# above min amount costs DiscountPrice.
 # BULK CONTRACT: If more than min amount is purchased, whole purchase is at discount price.
 # FIXED DURATION CONTRACT: Depending on length of time contract is valid, there is a purchase
 # price during that time and min quantity that must be purchased
