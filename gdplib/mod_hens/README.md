@@ -20,6 +20,10 @@ Seven model variants are described:
 - ``build_model('multiple_module_discrete')`` - Modular HENS - multiple module types allowed, discretized formulation
 - ``build_model('mixed_discrete')`` - Modular HENS - mixed modular and conventional exchangers allowed, discretized formulation
 
+The legacy case names ``require_modular_integer``, ``modular_option_integer``,
+``require_modular_discrete``, and ``modular_option_discrete`` are also accepted
+as aliases for compatibility.
+
 The discretized formulations use the ``induced linearity`` reformulation described in the (Chen & Grossmann, 2019) source paper.
 
 ## Problem Details

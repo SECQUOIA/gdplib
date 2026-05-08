@@ -1614,7 +1614,7 @@ def build_model():
     # from new_data_set import * # Uncomment this line to use new data set
 
     # declare model name
-    model = ConcreteModel('SIR Disease Model')
+    model = ConcreteModel("SIR Disease Model")
 
     # declare constants
     bpy = 26  # biweeks per year
@@ -1668,11 +1668,11 @@ def build_model():
     # Binary variables (model.y) are defined inside on the build_model() function. The disjuncts for the Big-M Reformulation is written outside of the code.
 
     # model.logI = Var(model.S_meas, bounds=_gt_zero, doc='log of estimated cases')
-    model.logI = Var(model.S_meas, bounds=(0.001, 1e7), doc='log of estimated cases')
+    model.logI = Var(model.S_meas, bounds=(0.001, 1e7), doc="log of estimated cases")
     # log of transmission parameter beta
     # model.logbeta = Var(model.S_beta, bounds=_gt_zero, doc='log of transmission parameter beta')
     model.logbeta = Var(
-        model.S_beta, bounds=(0.0001, 5), doc='log of transmission parameter beta'
+        model.S_beta, bounds=(0.0001, 5), doc="log of transmission parameter beta"
     )
     # binary variable y over all betas
     # model.y = Var(model.S_beta, within=Binary, doc='binary variable y over all betas')
@@ -1681,10 +1681,10 @@ def build_model():
     model.logbeta_low = Var(bounds=(0.0001, 5))
     # high value of beta
     # model.logbeta_high = Var(bounds=_beta_bounds, doc='high value of beta')
-    model.logbeta_high = Var(bounds=(0.0001, 5), doc='high value of beta')
+    model.logbeta_high = Var(bounds=(0.0001, 5), doc="high value of beta")
     # dummy variables
-    model.p = Var(model.S_meas, bounds=_gt_zero, doc='dummy variable p')
-    model.n = Var(model.S_meas, bounds=_gt_zero, doc='dummy variable n')
+    model.p = Var(model.S_meas, bounds=_gt_zero, doc="dummy variable p")
+    model.n = Var(model.S_meas, bounds=_gt_zero, doc="dummy variable n")
 
     # define indexed constants
 
@@ -1723,7 +1723,7 @@ def build_model():
         expr = sum(m.p[i] + m.n[i] for i in m.S_meas)
         return expr
 
-    model.obj = Objective(rule=_obj_rule, sense=minimize, doc='objective function')
+    model.obj = Objective(rule=_obj_rule, sense=minimize, doc="objective function")
 
     # define constraints
     def _logSIR(m, i):
@@ -1756,7 +1756,7 @@ def build_model():
         return (0.0, expr)
 
     model.logSIR = Constraint(
-        model.S_meas_small, rule=_logSIR, doc='log of SIR disease model'
+        model.S_meas_small, rule=_logSIR, doc="log of SIR disease model"
     )
 
     # objective function constraint
@@ -1787,7 +1787,7 @@ def build_model():
         return (0.0, expr)
 
     model.p_n_const = Constraint(
-        model.S_meas, rule=_p_n_const, doc='constraint for p and n'
+        model.S_meas, rule=_p_n_const, doc="constraint for p and n"
     )
 
     # disjuncts
@@ -1828,7 +1828,7 @@ def build_model():
         model.S_beta,
         model.y,
         rule=_high_low,
-        doc='disjunct for high and low beta values',
+        doc="disjunct for high and low beta values",
     )
 
     # disjunctions
@@ -1859,7 +1859,7 @@ def build_model():
         return [model.high_low[i, j] for j in model.y]
 
     model.disj = Disjunction(
-        model.S_beta, rule=_disj, doc='disjunction for high and low beta values'
+        model.S_beta, rule=_disj, doc="disjunction for high and low beta values"
     )
 
     return model
@@ -1969,8 +1969,8 @@ def build_model():
 
 if __name__ == "__main__":
     m = build_model()
-    TransformationFactory('gdp.bigm').apply_to(m)
-    SolverFactory('gams').solve(
-        m, solver='baron', tee=True, add_options=['option optcr=1e-6;']
+    TransformationFactory("gdp.bigm").apply_to(m)
+    SolverFactory("gams").solve(
+        m, solver="baron", tee=True, add_options=["option optcr=1e-6;"]
     )
     m.obj.display()

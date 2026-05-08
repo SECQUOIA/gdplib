@@ -35,7 +35,7 @@ def build_model():
     ----------
     [1] Kocis, G. R.; Grossmann, I. E. (1988). Global Optimization of Nonconvex Mixed-Integer Nonlinear Programming (MINLP) Problems in Process Synthesis. Ind. Eng. Chem. Res., 27(8), 1407-1421. https://doi.org/10.1021/ie00080a013
 
-    [2] Ovalle, D., Liñán, D. A., Lee, A., Gómez, J. M., Ricardez-Sandoval, L., Grossmann, I. E., & Neira, D. E. B. (2024). Logic-Based Discrete-Steepest Descent: A Solution Method for Process Synthesis Generalized Disjunctive Programs. arXiv preprint arXiv:2405.05358. https://doi.org/10.48550/arXiv.2405.05358
+    [2] Ovalle, D., Liñán, D. A., Lee, A., Gómez, J. M., Ricardez-Sandoval, L., Grossmann, I. E., & Bernal Neira, D. E. (2024). Logic-Based Discrete-Steepest Descent: A Solution Method for Process Synthesis Generalized Disjunctive Programs. arXiv preprint arXiv:2405.05358. https://doi.org/10.48550/arXiv.2405.05358
     """
     NK = 3
 
@@ -148,7 +148,7 @@ def build_model():
         m.j,
         within=pyo.NonNegativeReals,
         bounds=(pyo.log(m.vlow), pyo.log(m.vupp)),
-        doc="Colume of stage j [L]",
+        doc="Volume of stage j [L]",
     )  # Volume of stage j [L]
     m.b = pyo.Var(
         m.i, within=pyo.NonNegativeReals, doc="Batch size of product i [L]"
@@ -166,7 +166,7 @@ def build_model():
     # Volume requirement in stage j
     @m.Constraint(m.i, m.j)
     def vol(m, i, j):
-        """
+        r"""
         Volume Requirement for Stage j.
         Equation
         --------
@@ -191,7 +191,7 @@ def build_model():
     # Cycle time for each product i
     @m.Constraint(m.i, m.j)
     def cycle(m, i, j):
-        """
+        r"""
         Cycle time for each product i.
 
         Equation
@@ -217,7 +217,7 @@ def build_model():
     # Constraint for production time
     @m.Constraint()
     def time(m):
-        """
+        r"""
         Production time constraint.
         Equation:
             sum_{i \in I} q_i * \exp(tl_i - b_i) \leq h
@@ -237,7 +237,7 @@ def build_model():
     # Relating number of units to 0-1 variables
     @m.Constraint(m.j)
     def units(m, j):
-        """
+        r"""
         Relating number of units to 0-1 variables.
         Equation:
             n_j = sum_{k \in K} coeffval_{k,j} for j = mixer, reactor, centrifuge
@@ -259,7 +259,7 @@ def build_model():
     # Only one choice for parallel units is feasible
     @m.LogicalConstraint(m.j)
     def lim(m, j):
-        """
+        r"""
         Only one choice for parallel units is feasible.
         Equation:
             sum_{k \in K} Y_{k,j} = 1 for j = mixer, reactor, centrifuge

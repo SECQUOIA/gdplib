@@ -399,10 +399,10 @@ if __name__ == "__main__":
     #     mip_solver_args={
     #                      'io_options': {'add_options': [
     #                          'option reslim=30;']}})
-    TransformationFactory('gdp.bigm').apply_to(m, bigM=10000)
+    TransformationFactory("gdp.bigm").apply_to(m, bigM=10000)
     # TransformationFactory('gdp.chull').apply_to(m)
-    res = SolverFactory('gams').solve(
-        m, tee=True, io_options={'add_options': ['option reslim = 300;']}
+    res = SolverFactory("gams").solve(
+        m, tee=True, io_options={"add_options": ["option reslim = 300;"]}
     )
     # SolverFactory('gams').solve(
     #     m, tee=True,
@@ -465,24 +465,24 @@ if __name__ == "__main__":
     plt.plot(
         [x.value for x in m.site_x.values()],
         [y.value for y in m.site_y.values()],
-        'k.',
+        "k.",
         markersize=12,
     )
     plt.plot(
         [x for x in m.mkt_x.values()],
         [y for y in m.mkt_y.values()],
-        'bo',
+        "bo",
         markersize=12,
     )
     for mkt in m.markets:
         plt.annotate(
-            'mkt%s' % mkt,
+            "mkt%s" % mkt,
             (m.mkt_x[mkt], m.mkt_y[mkt]),
             (m.mkt_x[mkt] + 2, m.mkt_y[mkt] + 0),
         )
     for site in m.modular_sites:
         plt.annotate(
-            'site%s' % site,
+            "site%s" % site,
             (m.site_x[site].value, m.site_y[site].value),
             (m.site_x[site].value + 2, m.site_y[site].value + 0),
         )
@@ -495,7 +495,7 @@ if __name__ == "__main__":
                 m.mkt_y[mkt] - m.site_y[site].value,
                 width=0.8,
                 length_includes_head=True,
-                color='r',
+                color="r",
             )
     for site1, site2 in m.site_pairs:
         if sum(m.modules_transferred[site1, site2, mo].value for mo in m.months) > 0:
@@ -506,7 +506,7 @@ if __name__ == "__main__":
                 m.site_y[site2].value - m.site_y[site1].value,
                 width=0.9,
                 length_includes_head=True,
-                linestyle='dotted',
-                color='k',
+                linestyle="dotted",
+                color="k",
             )
     plt.show()

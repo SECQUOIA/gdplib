@@ -1,4 +1,4 @@
-# GDP Distillation Column Design
+# Jobshop Scheduling Problem
 
 This model solves a jobshop scheduling, which has a set of jobs which must be processed in sequence of stages but not all jobs require all stages. A zero wait transfer policy is assumed between stages. To obtain a feasible solution it is necessary to eliminate all clashes between jobs. It requires that no two jobs be performed at any stage at any time. The objective is to minimize the makespan, the time to complete all jobs.
 
