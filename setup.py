@@ -5,6 +5,7 @@ GDPlib open source model library for Generalized Disjunctive Programming
 This file is maintained for backward compatibility.
 Modern installations should use `pip install -e .` which will use pyproject.toml.
 """
+
 import sys
 from logging import warning
 
@@ -25,7 +26,7 @@ if __name__ == "__main__":
             "pint>=0.15.0",
             "openpyxl>=3.0.0",
         ],
-        python_requires=">=3.9, <3.13",
+        python_requires=">=3.10, <3.13",
         # All other metadata is now in pyproject.toml
         # This setup.py is maintained only for backward compatibility
     )

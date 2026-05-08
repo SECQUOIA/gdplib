@@ -26,7 +26,7 @@ jobs:
       - name: Black Formatting Check
         uses: psf/black@stable
         with:
-          options: "-S -C --check --diff"
+          options: "-S -C --target-version py310 --check --diff"
       
       - name: Flake8 Lint Check
         run: |

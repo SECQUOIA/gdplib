@@ -1,12 +1,14 @@
 # GitHub Copilot Custom Instructions for GDPlib
 
+Also read the repository-level instructions in `AGENTS.md`.
+
 ## Project Context
 GDPlib is an open-source Python library for Generalized Disjunctive Programming (GDP) models. The library provides a collection of GDP model implementations for benchmarking and educational purposes.
 
 ## Key Technologies & Dependencies
 - **Primary Framework**: Pyomo (optimization modeling in Python)
 - **Core Dependencies**: pandas, matplotlib, scipy, pint, openpyxl
-- **Python Version**: 3.6+
+- **Python Version**: 3.10-3.12
 - **License**: BSD 3-clause
 
 ## Coding Standards & Best Practices

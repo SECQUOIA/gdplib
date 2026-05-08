@@ -40,8 +40,7 @@ def build_model():
     [2] Brink, A., & Westerlund, T. (1995). The joint problem of model structure determination and parameter estimation in quantitative IR spectroscopy. Chemometrics and intelligent laboratory systems, 29(1), 29-36. https://doi.org/10.1016/0169-7439(95)00033-3
     """
     # Matrix of absorbance values across different wave numbers (rows) and spectra numbers (columns)
-    spectroscopic_data = StringIO(
-        """
+    spectroscopic_data = StringIO("""
              1      2       3       4       5       6       7       8
     1     0.0003  0.0764  0.0318  0.0007  0.0534  0.0773  0.0536  0.0320
     2     0.0007  0.0003  0.0004  0.0009  0.0005  0.0009  0.0005  0.0003
@@ -53,8 +52,7 @@ def build_model():
     8     0.0507  0.0361  0.0433  0.0635  0.0048  0.0891  0.0213  0.0310
     9     0.0905  0.0600  0.0754  0.1098  0.0038  0.1443  0.0420  0.0574
     10    0.0016  0.0209  0.0063  0.0010  0.0132  0.0203  0.0139  0.0057
-    """
-    )
+    """)
     # Note: this could come from an external data file
     spectroscopic_data_table = pd.read_csv(spectroscopic_data, delimiter=r"\s+")
     flat_spectro_data = spectroscopic_data_table.stack()
@@ -64,28 +62,24 @@ def build_model():
 
     # Measured concentration data for each compound(row) and spectra number(column)
     # Units for concentration for each component 1, 2, and 3 are ppm, ppm, and % for CO, NO, and CO2, respectively.
-    c_data = StringIO(
-        """
+    c_data = StringIO("""
             1       2       3       4       5       6       7       8
     1       502     204     353     702     0       1016    104     204
     2        97     351     351     351     700     0       201      97
     3        0      22      8       0       14      22      14       8 
-    """
-    )
+    """)
     c_data_table = pd.read_csv(c_data, delimiter=r"\s+")
     c_data_dict = {
         (k[0], int(k[1])): v for k, v in c_data_table.stack().to_dict().items()
     }
 
     # Covariance matrix; It is assumed to be known that it is equal to the identity matrix at first problem iteration
-    r_data = StringIO(
-        """
+    r_data = StringIO("""
             1       2       3
     1       1       0       0
     2       0       1       0
     3       0       0       1
-    """
-    )
+    """)
     r_data_table = pd.read_csv(r_data, delimiter=r"\s+")
     r_data_dict = {
         (k[0], int(k[1])): v for k, v in r_data_table.stack().to_dict().items()
