@@ -31,11 +31,24 @@ pip install -e .
 
 ### Development Setup
 
-For development work with enhanced Copilot integration:
+For development work on Linux, use the Pixi environment when available. The
+committed Pixi lock currently targets `linux-64`; on other platforms, use the
+pip workflow below or add the appropriate Pixi platform and regenerate the lock
+file.
+
+```bash
+pixi install
+pixi run test
+pixi run lint
+```
+
+For a pip-based setup:
 
 1. **Install development dependencies:**
    ```bash
+   pip install -r requirements.txt
    pip install -r requirements-dev.txt
+   pip install -e .
    ```
 
 2. **Set up GitHub Copilot with custom instructions:**
@@ -44,13 +57,20 @@ For development work with enhanced Copilot integration:
 
 3. **Run tests:**
    ```bash
-   pytest tests/
+   pytest tests/ -v --tb=short
    ```
 
 4. **Code formatting and linting:**
    ```bash
-   black gdplib/
-   flake8 gdplib/
+   black -S -C --target-version py310 --check --diff .
+   flake8 gdplib/ --count --select=E9,F63,F7,F82 --show-source --statistics
+   flake8 gdplib/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+   ```
+
+   The `typos` CLI used by CI is included in the Pixi environment. Install it separately before running the spell check from a pip-only environment:
+
+   ```bash
+   typos --config ./.github/workflows/typos.toml
    ```
 
 ## Model descriptions

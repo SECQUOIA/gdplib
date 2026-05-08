@@ -134,3 +134,11 @@ class TestModelConstruction:
             pytest.skip("GDP column module not available")
         except Exception as e:
             pytest.skip(f"GDP column model construction failed: {e}")
+
+    def test_methanol_model_construction(self):
+        """Test methanol model construction specifically."""
+        from gdplib.methanol import build_model
+
+        model = build_model()
+        assert model is not None
+        assert hasattr(model, "component_objects")
