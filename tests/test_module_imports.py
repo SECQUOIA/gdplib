@@ -39,7 +39,7 @@ class TestModuleImports:
         "small_batch",
         "cstr",
         "reverse_electrodialysis",
-        "multiperiod_blending"
+        "multiperiod_blending",
     ]
 
     @pytest.mark.parametrize("module_name", GDPLIB_MODULES)

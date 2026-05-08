@@ -99,9 +99,7 @@ def build_model(data: dict = None):
         import os
 
         default_path = os.path.join(
-            os.path.dirname(__file__),
-            "instances_json",
-            "mpbp_6.json",
+            os.path.dirname(__file__), "instances_json", "mpbp_6.json"
         )
         with open(default_path, "r") as f:
             data = convert_json_to_data(json.load(f))
@@ -544,9 +542,7 @@ if __name__ == "__main__":
         help="Path to the JSON instance file (default: instances_json/mpbp_6.json)",
     )
     parser.add_argument(
-        "--solver",
-        default="gurobi",
-        help="Name of the solver to use (default: gurobi)",
+        "--solver", default="gurobi", help="Name of the solver to use (default: gurobi)"
     )
     args = parser.parse_args()
 
