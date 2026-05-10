@@ -1,9 +1,24 @@
 """
 methanol.py
-Example 3 from Reference [1]. This model describes a profit maximization for a methanol production process with 90 [%] minimum purity and 1000 [tons/day] production requirements. The structure contains 19 units; two feedstocks, two compressor types (single stage, double stage) in the reactor feed stream and the recycle streams, two reactors, four coolers, three heaters and a flash separator.
-The model enforces constraints to ensure that the product purity meets the minimum requirement, the production flowrate is within the specified range, and the temperature and pressure conditions in the process units are maintained within the operational limits.
-The disjunctions in the model define the operational modes for feedstocks, compressors, and reactors. There are two alternative feedstocks (cheap or expensive), two alternative compressor types (single stage or double stage) in the reactor feed stream and the recycle stream, and two alternative reactors (lower or higher conversion and cost--denoted as cheap or expensive respectively).
-The objective of the model is to maximize profit by minimizing costs and maximizing revenue, including feedstock costs, product prices, reactor costs, electricity costs, and cooling and heating costs.
+Example 3 from Reference [1]. This model describes a profit maximization for a
+methanol production process with 90 [%] minimum purity and 1000 [tons/day]
+production capacity. The structure contains 19 units: two feedstocks, two
+compressor types (single stage, double stage) in the reactor feed stream and
+the recycle streams, two reactors, four coolers, three heaters and a flash
+separator.
+The model enforces constraints to ensure that the product purity meets the
+minimum requirement, the production flowrate is within the specified range, and
+the temperature and pressure conditions in the process units are maintained
+within the operational limits.
+The disjunctions in the model define the operational modes for feedstocks,
+compressors, and reactors. There are two alternative feedstocks (cheap or
+expensive), two alternative compressor types (single stage or double stage) in
+the reactor feed stream and the recycle stream, and two alternative reactors
+(lower or higher conversion and cost--denoted as cheap or expensive
+respectively).
+The objective of the model is to maximize profit by minimizing costs and
+maximizing revenue, including feedstock costs, product prices, reactor costs,
+electricity costs, and cooling and heating costs.
 
 References:
     [1] Turkay, M., Grossmann, I. E. (1996). Logic-based MINLP algorithms for the optimal synthesis of process networks. Computers and Chemical Engineering, 125, 959-978. https://doi.org/10.1016/0098-1354(95)00219-7
@@ -71,7 +86,7 @@ class MethanolModel(object):
 
         self.alpha = 0.72  # compressor coefficient
         self.eta = 0.75  # compressor efficiency
-        self.gamma = 0.23077  # ratio of constant pressure heat capacity to constant volume heat capacity
+        self.gamma = 0.23077  # isentropic pressure/temperature exponent
         self.cp = 35.0  # heat capacity
         self.heat_of_reaction = -15
         self.volume_conversion = dict()
@@ -82,7 +97,7 @@ class MethanolModel(object):
         self.cooling_cost = 700
         self.heating_cost = 8000
         self.purity_demand = 0.9  # purity demand in product stream
-        self.demand = 1.0  # flowrate restriction on product flow
+        self.demand = 1.0  # retained source production-flow scaling value
         self.flow_feed_lb = 0.5
         self.flow_feed_ub = 5
         self.flow_feed_temp = 3
@@ -513,7 +528,7 @@ class MethanolModel(object):
         setattr(block, 'compressor_' + str(u), b)
         b.p_ratio = pe.Var(bounds=(0, 1.74), doc='Pressure ratio')
         b.electricity_requirement = pe.Var(
-            bounds=(0, 50), doc='Electricity requirement'
+            bounds=(0, 50), doc='Compressor load variable [source scale]'
         )
 
         def _component_balances(_b, _c):
@@ -606,7 +621,7 @@ class MethanolModel(object):
         out_stream = self.outlet_streams[u]
         b = pe.Block()
         setattr(block, 'cooler_' + str(u), b)
-        b.heat_duty = pe.Var(bounds=(0, 50), doc='Heat duty [kJ/hr]')
+        b.heat_duty = pe.Var(bounds=(0, 50), doc='Scaled annual heat duty')
 
         def _component_balances(_b, _c):
             return m.component_flows[out_stream, _c] == m.component_flows[in_stream, _c]
@@ -649,7 +664,7 @@ class MethanolModel(object):
         out_stream = self.outlet_streams[u]
         b = pe.Block()
         setattr(block, 'heater_' + str(u), b)
-        b.heat_duty = pe.Var(bounds=(0, 50), doc='Heat duty [kJ/hr]')
+        b.heat_duty = pe.Var(bounds=(0, 50), doc='Scaled annual heat duty')
 
         def _component_balances(_b, _c):
             return m.component_flows[out_stream, _c] == m.component_flows[in_stream, _c]
