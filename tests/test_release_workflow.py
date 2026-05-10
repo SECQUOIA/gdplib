@@ -3,6 +3,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 PUBLISH_WORKFLOW = ROOT / ".github" / "workflows" / "publish.yml"
 README = ROOT / "README.md"
+PIXI = ROOT / "pixi.toml"
 
 
 def test_publish_workflow_builds_and_validates_before_publishing():
@@ -39,5 +40,21 @@ def test_readme_documents_release_process_and_pixi_policy():
         "pixi run lint",
         "python -m twine check dist/*",
         "linux-64",
+        "pixi.lock",
+        "pixi.toml",
+        "macOS and Windows users",
+        "pip workflow",
+        "default Pixi environment intentionally excludes optional external",
     ]:
         assert phrase in readme
+
+
+def test_pixi_manifest_matches_documented_platform_policy():
+    pixi = PIXI.read_text()
+    readme = README.read_text()
+
+    assert 'platforms = ["linux-64"]' in pixi
+    assert "The committed Pixi support surface is `linux-64` only" in readme
+    assert "pixi install" in readme
+    assert "pixi run test" in readme
+    assert "pixi run lint" in readme

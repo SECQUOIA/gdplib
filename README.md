@@ -59,6 +59,21 @@ pixi run test
 pixi run lint
 ```
 
+The committed Pixi support surface is `linux-64` only because that is the
+platform the maintainers can verify with `pixi install`, `pixi run test`, and
+`pixi run lint`. The `pixi.lock` file should cover exactly the platforms listed
+in `pixi.toml`; do not commit lock-file changes for `osx-64`, `osx-arm64`,
+`win-64`, or another platform unless that platform has been added deliberately
+and verified with the same commands. macOS and Windows users should use the pip
+workflow unless a PR explicitly adds and verifies Pixi support for those
+platforms.
+
+The default Pixi environment intentionally excludes optional external
+optimization solver stacks and licensed solver bindings. Keep GAMS, BARON,
+IPOPT, Gurobi, HiGHS, and similar tools in optional local environments,
+benchmark profiles, or documentation unless they become required for default
+imports and tests.
+
 ### PyPI Release Workflow
 
 PyPI releases are published by
