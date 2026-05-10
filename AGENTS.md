@@ -2,6 +2,9 @@
 
 These instructions apply to the whole repository.
 
+- Keep this file curated: fold new lessons into the most specific existing
+  section, replace obsolete detail, and prefer reusable guidance.
+
 ## Project Scope
 
 - GDPlib is a Python model library for Generalized Disjunctive Programming examples and benchmarks built with Pyomo.
@@ -58,6 +61,8 @@ These instructions apply to the whole repository.
   require arguments; only skip required-argument builders or unavailable
   optional solvers. Do not catch `Exception` or `TypeError` from
   `build_model()` and turn it into a skip.
+- For line-ending-heavy PRs, inspect `git diff --ignore-cr-at-eol`, still run
+  `git diff --check`, and avoid unrelated normalization.
 - Match CI formatting and linting:
   ```bash
   black -S -C --target-version py310 --check --diff .
@@ -83,21 +88,13 @@ These instructions apply to the whole repository.
   inline comments over behavior changes. Do not commit source PDFs, extracted
   paper text, or other local research artifacts unless they are intentional
   package data.
-- Trace units, scaling, and constants to the source paper or a clearly named
-  related implementation when possible. When a quantity is only known in the
-  source model's internal scaling, label it as `[source scale]` or
-  `[dimensionless]` instead of inventing a physical unit.
-- When clarifying model source values, annotate constants, operating bounds,
-  composition fractions, and correlation coefficients with bracketed units in
-  nearby comments, for example `[kg-mol/sec]`, `[100 K]`, `[MPa]`,
-  `[mole fraction]`, or `[dimensionless]`.
-- When comparing against external implementations, state whether they are
-  equivalent formulations or merely useful references. Do not imply that a
-  rigorous fixed-topology flowsheet is a drop-in equivalent for a GDP
-  superstructure benchmark.
+- Trace units, scaling, constants, and source references to the paper or a
+  clearly named related implementation. If a quantity is only known in source
+  scaling, label it `[source scale]` or `[dimensionless]`; distinguish
+  equivalent formulations from merely useful references.
 - If `typos` flags a correct domain/project name, add the exact accepted term
-  to `.github/workflows/typos.toml` rather than misspelling or avoiding the
-  correct name in documentation.
+  to `.github/workflows/typos.toml` rather than misspelling, avoiding the
+  correct name, or renaming a public API/model component solely for spell-check.
 - Use `### Solution` consistently for README solution sections. For a single
   verified objective value, prefer:
   `Best known objective value: <value> (optimal)`. For multiple formulations or
@@ -167,6 +164,8 @@ These instructions apply to the whole repository.
   paths such as `gdplib/*/benchmark_result/`, `benchmark_runs/`, and
   `benchmark_summary/`. Record important results in the relevant PR or issue
   discussion instead.
+- Benchmark and reporting helpers that redirect solver output must restore
+  `stdout`/`stderr` even when solves fail.
 - Preflight before long campaigns, and use small, bounded runs before launching
   full matrices. Prefer explicit `--instances`, `--strategies`, `--timelimit`,
   `--solver-profile`, and `--run-id` values so runs are reproducible.
@@ -218,7 +217,8 @@ These instructions apply to the whole repository.
 - `build_model()` should construct and return a Pyomo model. Avoid solving, network access, filesystem writes, or other side effects during model construction.
 - Package modules may use relative imports. Scripts intended to run as `__main__` should use absolute imports, as described in the README.
 - Keep data files package-local and access them with paths relative to the module file.
-- Preserve existing public import paths and model-builder names unless the user explicitly asks for an API break.
+- Preserve public import paths, model-builder names, and Pyomo model component
+  names such as `m.foo` unless the user explicitly asks for an API break.
 - When a change claims to simplify or reduce a GDP/Pyomo model, distinguish
   between Pyomo modeling-layer objects and the solver-facing transformed model.
   Report both when relevant: logical components such as `BooleanVarData`,
@@ -228,6 +228,10 @@ These instructions apply to the whole repository.
   committed environment. Prefer direct `gdp.bigm` smoke tests when that is the
   intended path; do not add optional dependencies such as `sympy` solely to test
   a transformation path that the project does not otherwise require.
+- For algebraic GDP reformulations, add deterministic equivalence tests on
+  representative initialized data and smoke-test supported transformations such
+  as `gdp.bigm` and `gdp.hull`. Keep this separate from solver-backed
+  optimality evidence.
 - For scalable model changes, verify the documented/default instance and at
   least one larger instance when practical. If semantics should be unchanged,
   compare transformed model counts or generated algebraic representations where
