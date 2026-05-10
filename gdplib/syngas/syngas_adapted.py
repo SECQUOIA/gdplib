@@ -1209,7 +1209,7 @@ if __name__ == "__main__":
     # )
     result = SolverFactory("gdpopt").solve(
         m,
-        strategy="LOA",
+        algorithm="LOA",
         tee=True,
         mip_solver="gams",
         nlp_solver="gams",

@@ -237,7 +237,7 @@ if __name__ == "__main__":
         for case in cases:
             print(case)
             m = build_model(case)
-            m.conventional.indicator_var.fix(1)
+            m.conventional.indicator_var.fix(True)
             m.modular.deactivate()
             TransformationFactory("gdp.bigm").apply_to(m, bigM=7000)
             SolverFactory("gams").solve(m, solver="baron")
@@ -246,7 +246,7 @@ if __name__ == "__main__":
             del m
 
             m = build_model(case)
-            m.modular.indicator_var.fix(1)
+            m.modular.indicator_var.fix(True)
             m.conventional.deactivate()
             TransformationFactory("gdp.chull").apply_to(m)
             SolverFactory("gurobi").solve(m)
