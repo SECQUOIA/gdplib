@@ -31,12 +31,17 @@ These instructions apply to the whole repository.
   unavailable and the fallback is called out explicitly.
 - If `pixi` is not on `PATH`, check whether a local Pixi binary exists (for
   example `$HOME/.pixi/bin/pixi`) before falling back to the pip workflow.
+- The committed Pixi support surface is exactly the platform list in
+  `pixi.toml` and the matching entries in `pixi.lock`; it is currently
+  `linux-64`. Keep README, `pixi.toml`, and `pixi.lock` aligned when changing
+  that policy.
 - On macOS or Windows, use the pip workflow below unless the task explicitly
-  expands Pixi platform support and regenerates `pixi.lock`.
+  expands Pixi platform support.
 - Do not add Pixi platforms casually. Adding `osx-64`, `osx-arm64`, `win-64`,
-  or another platform should also regenerate `pixi.lock` and verify
-  `pixi install`, `pixi run test`, and `pixi run lint` on that platform, or be
-  tracked as follow-up work.
+  or another platform must also regenerate `pixi.lock` and verify
+  `pixi install`, `pixi run test`, and `pixi run lint` on that platform before
+  committing manifest or lock-file changes. If the platform cannot be verified,
+  leave the manifest and lock unchanged and document the work as follow-up.
 - The legacy pip workflow is still supported:
   ```bash
   pip install -r requirements.txt
@@ -63,6 +68,9 @@ These instructions apply to the whole repository.
   `build_model()` and turn it into a skip.
 - For line-ending-heavy PRs, inspect `git diff --ignore-cr-at-eol`, still run
   `git diff --check`, and avoid unrelated normalization.
+- For GitHub issue or PR inspection through `gh`, prefer explicit `--json`
+  field lists when default views request deprecated GraphQL fields such as
+  Projects Classic `projectCards`.
 - Match CI formatting and linting:
   ```bash
   black -S -C --target-version py310 --check --diff .
@@ -241,10 +249,17 @@ These instructions apply to the whole repository.
 
 - Runtime dependencies belong in `pyproject.toml`, `setup.py`, and `requirements.txt`.
 - Development-only tools belong in `requirements-dev.txt` and the Pixi environment.
-- Add solver packages only to optional environments or documentation unless they are required for default imports and tests.
+- Keep optional external solver stacks and licensed solver bindings out of the
+  default Pixi environment unless they are required for default imports and
+  tests. Put GAMS, BARON, IPOPT, Gurobi, HiGHS, and similar tools in optional
+  local environments, optional Pixi features, benchmark profiles, or
+  documentation.
 - Packaging tests can regenerate `gdplib/_version.py` and the editable package
   entry in `pixi.lock`. Do not commit that churn unless the task is explicitly
   about versioning, release metadata, or regenerating the Pixi lock.
+- When changing release workflow or Pixi support policy docs, update
+  `tests/test_release_workflow.py` so README, `publish.yml`, `pixi.toml`, and
+  AGENTS.md stay aligned.
 - PyPI publishing is intentionally release-driven. Keep publish workflows tied
   to published GitHub Releases or another explicit maintainer release action,
   not ordinary pushes or pull requests. Publishing should use PyPI Trusted
