@@ -26,5 +26,5 @@ Number of reactors in series is 5.
 | Continuous variables  |       56 |
 | Disjunctions          |       10 |
 | Disjuncts             |       20 |
-| Constraints           |      100 |
+| Constraints           |      112 |
 | Nonlinear constraints |       17 |
