@@ -1,6 +1,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+AGENTS = ROOT / "AGENTS.md"
 PUBLISH_WORKFLOW = ROOT / ".github" / "workflows" / "publish.yml"
 README = ROOT / "README.md"
 PIXI = ROOT / "pixi.toml"
@@ -58,3 +59,17 @@ def test_pixi_manifest_matches_documented_platform_policy():
     assert "pixi install" in readme
     assert "pixi run test" in readme
     assert "pixi run lint" in readme
+
+
+def test_agents_documents_release_and_pixi_policy_lessons():
+    agents = AGENTS.read_text()
+
+    for phrase in [
+        "The committed Pixi support surface is exactly the platform list",
+        "`pixi.toml` and the matching entries in `pixi.lock`",
+        "leave the manifest and lock unchanged",
+        "deprecated GraphQL fields",
+        "Keep optional external solver stacks and licensed solver bindings out",
+        "tests/test_release_workflow.py",
+    ]:
+        assert phrase in agents
