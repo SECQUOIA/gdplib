@@ -59,6 +59,42 @@ pixi run test
 pixi run lint
 ```
 
+### PyPI Release Workflow
+
+PyPI releases are published by
+[`.github/workflows/publish.yml`](./.github/workflows/publish.yml) when a
+GitHub Release is published. Package versions come from git tags through
+`setuptools_scm`, so create the release from the version tag intended for PyPI.
+The build backend remains `setuptools.build_meta` as configured in
+`pyproject.toml`, and package maintainer metadata remains defined there.
+
+The publish workflow checks out full git history, builds both the sdist and
+wheel with `python -m build`, validates them with
+`python -m twine check dist/*`, installs the wheel on Python 3.10, 3.11, and
+3.12, and then publishes with PyPI Trusted Publishing through the protected
+`pypi` GitHub environment. The PyPI project must have a trusted publisher entry
+for this repository, the `publish.yml` workflow, and the `pypi` environment
+before publishing the first release.
+
+Before publishing a GitHub Release, run the normal local checks:
+
+```bash
+pixi run test
+pixi run lint
+```
+
+If local artifact validation is needed, install the PyPA build tools in the
+active environment and run:
+
+```bash
+python -m build
+python -m twine check dist/*
+```
+
+The committed Pixi environment remains `linux-64` only. Do not add Pixi
+platforms for release work unless the lock file is regenerated and the selected
+platforms are verified according to the development policy above.
+
 ### Benchmark Campaigns
 
 The benchmark runner can preflight the PR #58 benchmark campaign before starting
