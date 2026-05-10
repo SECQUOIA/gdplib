@@ -90,20 +90,20 @@ def main():
     ## Initial values for the tray existence or absence
     for n_tray in m.candidate_trays_main:
         for sec in m.section_main:
-            m.tray_exists[sec, n_tray].indicator_var.set_value(1)
-            m.tray_absent[sec, n_tray].indicator_var.set_value(0)
+            m.tray_exists[sec, n_tray].indicator_var.set_value(True)
+            m.tray_absent[sec, n_tray].indicator_var.set_value(False)
     for n_tray in m.candidate_trays_feed:
-        m.tray_exists[2, n_tray].indicator_var.set_value(1)
-        m.tray_absent[2, n_tray].indicator_var.set_value(0)
+        m.tray_exists[2, n_tray].indicator_var.set_value(True)
+        m.tray_absent[2, n_tray].indicator_var.set_value(False)
     for n_tray in m.candidate_trays_product:
-        m.tray_exists[3, n_tray].indicator_var.set_value(1)
-        m.tray_absent[3, n_tray].indicator_var.set_value(0)
+        m.tray_exists[3, n_tray].indicator_var.set_value(True)
+        m.tray_absent[3, n_tray].indicator_var.set_value(False)
 
     intro_message(m)
 
     results = SolverFactory("gdpopt").solve(
         m,
-        strategy="LOA",
+        algorithm="LOA",
         tee=True,
         time_limit=3600,
         mip_solver="gams",

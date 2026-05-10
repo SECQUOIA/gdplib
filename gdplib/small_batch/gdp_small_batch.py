@@ -398,7 +398,9 @@ def build_model():
     # Associate Boolean variables with with disjunction
     for k in m.k:
         for j in m.j:
-            m.Y[k, j].associate_binary_var(m.Y_exists[k, j].indicator_var)
+            m.Y[k, j].associate_binary_var(
+                m.Y_exists[k, j].indicator_var.get_associated_binary()
+            )
 
     # ____________________________
 

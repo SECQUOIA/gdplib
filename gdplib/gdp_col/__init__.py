@@ -20,11 +20,11 @@ def build_model():
     m.reboil_ratio.set_value(1.3)
     # Fix to be total condenser
     m.partial_cond.deactivate()
-    m.total_cond.indicator_var.fix(1)
+    m.total_cond.indicator_var.fix(True)
     # Give initial values of the tray existence/absence
     for t in m.conditional_trays:
-        m.tray[t].indicator_var.set_value(1)
-        m.no_tray[t].indicator_var.set_value(0)
+        m.tray[t].indicator_var.set_value(True)
+        m.no_tray[t].indicator_var.set_value(False)
 
     m.BigM = Suffix(direction=Suffix.LOCAL)
     m.BigM[None] = 100

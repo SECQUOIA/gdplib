@@ -1103,32 +1103,36 @@ def enumerate_solutions():
 
                     # fix the disjuncts
                     if feed_choice == 'cheap':
-                        m.cheap_feed_disjunct.indicator_var.fix(1)
-                        m.expensive_feed_disjunct.indicator_var.fix(0)
+                        m.cheap_feed_disjunct.indicator_var.fix(True)
+                        m.expensive_feed_disjunct.indicator_var.fix(False)
                     else:
-                        m.cheap_feed_disjunct.indicator_var.fix(0)
-                        m.expensive_feed_disjunct.indicator_var.fix(1)
+                        m.cheap_feed_disjunct.indicator_var.fix(False)
+                        m.expensive_feed_disjunct.indicator_var.fix(True)
 
                     if feed_compressor_choice == 'single_stage':
-                        m.single_stage_feed_compressor_disjunct.indicator_var.fix(1)
-                        m.two_stage_feed_compressor_disjunct.indicator_var.fix(0)
+                        m.single_stage_feed_compressor_disjunct.indicator_var.fix(True)
+                        m.two_stage_feed_compressor_disjunct.indicator_var.fix(False)
                     else:
-                        m.single_stage_feed_compressor_disjunct.indicator_var.fix(0)
-                        m.two_stage_feed_compressor_disjunct.indicator_var.fix(1)
+                        m.single_stage_feed_compressor_disjunct.indicator_var.fix(False)
+                        m.two_stage_feed_compressor_disjunct.indicator_var.fix(True)
 
                     if reactor_choice == 'cheap':
-                        m.cheap_reactor.indicator_var.fix(1)
-                        m.expensive_reactor.indicator_var.fix(0)
+                        m.cheap_reactor.indicator_var.fix(True)
+                        m.expensive_reactor.indicator_var.fix(False)
                     else:
-                        m.cheap_reactor.indicator_var.fix(0)
-                        m.expensive_reactor.indicator_var.fix(1)
+                        m.cheap_reactor.indicator_var.fix(False)
+                        m.expensive_reactor.indicator_var.fix(True)
 
                     if recycle_compressor_choice == 'single_stage':
-                        m.single_stage_recycle_compressor_disjunct.indicator_var.fix(1)
-                        m.two_stage_recycle_compressor_disjunct.indicator_var.fix(0)
+                        m.single_stage_recycle_compressor_disjunct.indicator_var.fix(
+                            True
+                        )
+                        m.two_stage_recycle_compressor_disjunct.indicator_var.fix(False)
                     else:
-                        m.single_stage_recycle_compressor_disjunct.indicator_var.fix(0)
-                        m.two_stage_recycle_compressor_disjunct.indicator_var.fix(1)
+                        m.single_stage_recycle_compressor_disjunct.indicator_var.fix(
+                            False
+                        )
+                        m.two_stage_recycle_compressor_disjunct.indicator_var.fix(True)
 
                     pe.TransformationFactory('gdp.fix_disjuncts').apply_to(m)
 

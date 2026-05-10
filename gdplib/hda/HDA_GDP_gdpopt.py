@@ -3345,8 +3345,8 @@ def solve_with_gdpopt(m):
     res = opt.solve(
         m,
         tee=True,
-        strategy="LOA",
-        # strategy='GLOA',
+        algorithm="LOA",
+        # algorithm='GLOA',
         time_limit=3600,
         mip_solver="gams",
         mip_solver_args=dict(solver="cplex", warmstart=True),
@@ -3465,7 +3465,7 @@ def enumerate_solutions(m):
                             res = opt.solve(
                                 m,
                                 tee=False,
-                                strategy="LOA",
+                                algorithm="LOA",
                                 time_limit=3600,
                                 mip_solver="gams",
                                 mip_solver_args=dict(solver="gurobi", warmstart=True),
