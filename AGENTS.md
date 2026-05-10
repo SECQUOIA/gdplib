@@ -106,6 +106,33 @@ These instructions apply to the whole repository.
   formulation, and optionally nonzero primal variable values.
 - For Pyomo code, follow the import style already used by the local module.
 
+## Pyomo Deprecations and Warnings
+
+- When fixing Pyomo or Pyomo.GDP deprecations, keep the change narrowly tied
+  to the deprecated API. Do not bundle unrelated warning classes, numerical
+  initialization changes, or formulation changes into the same PR unless they
+  are required for correctness.
+- Set `BooleanVar` and GDP `indicator_var` values with `True`/`False`, not
+  numeric `1`/`0`. When associating a `BooleanVar` with a disjunct indicator,
+  use the indicator's associated binary variable instead of the Boolean
+  `indicator_var` itself.
+- For GDPOpt dispatcher calls through `SolverFactory("gdpopt").solve(...)`,
+  use `algorithm=...` instead of the deprecated top-level `strategy=...`.
+  Verify current Pyomo option names in the committed environment before
+  updating less common GDPOpt options.
+- For ordered Pyomo `Set` positional access, use `set.at(index)` when the
+  intent is positional lookup. Do not rely on deprecated `set[index]` behavior.
+- Add focused warning-regression tests for deprecation cleanup. Prefer
+  capturing Pyomo warning logs for the smallest relevant build or transform
+  path, and assert against the specific deprecated warning patterns being
+  removed. Do not make tests fail on unrelated existing warnings; track those
+  separately in the relevant model issue.
+- If a warning cleanup touches model construction, GDP transformations, or
+  solver-facing expressions, compare the affected benchmark instances against
+  existing baseline artifacts when practical. Record objective values,
+  termination conditions, bounds, and unchanged failures in the PR or issue
+  discussion, but do not commit generated benchmark outputs.
+
 ## Benchmark Campaigns
 
 - Use the committed benchmark CLI for solver-backed campaigns:
