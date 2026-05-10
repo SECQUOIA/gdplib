@@ -245,3 +245,26 @@ These instructions apply to the whole repository.
 - Packaging tests can regenerate `gdplib/_version.py` and the editable package
   entry in `pixi.lock`. Do not commit that churn unless the task is explicitly
   about versioning, release metadata, or regenerating the Pixi lock.
+- PyPI publishing is intentionally release-driven. Keep publish workflows tied
+  to published GitHub Releases or another explicit maintainer release action,
+  not ordinary pushes or pull requests. Publishing should use PyPI Trusted
+  Publishing through the protected `pypi` environment unless maintainers choose
+  and document another credential path.
+- Release workflow changes should build and validate real artifacts before any
+  publish step. Include `python -m build`, `python -m twine check dist/*`, and
+  a wheel install/import smoke test across the supported Python versions when
+  practical. Keep these checks in CI or document why a local-only check is the
+  best available evidence.
+- `setuptools_scm` needs intact git metadata to infer release versions. CI
+  builds should check out full history, and local artifact checks should run
+  from a real git checkout or set an explicit pretend version only when the
+  purpose is isolated packaging validation. Do not rely on source copies without
+  `.git` metadata as release evidence.
+- Pixi is the preferred Linux development environment, not a runtime
+  requirement for PyPI users. A release should remain installable with standard
+  pip tooling from the wheel or sdist, and package metadata should not depend on
+  Pixi-only files.
+- Treat packaging deprecation warnings from `setuptools`, `setuptools_scm`, or
+  PyPA tools as useful follow-up work. Keep warning cleanup in a focused
+  metadata PR unless the warning causes the release build, artifact validation,
+  or installation smoke test to fail.
