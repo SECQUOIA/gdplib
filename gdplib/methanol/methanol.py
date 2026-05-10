@@ -84,41 +84,41 @@ class MethanolModel(object):
 
         self.model = m = pe.ConcreteModel()  # main model
 
-        self.alpha = 0.72  # compressor coefficient
-        self.eta = 0.75  # compressor efficiency
-        self.gamma = 0.23077  # isentropic pressure/temperature exponent
-        self.cp = 35.0  # heat capacity
-        self.heat_of_reaction = -15
+        self.alpha = 0.72  # compressor coefficient [dimensionless]
+        self.eta = 0.75  # compressor efficiency [dimensionless]
+        self.gamma = 0.23077  # isentropic pressure/temperature exponent [dimensionless]
+        self.cp = 35.0  # heat capacity [kJ/kg-mol-K]
+        self.heat_of_reaction = -15  # reactor heat-balance coeff. [source scale]
         self.volume_conversion = dict()
-        self.volume_conversion[9] = 0.1
-        self.volume_conversion[10] = 0.05
-        self.reactor_volume = 100
-        self.electricity_cost = 0.255
-        self.cooling_cost = 700
-        self.heating_cost = 8000
-        self.purity_demand = 0.9  # purity demand in product stream
-        self.demand = 1.0  # retained source production-flow scaling value
-        self.flow_feed_lb = 0.5
-        self.flow_feed_ub = 5
-        self.flow_feed_temp = 3
-        self.flow_feed_pressure = 1
-        self.cost_flow_1 = 795.6
-        self.cost_flow_2 = 1009.8
-        self.price_of_product = 7650
-        self.price_of_byproduct = 642.6
-        self.cheap_reactor_fixed_cost = 100
-        self.cheap_reactor_variable_cost = 5
-        self.expensive_reactor_fixed_cost = 250
-        self.expensive_reactor_variable_cost = 10
-        self.heat_unit_match = 0.00306
-        self.capacity_redundancy = 1.2
-        self.antoine_unit_trans = 7500.6168
-        self.K = 0.415
-        self.delta_H = 26.25
-        self.reactor_relation = 0.9
-        self.purity_demand = 0.9
-        self.fix_electricity_cost = 175
-        self.two_stage_fix_cost = 50
+        self.volume_conversion[9] = 0.1  # reactor 9 conversion coefficient [1/m^3]
+        self.volume_conversion[10] = 0.05  # reactor 10 conversion coefficient [1/m^3]
+        self.reactor_volume = 100  # reactor volume [m^3]
+        self.electricity_cost = 0.255  # variable electricity cost [$1000/yr/load]
+        self.cooling_cost = 700  # cooling-water cost [$1000/source heat-duty]
+        self.heating_cost = 8000  # steam-heating cost [$1000/source heat-duty]
+        self.purity_demand = 0.9  # purity demand in product stream [mole fraction]
+        self.demand = 1.0  # retained production-flow scale [source scale]
+        self.flow_feed_lb = 0.5  # feed flow lower bound [kg-mol/sec]
+        self.flow_feed_ub = 5  # feed flow upper bound [kg-mol/sec]
+        self.flow_feed_temp = 3  # feed temperature [100 K]
+        self.flow_feed_pressure = 1  # feed pressure [MPa]
+        self.cost_flow_1 = 795.6  # feed 1 cost coefficient [$1000/yr/(kg-mol/sec)]
+        self.cost_flow_2 = 1009.8  # feed 2 cost coefficient [$1000/yr/(kg-mol/sec)]
+        self.price_of_product = 7650  # product revenue [$1000/yr/(kg-mol/sec)]
+        self.price_of_byproduct = 642.6  # byproduct revenue [$1000/yr/(kg-mol/sec)]
+        self.cheap_reactor_fixed_cost = 100  # cheap reactor fixed cost [$1000/yr]
+        self.cheap_reactor_variable_cost = 5  # cheap reactor variable cost [$1000/m^3]
+        self.expensive_reactor_fixed_cost = 250  # expensive fixed cost [$1000/yr]
+        self.expensive_reactor_variable_cost = 10  # expensive variable cost [$1000/m^3]
+        self.heat_unit_match = 0.00306  # annual heat-duty scale [source scale]
+        self.capacity_redundancy = 1.2  # retained capacity redundancy [dimensionless]
+        self.antoine_unit_trans = 7500.6168  # Antoine pressure conversion [Torr/MPa]
+        self.K = 0.415  # equilibrium-conversion coefficient [dimensionless]
+        self.delta_H = 26.25  # equilibrium-correlation coefficient [dimensionless]
+        self.reactor_relation = 0.9  # reactor outlet/inlet pressure [dimensionless]
+        self.purity_demand = 0.9  # purity demand in product stream [mole fraction]
+        self.fix_electricity_cost = 175  # fixed compressor cost [$1000/yr/load]
+        self.two_stage_fix_cost = 50  # two-stage compressor fixed cost [$1000/yr]
 
         m.streams = pe.Set(
             initialize=list(range(1, 34)), ordered=True, doc='Set of streams'
@@ -140,9 +140,9 @@ class MethanolModel(object):
 
         flow_1 = dict()
         # Feed 1 (cheap feedstock; component molar fractions)
-        flow_1['H2'] = 0.6
-        flow_1['CO'] = 0.25
-        flow_1['CH4'] = 0.15
+        flow_1['H2'] = 0.6  # Feed 1 H2 composition [mole fraction]
+        flow_1['CO'] = 0.25  # Feed 1 CO composition [mole fraction]
+        flow_1['CH4'] = 0.15  # Feed 1 CH4 composition [mole fraction]
         m.flow_1_composition = pe.Param(
             m.components,
             initialize=flow_1,
@@ -151,9 +151,9 @@ class MethanolModel(object):
         )
         flow_2 = dict()
         # Feed 2 (expensive feedstock; component molar fractions)
-        flow_2['H2'] = 0.65
-        flow_2['CO'] = 0.30
-        flow_2['CH4'] = 0.05
+        flow_2['H2'] = 0.65  # Feed 2 H2 composition [mole fraction]
+        flow_2['CO'] = 0.30  # Feed 2 CO composition [mole fraction]
+        flow_2['CH4'] = 0.05  # Feed 2 CH4 composition [mole fraction]
         m.flow_2_composition = pe.Param(
             m.components,
             initialize=flow_2,
@@ -162,15 +162,15 @@ class MethanolModel(object):
         )
 
         # Setting operating conditions (bounds) for specific streams in the process
-        m.pressures[13].setlb(2.5)
-        m.temps[13].setlb(4.23)
-        m.temps[13].setub(8.73)
-        m.temps[18].setlb(5.23)
-        m.temps[18].setub(8.73)
-        m.flows[22].setlb(0.1)
-        m.flows[22].setub(1.0)
-        m.temps[23].fix(4)
-        m.temps[25].fix(4)
+        m.pressures[13].setlb(2.5)  # Reactor feed pressure lower bound [MPa]
+        m.temps[13].setlb(4.23)  # Reactor feed temperature lower bound [100 K]
+        m.temps[13].setub(8.73)  # Reactor feed temperature upper bound [100 K]
+        m.temps[18].setlb(5.23)  # Reactor product temperature lower bound [100 K]
+        m.temps[18].setub(8.73)  # Reactor product temperature upper bound [100 K]
+        m.flows[22].setlb(0.1)  # Liquid product flow lower bound [kg-mol/sec]
+        m.flows[22].setub(1.0)  # Liquid product flow upper bound [kg-mol/sec]
+        m.temps[23].fix(4)  # Product stream temperature [100 K]
+        m.temps[25].fix(4)  # Byproduct stream temperature [100 K]
 
         self.inlet_streams = dict()
         self.outlet_streams = dict()
@@ -971,18 +971,18 @@ class MethanolModel(object):
         b.antoine_C = pe.Param(
             m.components, mutable=True, doc='Antoine equation parameter C'
         )
-        b.antoine_A['H2'] = 13.6333
-        b.antoine_A['CO'] = 14.3686
-        b.antoine_A['CH3OH'] = 18.5875
-        b.antoine_A['CH4'] = 15.2243
-        b.antoine_B['H2'] = 164.9
-        b.antoine_B['CO'] = 530.22
-        b.antoine_B['CH3OH'] = 3626.55
-        b.antoine_B['CH4'] = 897.84
-        b.antoine_C['H2'] = 3.19
-        b.antoine_C['CO'] = -13.15
-        b.antoine_C['CH3OH'] = -34.29
-        b.antoine_C['CH4'] = -7.16
+        b.antoine_A['H2'] = 13.6333  # Antoine A coefficient [dimensionless]
+        b.antoine_A['CO'] = 14.3686  # Antoine A coefficient [dimensionless]
+        b.antoine_A['CH3OH'] = 18.5875  # Antoine A coefficient [dimensionless]
+        b.antoine_A['CH4'] = 15.2243  # Antoine A coefficient [dimensionless]
+        b.antoine_B['H2'] = 164.9  # Antoine B coefficient [K]
+        b.antoine_B['CO'] = 530.22  # Antoine B coefficient [K]
+        b.antoine_B['CH3OH'] = 3626.55  # Antoine B coefficient [K]
+        b.antoine_B['CH4'] = 897.84  # Antoine B coefficient [K]
+        b.antoine_C['H2'] = 3.19  # Antoine C coefficient [K]
+        b.antoine_C['CO'] = -13.15  # Antoine C coefficient [K]
+        b.antoine_C['CH3OH'] = -34.29  # Antoine C coefficient [K]
+        b.antoine_C['CH4'] = -7.16  # Antoine C coefficient [K]
 
         def _component_balances(_b, _c):
             return (
