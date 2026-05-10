@@ -59,6 +59,58 @@ pixi run test
 pixi run lint
 ```
 
+### Benchmark Campaigns
+
+The benchmark runner can preflight the PR #58 benchmark campaign before starting
+long solver-backed runs. Preflight checks the selected strategy plugins, solver
+interface, GAMS executable when applicable, and model construction.
+
+The default profile is a local nonlinear GAMS profile that uses DICOPT for
+transformed and local MINLP roles, IPOPTH for NLP roles, and Gurobi for MIP
+roles. This is the recommended first pass before launching a global GAMS/BARON
+run. Use `--solver-profile gams-gurobi` for a GAMS/Gurobi pass, or
+`--solver-profile gams-baron` for a global BARON pass.
+
+```bash
+pixi run gdplib-benchmark preflight
+```
+
+To run the PR #58 campaign with the local nonlinear GAMS profile and 1-hour
+per-case time limits:
+
+```bash
+pixi run gdplib-benchmark run --cases-file benchmark_cases/pr58_local.csv --run-id pr58_local
+```
+
+For row-by-row control over instances, methods, and subsolvers, pass a case
+file:
+
+```bash
+pixi run gdplib-benchmark run --cases-file benchmark_cases.csv --run-id pr58_cases
+```
+
+CSV columns may include `instance`, `strategy`, `timelimit`, `solver_profile`,
+`subsolver`, `gams_solver`, `gams_nlp_solver`, `gams_mip_solver`,
+`gams_minlp_solver`, `gams_local_minlp_solver`, and `label`.
+
+After the local nonlinear run has identified construction, transformation, and
+local solver issues, run the global GAMS/BARON profile explicitly:
+
+```bash
+pixi run gdplib-benchmark run --solver-profile gams-baron --run-id pr58_global
+```
+
+To capture Pyomo/Python warnings from the same model set without starting
+solver-backed benchmark jobs:
+
+```bash
+pixi run gdplib-benchmark warnings --run-id pr58_warnings
+```
+
+Benchmark outputs are generated under `gdplib/<model>/benchmark_result/<run-id>/`.
+Aggregate run metadata, strict JSON summaries, and failure manifests are written
+under `benchmark_runs/<run-id>/`. These generated outputs are ignored by git.
+
 For a pip-based setup:
 
 1. **Install development dependencies:**
