@@ -242,7 +242,7 @@ def build_model():
     for comp in m.comp:
         m.dHvap[comp] = dHvapb[comp] / m.Hscale
 
-    ## Heat capacity calculation using the Ruczika-D method for each component in the feed, section, and tray
+    ## Heat capacity calculation using the Ruzicka-Domalski method for each component in the feed, section, and tray
     for sec in m.section:
         for n_tray in m.tray:
             for comp in m.comp:
@@ -266,7 +266,7 @@ def build_model():
                         / m.Hscale
                     )
 
-    ## Liquid and vapor enthalpy calculation using the Ruczika-D method for each component in the feed, section, and tray
+    ## Liquid and vapor enthalpy calculation using the Ruzicka-Domalski method for each component in the feed, section, and tray
     for sec in m.section:
         for n_tray in m.tray:
             for comp in m.comp:
@@ -279,7 +279,7 @@ def build_model():
     m.hvf = {}  # Vapor enthalpy for side feed [J/mol]
     m.F0 = {}  # Side feed flowrate per component [mol/s]
 
-    ## Heat capacity in liquid and vapor phases for side feed using the Ruczika-D method.
+    ## Heat capacity in liquid and vapor phases for side feed using the Ruzicka-Domalski method.
     for comp in m.comp:
         for cp in m.cplv:
             m.cpdTf[comp, cp] = (
@@ -299,7 +299,7 @@ def build_model():
                 / m.Hscale
             )
 
-    ## Side feed flowrate and enthalpy calculation using the Ruczika-D method for each component in the feed
+    ## Side feed flowrate and enthalpy calculation using the Ruzicka-Domalski method for each component in the feed
     for comp in m.comp:
         m.F0[comp] = (
             m.xfi[comp] * m.Fi

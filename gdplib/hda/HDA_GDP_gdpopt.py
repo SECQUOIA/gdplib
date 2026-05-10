@@ -20,7 +20,7 @@ def HDA_model():
 
     m.alpha = Param(initialize=0.3665, doc="compressor coefficient")
     m.compeff = Param(initialize=0.750, doc="compressor efficiency")
-    m.heat_capacity_ratio = Param(initialize=1.300, doc="ratio of cp to cv")
+    m.gam = Param(initialize=1.300, doc="ratio of cp to cv")
     m.abseff = Param(initialize=0.333, doc="absorber tray efficiency")
     m.disteff = Param(initialize=0.5000, doc="column tray efficiency")
     m.uflow = Param(initialize=50, doc="upper bound - flow logicals")
@@ -1312,7 +1312,7 @@ def HDA_model():
                     * m.f[stream]
                     / 60.0
                     * (1.0 / m.compeff)
-                    * (m.heat_capacity_ratio / (m.heat_capacity_ratio - 1.0))
+                    * (m.gam / (m.gam - 1.0))
                     for (comp1, stream) in m.icomp
                     if comp_ == comp1
                 )
@@ -1324,13 +1324,9 @@ def HDA_model():
 
         def Ratio(_m, comp_):
             if comp == comp_:
-                return m.presrat[comp_] ** (
-                    m.heat_capacity_ratio / (m.heat_capacity_ratio - 1.0)
-                ) == sum(
+                return m.presrat[comp_] ** (m.gam / (m.gam - 1.0)) == sum(
                     m.p[stream] for (comp1, stream) in m.ocomp if comp_ == comp1
-                ) / sum(
-                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
-                )
+                ) / sum(m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_)
             return Constraint.Skip
 
         b.ratio = Constraint([comp], rule=Ratio, doc='pressure ratio (out to in)')
@@ -2252,19 +2248,11 @@ def HDA_model():
 
         def Valt(_m, valve):
             return sum(
-                m.t[stream]
-                / (
-                    m.p[stream]
-                    ** ((m.heat_capacity_ratio - 1.0) / m.heat_capacity_ratio)
-                )
+                m.t[stream] / (m.p[stream] ** ((m.gam - 1.0) / m.gam))
                 for (valv, stream) in m.oval
                 if valv == valve
             ) == sum(
-                m.t[stream]
-                / (
-                    m.p[stream]
-                    ** ((m.heat_capacity_ratio - 1.0) / m.heat_capacity_ratio)
-                )
+                m.t[stream] / (m.p[stream] ** ((m.gam - 1.0) / m.gam))
                 for (valv, stream) in m.ival
                 if valv == valve
             )

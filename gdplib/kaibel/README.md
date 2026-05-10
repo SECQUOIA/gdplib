@@ -6,6 +6,10 @@ Source paper:
 
 > Rawlings, E. S., Chen, Q., Grossmann, I. E., & Caballero, J. A. (2019). Kaibel Column: Modeling, optimization, and conceptual design of multi-product dividing wall columns. *Computers and Chemical Engineering*, 125, 31–39. https://doi.org/10.1016/j.compchemeng.2019.03.006
 
+Heat-capacity and enthalpy calculations use the Ruzicka-Domalski group-additivity heat-capacity method:
+
+> Ruzicka, V. Jr., & Domalski, E. S. Estimation of the heat capacities of organic liquids as a function of temperature using group additivity. *Journal of Physical and Chemical Reference Data*, 22(3). https://www.osti.gov/biblio/6251468
+
 ## Problem Details
 
 ### Solution
@@ -28,6 +32,5 @@ Best known objective value: 99,709
 - ``nl``: nonlinear constraints
 - ``disj``: disjuncts
 - ``disjtn``: disjunctions
-
 
 
