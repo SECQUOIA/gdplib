@@ -20,7 +20,7 @@ def HDA_model():
 
     m.alpha = Param(initialize=0.3665, doc="compressor coefficient")
     m.compeff = Param(initialize=0.750, doc="compressor efficiency")
-    m.gamma = Param(initialize=1.300, doc="ratio of cp to cv")
+    m.heat_capacity_ratio = Param(initialize=1.300, doc="ratio of cp to cv")
     m.abseff = Param(initialize=0.333, doc="absorber tray efficiency")
     m.disteff = Param(initialize=0.5000, doc="column tray efficiency")
     m.uflow = Param(initialize=50, doc="upper bound - flow logicals")
@@ -1312,7 +1312,7 @@ def HDA_model():
                     * m.f[stream]
                     / 60.0
                     * (1.0 / m.compeff)
-                    * (m.gamma / (m.gamma - 1.0))
+                    * (m.heat_capacity_ratio / (m.heat_capacity_ratio - 1.0))
                     for (comp1, stream) in m.icomp
                     if comp_ == comp1
                 )
@@ -1324,9 +1324,13 @@ def HDA_model():
 
         def Ratio(_m, comp_):
             if comp == comp_:
-                return m.presrat[comp_] ** (m.gamma / (m.gamma - 1.0)) == sum(
+                return m.presrat[comp_] ** (
+                    m.heat_capacity_ratio / (m.heat_capacity_ratio - 1.0)
+                ) == sum(
                     m.p[stream] for (comp1, stream) in m.ocomp if comp_ == comp1
-                ) / sum(m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_)
+                ) / sum(
+                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
+                )
             return Constraint.Skip
 
         b.ratio = Constraint([comp], rule=Ratio, doc='pressure ratio (out to in)')
@@ -1416,7 +1420,7 @@ def HDA_model():
                 return m.avevlt[dist] == sqrt(divided1 * divided2)
             return Constraint.Skip
 
-        b.relvol = Constraint([dist], rule=Relvol, doc='average relative volatilty')
+        b.relvol = Constraint([dist], rule=Relvol, doc='average relative volatility')
 
         def Undwood(_m, dist_):
             if dist_ == dist:
@@ -2248,11 +2252,19 @@ def HDA_model():
 
         def Valt(_m, valve):
             return sum(
-                m.t[stream] / (m.p[stream] ** ((m.gamma - 1.0) / m.gamma))
+                m.t[stream]
+                / (
+                    m.p[stream]
+                    ** ((m.heat_capacity_ratio - 1.0) / m.heat_capacity_ratio)
+                )
                 for (valv, stream) in m.oval
                 if valv == valve
             ) == sum(
-                m.t[stream] / (m.p[stream] ** ((m.gamma - 1.0) / m.gamma))
+                m.t[stream]
+                / (
+                    m.p[stream]
+                    ** ((m.heat_capacity_ratio - 1.0) / m.heat_capacity_ratio)
+                )
                 for (valv, stream) in m.ival
                 if valv == valve
             )

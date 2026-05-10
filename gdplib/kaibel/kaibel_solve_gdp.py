@@ -1,7 +1,7 @@
-""" Kaibel Column model: GDP formulation.
+"""Kaibel Column model: GDP formulation.
 
 The solution requires the specification of certain parameters, such as the number trays, feed location, etc., and an initialization procedure, which consists of the next three steps:
-(i) a preliminary design of the separation considering a sequence of indirect continuous distillation columns (CDCs) to obtain the minimum number of stages with Fenske Equation in the function initialize_kaibel in kaibel_init.py 
+(i) a preliminary design of the separation considering a sequence of indirect continuous distillation columns (CDCs) to obtain the minimum number of stages with Fenske Equation in the function initialize_kaibel in kaibel_init.py
 (ii) flash calculation for the feed with the function calc_side_feed_flash in kaibel_side_flash.py
 (iii) calculation of variable bounds by solving the NLP problem.
 
@@ -102,9 +102,8 @@ def build_model():
     m.bounds = RangeSet(2, doc="Number of boundary condition values")
 
     m.candidate_trays_main = Set(
-        initialize=m.tray - [m.con_tray, m.reb_tray],
-        doc="Candidate trays for top and \
-                                 bottom sections 1 and 4",
+        initialize=m.tray - [m.con_tray, m.reb_tray], doc="Candidate trays for top and \
+                                 bottom sections 1 and 4"
     )
     m.candidate_trays_feed = Set(
         initialize=m.tray - [m.con_tray, m.feed_tray, m.reb_tray],
@@ -243,7 +242,7 @@ def build_model():
     for comp in m.comp:
         m.dHvap[comp] = dHvapb[comp] / m.Hscale
 
-    ## Heat capacity calculation for liquid and vapor phases for each component in the feed, section, and tray
+    ## Heat capacity calculation using the Ruczika-D method for each component in the feed, section, and tray
     for sec in m.section:
         for n_tray in m.tray:
             for comp in m.comp:
@@ -267,7 +266,7 @@ def build_model():
                         / m.Hscale
                     )
 
-    ## Liquid and vapor enthalpy calculation for each component in the feed, section, and tray
+    ## Liquid and vapor enthalpy calculation using the Ruczika-D method for each component in the feed, section, and tray
     for sec in m.section:
         for n_tray in m.tray:
             for comp in m.comp:
@@ -280,7 +279,7 @@ def build_model():
     m.hvf = {}  # Vapor enthalpy for side feed [J/mol]
     m.F0 = {}  # Side feed flowrate per component [mol/s]
 
-    ## Heat capacity in liquid and vapor phases for side feed for each component.
+    ## Heat capacity in liquid and vapor phases for side feed using the Ruczika-D method.
     for comp in m.comp:
         for cp in m.cplv:
             m.cpdTf[comp, cp] = (
@@ -300,7 +299,7 @@ def build_model():
                 / m.Hscale
             )
 
-    ## Side feed flowrate and liquid and vapor enthalpy calculation for each component in the feed
+    ## Side feed flowrate and enthalpy calculation using the Ruczika-D method for each component in the feed
     for comp in m.comp:
         m.F0[comp] = (
             m.xfi[comp] * m.Fi
@@ -338,8 +337,8 @@ def build_model():
         bounds=lambda m, sec, tray, comp: (
             m.prop[comp, 'TC'] / m.Tup,
             m.prop[comp, 'TC'] / m.Tlo,
-        ),  # (0, None),
-        initialize=lambda m, sec, tray, comp: m.T0[sec, tray] / m.Tlo,
+        ),
+        initialize=lambda m, sec, tray, comp: m.prop[comp, 'TC'] / m.T0[sec, tray],
     )
 
     m.x = Var(
@@ -1478,31 +1477,23 @@ def _build_bottom_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the bottom section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[1, n_tray, comp] * m.P[1, n_tray]
-            == m.x[1, n_tray, comp]
+        return m.y[1, n_tray, comp] * m.P[1, n_tray] == m.x[1, n_tray, comp] * (
+            m.actv[1, n_tray, comp]
             * (
-                m.actv[1, n_tray, comp]
-                * (
-                    m.prop[comp, 'PC']
-                    * exp(
-                        m.Tr[1, n_tray, comp]
-                        # m.prop[comp, 'TC']
-                        # / m.T[1, n_tray]
-                        * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 6
-                        )
+                m.prop[comp, 'PC']
+                * exp(
+                    m.Tr[1, n_tray, comp]
+                    * (
+                        m.prop[comp, 'vpA'] * (1 - m.T[1, n_tray] / m.prop[comp, 'TC'])
+                        + m.prop[comp, 'vpB']
+                        * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 1.5
+                        + m.prop[comp, 'vpC']
+                        * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 3
+                        + m.prop[comp, 'vpD']
+                        * (1 - m.T[1, n_tray] / m.prop[comp, 'TC']) ** 6
                     )
                 )
             )
-            # / m.P[1, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Bottom section 1 liquid enthalpy")
@@ -1779,7 +1770,7 @@ def _build_feed_side_equations(disj, n_tray):
         Parameters
         ----------
         disj : Disjunct
-            The disjunct object for the bottom section in the column.
+            The disjunct object for the feed side section in the column.
         comp : int
             The component index.
 
@@ -1808,31 +1799,23 @@ def _build_feed_side_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the feed side section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[2, n_tray, comp] * m.P[2, n_tray]
-            == m.x[2, n_tray, comp]
+        return m.y[2, n_tray, comp] * m.P[2, n_tray] == m.x[2, n_tray, comp] * (
+            m.actv[2, n_tray, comp]
             * (
-                m.actv[2, n_tray, comp]
-                * (
-                    m.prop[comp, 'PC']
-                    * exp(
-                        m.Tr[2, n_tray, comp]
-                        # m.prop[comp, 'TC']
-                        # / m.T[2, n_tray]
-                        * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 6
-                        )
+                m.prop[comp, 'PC']
+                * exp(
+                    m.Tr[2, n_tray, comp]
+                    * (
+                        m.prop[comp, 'vpA'] * (1 - m.T[2, n_tray] / m.prop[comp, 'TC'])
+                        + m.prop[comp, 'vpB']
+                        * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 1.5
+                        + m.prop[comp, 'vpC']
+                        * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 3
+                        + m.prop[comp, 'vpD']
+                        * (1 - m.T[2, n_tray] / m.prop[comp, 'TC']) ** 6
                     )
                 )
             )
-            # / m.P[2, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Feed section 2 liquid enthalpy")
@@ -2106,7 +2089,7 @@ def _build_product_side_equations(disj, n_tray):
         m.comp,
         doc="Product section 3 temperature term for the vapor composition equation",
     )
-    def _feedside_reduced_temperature(disj, comp):
+    def _productside_reduced_temperature(disj, comp):
         """Calculate the temperature term for the product section vapor composition.
 
         The constraint is used to avoid division by zero in the MINLP Hull reformulation.
@@ -2114,7 +2097,7 @@ def _build_product_side_equations(disj, n_tray):
         Parameters
         ----------
         disj : Disjunct
-            The disjunct object for the bottom section in the column.
+            The disjunct object for the product side section in the column.
         comp : int
             The component index.
 
@@ -2143,31 +2126,23 @@ def _build_product_side_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the product side section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[3, n_tray, comp] * m.P[3, n_tray]
-            == m.x[3, n_tray, comp]
+        return m.y[3, n_tray, comp] * m.P[3, n_tray] == m.x[3, n_tray, comp] * (
+            m.actv[3, n_tray, comp]
             * (
-                m.actv[3, n_tray, comp]
-                * (
-                    m.prop[comp, 'PC']
-                    * exp(
-                        m.Tr[3, n_tray, comp]
-                        # m.prop[comp, 'TC']
-                        # / m.T[3, n_tray]
-                        * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 6
-                        )
+                m.prop[comp, 'PC']
+                * exp(
+                    m.Tr[3, n_tray, comp]
+                    * (
+                        m.prop[comp, 'vpA'] * (1 - m.T[3, n_tray] / m.prop[comp, 'TC'])
+                        + m.prop[comp, 'vpB']
+                        * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 1.5
+                        + m.prop[comp, 'vpC']
+                        * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 3
+                        + m.prop[comp, 'vpD']
+                        * (1 - m.T[3, n_tray] / m.prop[comp, 'TC']) ** 6
                     )
                 )
             )
-            # / m.P[3, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Product section 3 liquid enthalpy")
@@ -2310,7 +2285,7 @@ def _build_top_equations(disj, n_tray):
             m.D[comp] if n_tray == m.con_tray else 0
         ) == 0
 
-    @disj.Constraint(doc="Top scetion 4 energy balances")
+    @disj.Constraint(doc="Top section 4 energy balances")
     def _top_energy_balances(disj):
         """
         Energy balances for the top section in the column.
@@ -2448,7 +2423,7 @@ def _build_top_equations(disj, n_tray):
     @disj.Constraint(
         m.comp, doc="Top section 4 temperature term for the vapor composition equation"
     )
-    def _feedside_reduced_temperature(disj, comp):
+    def _top_reduced_temperature(disj, comp):
         """Calculate the temperature term for the top section vapor composition.
 
         The constraint is used to avoid division by zero in the MINLP Hull reformulation.
@@ -2456,7 +2431,7 @@ def _build_top_equations(disj, n_tray):
         Parameters
         ----------
         disj : Disjunct
-            The disjunct object for the bottom section in the column.
+            The disjunct object for the top section in the column.
         comp : int
             The component index.
 
@@ -2467,7 +2442,7 @@ def _build_top_equations(disj, n_tray):
         """
         return m.Tr[4, n_tray, comp] * m.T[4, n_tray] == m.prop[comp, 'TC']
 
-    @disj.Constraint(m.comp, doc="Top scetion 4 vapor composition")
+    @disj.Constraint(m.comp, doc="Top section 4 vapor composition")
     def top_vapor_composition(disj, comp):
         """
         Vapor composition for the top section in the column.
@@ -2485,31 +2460,23 @@ def _build_top_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the top section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[4, n_tray, comp] * m.P[4, n_tray]
-            == m.x[4, n_tray, comp]
+        return m.y[4, n_tray, comp] * m.P[4, n_tray] == m.x[4, n_tray, comp] * (
+            m.actv[4, n_tray, comp]
             * (
-                m.actv[4, n_tray, comp]
-                * (
-                    m.prop[comp, 'PC']
-                    * exp(
-                        m.Tr[4, n_tray, comp]
-                        # m.prop[comp, 'TC']
-                        # / m.T[4, n_tray]
-                        * (
-                            m.prop[comp, 'vpA']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC'])
-                            + m.prop[comp, 'vpB']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 1.5
-                            + m.prop[comp, 'vpC']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 3
-                            + m.prop[comp, 'vpD']
-                            * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 6
-                        )
+                m.prop[comp, 'PC']
+                * exp(
+                    m.Tr[4, n_tray, comp]
+                    * (
+                        m.prop[comp, 'vpA'] * (1 - m.T[4, n_tray] / m.prop[comp, 'TC'])
+                        + m.prop[comp, 'vpB']
+                        * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 1.5
+                        + m.prop[comp, 'vpC']
+                        * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 3
+                        + m.prop[comp, 'vpD']
+                        * (1 - m.T[4, n_tray] / m.prop[comp, 'TC']) ** 6
                     )
                 )
             )
-            # / m.P[4, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Top section 4 liquid enthalpy")
