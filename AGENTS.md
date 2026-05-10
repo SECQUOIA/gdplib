@@ -79,6 +79,25 @@ These instructions apply to the whole repository.
 - For new or substantially changed models, include relevant mathematical
   formulation details, usage examples, and source references in the model
   README or module documentation.
+- For model documentation audits, prefer documentation, module docstrings, and
+  inline comments over behavior changes. Do not commit source PDFs, extracted
+  paper text, or other local research artifacts unless they are intentional
+  package data.
+- Trace units, scaling, and constants to the source paper or a clearly named
+  related implementation when possible. When a quantity is only known in the
+  source model's internal scaling, label it as `[source scale]` or
+  `[dimensionless]` instead of inventing a physical unit.
+- When clarifying model source values, annotate constants, operating bounds,
+  composition fractions, and correlation coefficients with bracketed units in
+  nearby comments, for example `[kg-mol/sec]`, `[100 K]`, `[MPa]`,
+  `[mole fraction]`, or `[dimensionless]`.
+- When comparing against external implementations, state whether they are
+  equivalent formulations or merely useful references. Do not imply that a
+  rigorous fixed-topology flowsheet is a drop-in equivalent for a GDP
+  superstructure benchmark.
+- If `typos` flags a correct domain/project name, add the exact accepted term
+  to `.github/workflows/typos.toml` rather than misspelling or avoiding the
+  correct name in documentation.
 - Use `### Solution` consistently for README solution sections. For a single
   verified objective value, prefer:
   `Best known objective value: <value> (optimal)`. For multiple formulations or
