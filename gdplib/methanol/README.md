@@ -60,7 +60,10 @@ and 0.15 CH4. Feed 2 is 0.65 H2, 0.30 CO, and 0.05 CH4.
 
 ### Solution
 
-Best known objective value: 1583.00
+Best known objective value: -1793.4292381783 (optimal)
+
+The Pyomo objective minimizes negative profit for GDPopt compatibility.
+The corresponding maximum profit is 1793.4292381783 [$1000/yr].
 
 
 ### Size

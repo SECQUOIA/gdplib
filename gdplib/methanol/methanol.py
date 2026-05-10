@@ -484,7 +484,8 @@ class MethanolModel(object):
         e -= self.cooling_cost * m.cooler_12.heat_duty
         e -= self.heating_cost * m.heater_14.heat_duty
         e -= self.heating_cost * m.heater_15.heat_duty
-        m.objective = pe.Objective(expr=-e)
+        m.profit = pe.Expression(expr=e, doc='Profit [$1000/yr]')
+        m.objective = pe.Objective(expr=-m.profit)
 
     def build_compressor(self, block, unit_number):
         """
@@ -1155,7 +1156,7 @@ def enumerate_solutions():
                             reactor_choice,
                             recycle_compressor_choice,
                             str(res.solver.termination_condition),
-                            str(-pe.value(m.objective)),
+                            str(pe.value(m.profit)),
                         )
                     )
     time_elapsed = time.time() - since
@@ -1187,35 +1188,77 @@ def build_model():
     return m
 
 
-def solve_with_gdp_opt():
+def solve_with_gdp_opt(
+    algorithm='LOA',
+    mip_solver='gams',
+    nlp_solver='gams',
+    tee=True,
+    mip_solver_args=None,
+    nlp_solver_args=None,
+    return_results=False,
+    print_results=True,
+    **solve_options,
+):
     """
-    Solve the methanol production model using LOA (logic-based outer approximation) with GDPopt solver.
+    Solve the methanol production model with GDPopt.
+
+    Parameters
+    ----------
+    algorithm : str
+        GDPopt algorithm name. Defaults to ``'LOA'``.
+    mip_solver : str
+        Solver used for GDPopt MIP master problems.
+    nlp_solver : str
+        Solver used for GDPopt NLP subproblems.
+    tee : bool
+        Stream GDPopt output during the solve.
+    mip_solver_args : dict, optional
+        Additional keyword arguments for the MIP solver.
+    nlp_solver_args : dict, optional
+        Additional keyword arguments for the NLP solver. For example,
+        ``{'solver': 'baron'}`` selects GAMS/BARON for NLP subproblems.
+    return_results : bool
+        If True, return ``(model, results)``. The default preserves the
+        historical return value of only the model.
+    print_results : bool
+        Print active disjunct names and the solver result object after solving.
+    **solve_options
+        Additional keyword arguments passed through to ``GDPopt.solve()``.
 
     Returns
     -------
     m : Pyomo.ConcreteModel
         The Pyomo model.
+    res : SolverResults, optional
+        GDPopt solve results when ``return_results`` is True.
     """
 
-    m = MethanolModel().model
-    for _d in m.component_data_objects(
-        gdp.Disjunct, descend_into=True, active=True, sort=True
-    ):
-        _d.BigM = pe.Suffix()
-        for _c in _d.component_data_objects(
-            pe.Constraint, descend_into=True, active=True, sort=True
-        ):
-            lb, ub = compute_bounds_on_expr(_c.body)
-            _d.BigM[_c] = max(abs(lb), abs(ub))
+    m = build_model()
     opt = pe.SolverFactory('gdpopt')
-    res = opt.solve(m, algorithm='LOA', mip_solver='gams', nlp_solver='gams', tee=True)
-    for d in m.component_data_objects(
-        ctype=gdp.Disjunct, active=True, sort=True, descend_into=True
-    ):
-        if d.indicator_var.value == 1:
-            print(d.name)
-    print(res)
+    solve_kwargs = {
+        'algorithm': algorithm,
+        'mip_solver': mip_solver,
+        'nlp_solver': nlp_solver,
+        'tee': tee,
+    }
+    if mip_solver_args is not None:
+        solve_kwargs['mip_solver_args'] = mip_solver_args
+    if nlp_solver_args is not None:
+        solve_kwargs['nlp_solver_args'] = nlp_solver_args
+    solve_kwargs.update(solve_options)
 
+    res = opt.solve(m, **solve_kwargs)
+
+    if print_results:
+        for d in m.component_data_objects(
+            ctype=gdp.Disjunct, active=True, sort=True, descend_into=True
+        ):
+            if d.indicator_var.value is True:
+                print(d.name)
+        print(res)
+
+    if return_results:
+        return m, res
     return m
 
 
