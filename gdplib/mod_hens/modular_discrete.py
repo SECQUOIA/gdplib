@@ -81,7 +81,7 @@ def build_modular_option(cafaro_approx, num_stages):
     """
     m = build_model(cafaro_approx, num_stages)
 
-    # Optimize for the least cost configuration across all stages and matche
+    # Optimize for the least cost configuration across all stages and matches
     for hot, cold in m.valid_matches:
         lowest_price = float('inf')
         for size in sorted(m.possible_sizes, reverse=True):

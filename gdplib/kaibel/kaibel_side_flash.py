@@ -1,4 +1,4 @@
-""" Side feed flash """
+"""Side feed flash"""
 
 from pyomo.environ import (
     ConcreteModel,
