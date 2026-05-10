@@ -44,6 +44,9 @@ dependencies = [
 Homepage = "https://github.com/grossmann-group/gdplib"
 Repository = "https://github.com/grossmann-group/gdplib"
 
+[project.scripts]
+gdplib-benchmark = "gdplib.benchmark:main"
+
 [tool.setuptools]
 packages = {find = {}}
 

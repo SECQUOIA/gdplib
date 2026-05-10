@@ -134,3 +134,4 @@ dmypy.json
 
 gdplib/*/benchmark_result/
 benchmark_summary/
+benchmark_runs/

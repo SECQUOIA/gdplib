@@ -27,6 +27,7 @@ if __name__ == "__main__":
             "openpyxl>=3.0.0",
         ],
         python_requires=">=3.10, <3.13",
+        entry_points={"console_scripts": ["gdplib-benchmark=gdplib.benchmark:main"]},
         # All other metadata is now in pyproject.toml
         # This setup.py is maintained only for backward compatibility
     )
