@@ -1,7 +1,7 @@
 import os
 import json
 import time
-import sys
+from contextlib import redirect_stdout
 from datetime import datetime
 from importlib import import_module
 from pyomo.environ import *
@@ -28,14 +28,13 @@ def benchmark(model, strategy, timelimit, result_dir, subsolver="scip"):
     None
     """
     model = model.clone()
-    stdout = sys.stdout
+    log_path = os.path.join(result_dir, f"{strategy}_{subsolver}.log")
+    json_path = os.path.join(result_dir, f"{strategy}_{subsolver}.json")
     if strategy in ["gdp.bigm", "gdp.hull"]:
         transformation_start_time = time.time()
         TransformationFactory(strategy).apply_to(model)
         transformation_end_time = time.time()
-        with open(
-            result_dir + "/" + strategy + "_" + subsolver + ".log", "w"
-        ) as sys.stdout:
+        with open(log_path, "w") as log_file, redirect_stdout(log_file):
             results = SolverFactory(subsolver).solve(
                 model, tee=True, timelimit=timelimit
             )
@@ -50,9 +49,7 @@ def benchmark(model, strategy, timelimit, result_dir, subsolver="scip"):
         "gdpopt.lbb",
         "gdpopt.ric",
     ]:
-        with open(
-            result_dir + "/" + strategy + "_" + subsolver + ".log", "w"
-        ) as sys.stdout:
+        with open(log_path, "w") as log_file, redirect_stdout(log_file):
             results = SolverFactory(strategy).solve(
                 model,
                 tee=True,
@@ -63,9 +60,10 @@ def benchmark(model, strategy, timelimit, result_dir, subsolver="scip"):
                 time_limit=timelimit,
             )
             print(results)
+    else:
+        raise ValueError(f"Unknown benchmark strategy: {strategy}")
 
-    sys.stdout = stdout
-    with open(result_dir + "/" + strategy + "_" + subsolver + ".json", "w") as f:
+    with open(json_path, "w") as f:
         json.dump(results.json_repn(), f)
     return None
 

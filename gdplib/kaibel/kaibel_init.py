@@ -1,28 +1,28 @@
 """
-        Calculation of the theoretical minimum number of trays and initial
-                             temperature values.
-             (written by E. Soraya Rawlings, esoraya@rwlngs.net)
+       Calculation of the theoretical minimum number of trays and initial
+                            temperature values.
+            (written by E. Soraya Rawlings, esoraya@rwlngs.net)
 
- The separation of four components require a sequence of at least three distillation
- columns. Here, we calculate the minimum number of theoretical trays for the three
- columns. The sequence is shown in Figure 2.
+The separation of four components require a sequence of at least three distillation
+columns. Here, we calculate the minimum number of theoretical trays for the three
+columns. The sequence is shown in Figure 2.
 
-          COLUMN 1              COLUMN 2              COLUMN 3
-              -----                 ----                 -----
-             |     |               |    |               |     |
-           -----   |   A        -----   |             -----   |
-          |     |<---> B --    |     |<----> A --    |     |<---> A
-          |     |      C   |   |     |       B   |   |     |
-    A     |     |          |   |     |           |   |     |
-    B     |     |          |   |     |           |   |     |
-    C --->|     |           -->|     |            -->|     |
-    D     |     |              |     |               |     |
-          |     |              |     |               |     |
-          |     |<-            |     |<-             |     |<-
-           -----   |            -----   |             -----   |
-             |     |              |     |               |     |
-              -------> D           -------> C            -------> B
-   Figure 2. Sequence of columns for the separation of a quaternary mixture
+         COLUMN 1              COLUMN 2              COLUMN 3
+             -----                 ----                 -----
+            |     |               |    |               |     |
+          -----   |   A        -----   |             -----   |
+         |     |<---> B --    |     |<----> A --    |     |<---> A
+         |     |      C   |   |     |       B   |   |     |
+   A     |     |          |   |     |           |   |     |
+   B     |     |          |   |     |           |   |     |
+   C --->|     |           -->|     |            -->|     |
+   D     |     |              |     |               |     |
+         |     |              |     |               |     |
+         |     |<-            |     |<-             |     |<-
+          -----   |            -----   |             -----   |
+            |     |              |     |               |     |
+             -------> D           -------> C            -------> B
+  Figure 2. Sequence of columns for the separation of a quaternary mixture
 """
 
 from __future__ import division

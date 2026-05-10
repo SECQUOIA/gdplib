@@ -3,7 +3,6 @@ from importlib import import_module
 from pyomo.util.model_size import build_model_size_report
 import pandas as pd
 
-
 if __name__ == "__main__":
     instance_list = [
         # "batch_processing",

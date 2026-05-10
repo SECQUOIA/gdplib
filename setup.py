@@ -2,11 +2,11 @@
 """
 GDPlib open source model library for Generalized Disjunctive Programming
 """
+
 import sys
 from logging import warning
 
 from setuptools import setup, find_packages
-
 
 kwargs = dict(
     name='gdplib',

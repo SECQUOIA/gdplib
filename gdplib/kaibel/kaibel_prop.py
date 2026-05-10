@@ -1,4 +1,4 @@
-""" Properties of the system """
+"""Properties of the system"""
 
 from pyomo.environ import ConcreteModel
 
@@ -90,7 +90,7 @@ def get_model_with_properties():
     # ------------------------------------------------------------------
 
     m.prop = {}  # Properties of components:
-    cpL = {}  # Ruczika-D method for liquid heat capacity calculation
+    cpL = {}  # Ruzicka-Domalski method for liquid heat capacity calculation
     # (Reference A, page 6.20)
     sumA = {}
     sumB = {}

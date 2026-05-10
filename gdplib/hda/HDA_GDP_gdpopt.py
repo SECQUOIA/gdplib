@@ -1416,7 +1416,7 @@ def HDA_model():
                 return m.avevlt[dist] == sqrt(divided1 * divided2)
             return Constraint.Skip
 
-        b.relvol = Constraint([dist], rule=Relvol, doc='average relative volatilty')
+        b.relvol = Constraint([dist], rule=Relvol, doc='average relative volatility')
 
         def Undwood(_m, dist_):
             if dist_ == dist:
