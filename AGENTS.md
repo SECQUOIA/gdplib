@@ -240,6 +240,12 @@ These instructions apply to the whole repository.
   representative initialized data and smoke-test supported transformations such
   as `gdp.bigm` and `gdp.hull`. Keep this separate from solver-backed
   optimality evidence.
+- For ordered-location superstructures or activation-prefix rewrites, test the
+  discrete semantics directly on a small representative instance. Enumerate the
+  relevant binary activation/location choices and assert the intended valid
+  combinations, including any derived feed, recycle, or terminal-location
+  expressions. Component-type checks and transformation smoke tests are useful
+  but are not enough to protect the modeling semantics.
 - For scalable model changes, verify the documented/default instance and at
   least one larger instance when practical. If semantics should be unchanged,
   compare transformed model counts or generated algebraic representations where
