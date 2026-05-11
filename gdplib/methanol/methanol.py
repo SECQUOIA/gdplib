@@ -33,7 +33,6 @@ def fix_vars_with_equal_bounds(m, tol=1e-8):
 
 class MethanolModel(object):
     def __init__(self):
-
         self.model = m = pe.ConcreteModel()  # main model
 
         self.alpha = 0.72  # compressor coefficient

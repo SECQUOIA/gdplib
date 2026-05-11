@@ -148,7 +148,7 @@ def build_model():
         m.j,
         within=pyo.NonNegativeReals,
         bounds=(pyo.log(m.vlow), pyo.log(m.vupp)),
-        doc="Colume of stage j [L]",
+        doc="Volume of stage j [L]",
     )  # Volume of stage j [L]
     m.b = pyo.Var(
         m.i, within=pyo.NonNegativeReals, doc="Batch size of product i [L]"

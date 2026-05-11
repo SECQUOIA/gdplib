@@ -2820,7 +2820,6 @@ def build_model():
         return ru
 
     for unit in m.RU:
-
         unit_exists = m.unit_exists[unit]
 
         # Create a block for each existing RED unit.
