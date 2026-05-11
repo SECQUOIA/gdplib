@@ -274,10 +274,12 @@ These instructions apply to the whole repository.
   representative initialized data and smoke-test supported transformations such
   as `gdp.bigm` and `gdp.hull`. Keep this separate from solver-backed
   optimality evidence.
-- For polynomial objectives or constraints involving negative-bounded variables,
-  prefer explicit products for small integer powers when Pyomo/GDPopt FBBT or
-  interval propagation fails on `PowExpression`; keep the algebra equivalent and
-  add a focused regression test for the expression form or solve path.
+- When Pyomo/GDPopt FBBT or interval propagation fails, fix the narrow
+  modeling cause before changing solver configuration: derive finite bounds from
+  source constraints and parameters for missing-bound failures, and use explicit
+  products for small integer powers when negative-bounded variables break
+  `PowExpression`. Keep algebra equivalent and verify the affected
+  transformation or GDPopt path when practical.
 - For ordered-location superstructures or activation-prefix rewrites, test the
   discrete semantics directly on a small representative instance. Enumerate the
   relevant binary activation/location choices and assert the intended valid
