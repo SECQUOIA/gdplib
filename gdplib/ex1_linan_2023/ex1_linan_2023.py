@@ -62,13 +62,18 @@ def build_model():
         Pyomo.Objective
             Build the objective function of the toy problem
         """
+        alpha2 = m.alpha * m.alpha
+        alpha4 = alpha2 * alpha2
+        alpha6 = alpha4 * alpha2
+        beta2 = m.beta * m.beta
+        beta4 = beta2 * beta2
         return (
-            4 * (pow(m.alpha, 2))
-            - 2.1 * (pow(m.alpha, 4))
-            + (1 / 3) * (pow(m.alpha, 6))
+            4 * alpha2
+            - 2.1 * alpha4
+            + (1 / 3) * alpha6
             + m.alpha * m.beta
-            - 4 * (pow(m.beta, 2))
-            + 4 * (pow(m.beta, 4))
+            - 4 * beta2
+            + 4 * beta4
         )
 
     m.obj = pyo.Objective(rule=obj_fun, sense=pyo.minimize, doc="Objective function")
@@ -125,7 +130,7 @@ def build_model():
         """
         return [m.Y1_disjunct[j] for j in m.set1]
 
-    m.Disjunction1 = Disjunction(rule=Disjunction1, xor=False)
+    m.Disjunction1 = Disjunction(rule=Disjunction1, xor=True)
 
     # Second disjunction
     def build_disjuncts2(m, set2):  # Disjuncts for second Boolean variable
@@ -179,7 +184,7 @@ def build_model():
         """
         return [m.Y2_disjunct[j] for j in m.set2]
 
-    m.Disjunction2 = Disjunction(rule=Disjunction2, xor=False)
+    m.Disjunction2 = Disjunction(rule=Disjunction2, xor=True)
 
     # Logical constraints
 

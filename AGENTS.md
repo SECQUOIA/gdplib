@@ -74,7 +74,9 @@ These instructions apply to the whole repository.
   `git diff --check`, and avoid unrelated normalization.
 - For GitHub issue or PR inspection through `gh`, prefer explicit `--json`
   field lists when default views request deprecated GraphQL fields such as
-  Projects Classic `projectCards`.
+  Projects Classic `projectCards`. GitHub rejects approvals from the PR author;
+  submit a `COMMENT` review instead and note that an eligible reviewer is still
+  required.
 - Match CI formatting and linting:
   ```bash
   black -S -C --target-version py310 --check --diff .
@@ -203,7 +205,10 @@ These instructions apply to the whole repository.
   instance, strategy/transformation, solver interface, GAMS solver and GDPopt
   role solvers when applicable, time limit, termination condition, objective
   value, primal/dual bounds, gap or infeasibility evidence, and failure log path
-  or traceback for errors.
+  or traceback for errors. If claiming coverage across alternatives or solvers,
+  name the exact benchmark strategies and solver profiles tested, and report
+  solver-wrapper caveats such as missing objective or bound fields even when the
+  termination condition is optimal.
 - For BARON infeasibility investigations, use `CompIIS` when useful and keep
   the IIS reproduction separate from exploratory verbose solver runs. Generate
   GAMS files with `symbolic_solver_labels=True`, include a GAMS-to-Pyomo symbol
@@ -262,10 +267,17 @@ These instructions apply to the whole repository.
   committed environment. Prefer direct `gdp.bigm` smoke tests when that is the
   intended path; do not add optional dependencies such as `sympy` solely to test
   a transformation path that the project does not otherwise require.
+- When model semantics require exactly one disjunct, declare the `Disjunction`
+  with `xor=True`; do not rely only on a separate `LogicalConstraint` because
+  `gdp.hull` requires XOR disjunctions.
 - For algebraic GDP reformulations, add deterministic equivalence tests on
   representative initialized data and smoke-test supported transformations such
   as `gdp.bigm` and `gdp.hull`. Keep this separate from solver-backed
   optimality evidence.
+- For polynomial objectives or constraints involving negative-bounded variables,
+  prefer explicit products for small integer powers when Pyomo/GDPopt FBBT or
+  interval propagation fails on `PowExpression`; keep the algebra equivalent and
+  add a focused regression test for the expression form or solve path.
 - For ordered-location superstructures or activation-prefix rewrites, test the
   discrete semantics directly on a small representative instance. Enumerate the
   relevant binary activation/location choices and assert the intended valid
@@ -290,9 +302,10 @@ These instructions apply to the whole repository.
   Pyomo's direct Gurobi solver interfaces. Pyomo's direct Gurobi writers do not
   support every nonlinear transformed GDP expression; for those cases, keep
   using the GAMS/Gurobi profile and record the limitation.
-- Packaging tests can regenerate `gdplib/_version.py` and the editable package
-  entry in `pixi.lock`. Do not commit that churn unless the task is explicitly
-  about versioning, release metadata, or regenerating the Pixi lock.
+- Packaging tests, Pixi runs, and benchmark runs can regenerate
+  `gdplib/_version.py` or the editable package entry in `pixi.lock`. Do not
+  commit that churn unless the task is explicitly about versioning, release
+  metadata, or regenerating the Pixi lock.
 - When changing release workflow or Pixi support policy docs, update
   `tests/test_release_workflow.py` so README, `publish.yml`, `pixi.toml`, and
   AGENTS.md stay aligned.
