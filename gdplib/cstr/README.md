@@ -12,7 +12,7 @@ https://doi.org/10.1016/j.compchemeng.2020.106794
 
 ### Optimal Solution
 
-Best known objective value: 3.06181298849707
+Best known objective value: 3.0620145766 (optimal)
 
 ### Size
 
