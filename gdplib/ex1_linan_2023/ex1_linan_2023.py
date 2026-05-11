@@ -125,7 +125,7 @@ def build_model():
         """
         return [m.Y1_disjunct[j] for j in m.set1]
 
-    m.Disjunction1 = Disjunction(rule=Disjunction1, xor=False)
+    m.Disjunction1 = Disjunction(rule=Disjunction1, xor=True)
 
     # Second disjunction
     def build_disjuncts2(m, set2):  # Disjuncts for second Boolean variable
@@ -179,7 +179,7 @@ def build_model():
         """
         return [m.Y2_disjunct[j] for j in m.set2]
 
-    m.Disjunction2 = Disjunction(rule=Disjunction2, xor=False)
+    m.Disjunction2 = Disjunction(rule=Disjunction2, xor=True)
 
     # Logical constraints
 
