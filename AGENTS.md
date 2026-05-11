@@ -12,6 +12,10 @@ These instructions apply to the whole repository.
   compatible with that license.
 - Supported Python versions are 3.10, 3.11, and 3.12. Keep `pyproject.toml`, `setup.py`, CI, and environment manifests aligned when changing support.
 - Treat optimization solvers as optional external tools. Do not make model construction, imports, or default tests require GAMS, IPOPT, or another solver unless the task explicitly asks for solver-specific behavior.
+- Direct Gurobi Python access is available through the optional Pixi
+  environment `gurobi`, which adds `gurobipy` without making it part of the
+  default development environment. Keep Gurobi license paths local; document
+  `GRB_LICENSE_FILE` rather than hard-coding machine-specific paths.
 - Models often represent chemical-engineering or operations-research
   optimization problems. Preserve the model's reference source and benchmarking
   intent when making changes.
@@ -282,6 +286,10 @@ These instructions apply to the whole repository.
   tests. Put GAMS, BARON, IPOPT, Gurobi, HiGHS, and similar tools in optional
   local environments, optional Pixi features, benchmark profiles, or
   documentation.
+- Use `pixi run -e gurobi ...` when local work needs direct `gurobipy` or
+  Pyomo's direct Gurobi solver interfaces. Pyomo's direct Gurobi writers do not
+  support every nonlinear transformed GDP expression; for those cases, keep
+  using the GAMS/Gurobi profile and record the limitation.
 - Packaging tests can regenerate `gdplib/_version.py` and the editable package
   entry in `pixi.lock`. Do not commit that churn unless the task is explicitly
   about versioning, release metadata, or regenerating the Pixi lock.
