@@ -4,5 +4,6 @@ hda = "hda"
 HDA = "HDA"
 equil = "equil"
 ue = "ue"
-# indx is used as an intentional variable/parameter name abbreviation
+Nin = "Nin"
 indx = "indx"
+IDAES = "IDAES"

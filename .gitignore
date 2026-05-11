@@ -104,6 +104,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+.pixi/
 env/
 venv/
 ENV/
@@ -132,3 +133,5 @@ dmypy.json
 .idea/
 
 gdplib/*/benchmark_result/
+benchmark_summary/
+benchmark_runs/

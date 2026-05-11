@@ -9,11 +9,11 @@ Source paper (see Section "Capacity Expansion Case Study"):
 
 Five model variants are described:
 
-- ``build_cap_expand_growth`` - Single site capacity expansion (Growth scenario)
-- ``build_cap_expand_dip`` - Single site capacity expansion (Dip scenario)
-- ``build_cap_expand_decay`` - Single site capacity expansion (Decay scenario)
-- ``build_distributed_model`` - Multi-site distributed design (monthly time periods)
-- ``build_quarter_distributed_model`` - Multi-site distributed design (quarterly time periods)
+- ``build_model('Growth')`` - Single site capacity expansion (Growth scenario)
+- ``build_model('Dip')`` - Single site capacity expansion (Dip scenario)
+- ``build_model('Decay')`` - Single site capacity expansion (Decay scenario)
+- ``build_model('Distributed')`` - Multi-site distributed design (monthly time periods)
+- ``build_model('QuarterDistributed')`` - Multi-site distributed design (quarterly time periods)
 
 
 ## Problem Details
@@ -21,29 +21,21 @@ Five model variants are described:
 ### Solution
 
 Best known objective values:
-- ``build_cap_expand_growth``: 3593 (optimal)
-- ``build_cap_expand_dip``: 2096 (optimal)
-- ``build_cap_expand_decay``: 851 (optimal)
-- ``build_distributed_model``: 36262
-- ``build_quarter_distributed_model``: 19568
+- ``Growth``: 3593 (optimal)
+- ``Dip``: 2096 (optimal)
+- ``Decay``: 851 (optimal)
+- ``Distributed``: 36262
+- ``QuarterDistributed``: 19568
 
 ### Size
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| Mod_grow | 488 | 2 | 0 | 363 | 123 | 486 | 1 | 2 | 1 |
-| Mod_dip | 488 | 2 | 0 | 363 | 123 | 486 | 1 | 2 | 1 |
-| Mod_decay | 488 | 2 | 0 | 363 | 123 | 486 | 1 | 2 | 1 |
-| Mod_dist | 2224 | 26 | 0 | 718 | 1480 | 1387 | 22 | 26 | 13 |
-| Mod_qtr | 1314 | 42 | 0 | 486 | 786 | 672 | 36 | 42 | 21 |
-
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             |   Growth |   Dip |   Decay |   Distributed |   QuarterDistributed |
+|:----------------------|---------:|------:|--------:|--------------:|---------------------:|
+| Variables             |      488 |   488 |     488 |          3720 |                 1320 |
+| Binary variables      |        2 |     2 |       2 |            42 |                   42 |
+| Integer variables     |      363 |   363 |     363 |          1452 |                  492 |
+| Continuous variables  |      123 |   123 |     123 |          2226 |                  786 |
+| Disjunctions          |        1 |     1 |       1 |            21 |                   21 |
+| Disjuncts             |        2 |     2 |       2 |            42 |                   42 |
+| Constraints           |      486 |   486 |     486 |          1792 |                  672 |
+| Nonlinear constraints |        1 |     1 |       1 |            36 |                   36 |

@@ -35,6 +35,7 @@ class TestModelStructure:
         "small_batch",
         "cstr",
         "reverse_electrodialysis",
+        "multiperiod_blending",
     ]
 
     @pytest.mark.parametrize("module_name", GDPLIB_MODULES)
@@ -142,7 +143,9 @@ class TestModelFunctionality:
                         ), f"{module_name} model has no components"
 
                     except Exception as e:
-                        pytest.skip(f"{module_name} model construction failed: {e}")
+                        pytest.fail(
+                            f"{module_name} model construction raised unexpected error: {e}"
+                        )
             except ImportError:
                 pytest.skip(f"Module {module_name} not available")
 

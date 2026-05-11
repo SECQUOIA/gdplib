@@ -90,20 +90,20 @@ def main():
     ## Initial values for the tray existence or absence
     for n_tray in m.candidate_trays_main:
         for sec in m.section_main:
-            m.tray_exists[sec, n_tray].indicator_var.set_value(1)
-            m.tray_absent[sec, n_tray].indicator_var.set_value(0)
+            m.tray_exists[sec, n_tray].indicator_var.set_value(True)
+            m.tray_absent[sec, n_tray].indicator_var.set_value(False)
     for n_tray in m.candidate_trays_feed:
-        m.tray_exists[2, n_tray].indicator_var.set_value(1)
-        m.tray_absent[2, n_tray].indicator_var.set_value(0)
+        m.tray_exists[2, n_tray].indicator_var.set_value(True)
+        m.tray_absent[2, n_tray].indicator_var.set_value(False)
     for n_tray in m.candidate_trays_product:
-        m.tray_exists[3, n_tray].indicator_var.set_value(1)
-        m.tray_absent[3, n_tray].indicator_var.set_value(0)
+        m.tray_exists[3, n_tray].indicator_var.set_value(True)
+        m.tray_absent[3, n_tray].indicator_var.set_value(False)
 
     intro_message(m)
 
     results = SolverFactory("gdpopt").solve(
         m,
-        strategy="LOA",
+        algorithm="LOA",
         tee=True,
         time_limit=3600,
         mip_solver="gams",
@@ -135,18 +135,16 @@ def intro_message(m):
 
 
     """
-    print(
-        """
+    print("""
 
 If you use this model and/or initialization strategy, you may cite the following:
-Rawlings, ES; Chen, Q; Grossmann, IE; Caballero, JA. Kaibel Column: Modeling, 
-optimization, and conceptual design of multi-product dividing wall columns. 
-Comp. and Chem. Eng., 2019, 125, 31-39. 
+Rawlings, ES; Chen, Q; Grossmann, IE; Caballero, JA. Kaibel Column: Modeling,
+optimization, and conceptual design of multi-product dividing wall columns.
+Comp. and Chem. Eng., 2019, 125, 31-39.
 DOI: https://doi.org/10.1016/j.compchemeng.2019.03.006
 
 
-    """
-    )
+    """)
 
 
 def display_results(m):

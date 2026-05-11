@@ -12,6 +12,7 @@ References
 
 """
 
+import math
 import os
 import pyomo.environ as pyo
 from pyomo.core.base.misc import display
@@ -135,6 +136,17 @@ def build_model():
         m.i, m.j, initialize=t_init, doc="Processing time of product i in batch j [hr]"
     )
 
+    def batch_size_bounds(m, i):
+        batch_size_ub = min(
+            math.log(pyo.value(m.vupp) / pyo.value(m.s[i, j])) for j in m.j
+        )
+        return (0, batch_size_ub)
+
+    def cycle_time_bounds(m, i):
+        _, batch_size_ub = batch_size_bounds(m, i)
+        cycle_time_ub = math.log(pyo.value(m.h) / pyo.value(m.q[i])) + batch_size_ub
+        return (0, cycle_time_ub)
+
     # Variables
     m.Y = pyo.BooleanVar(m.k, m.j, doc="Stage existence")  # Stage existence
     m.coeffval = pyo.Var(
@@ -151,14 +163,23 @@ def build_model():
         doc="Volume of stage j [L]",
     )  # Volume of stage j [L]
     m.b = pyo.Var(
-        m.i, within=pyo.NonNegativeReals, doc="Batch size of product i [L]"
+        m.i,
+        within=pyo.NonNegativeReals,
+        bounds=batch_size_bounds,
+        doc="Batch size of product i [L]",
     )  # Batch size of product i [L]
     m.tl = pyo.Var(
-        m.i, within=pyo.NonNegativeReals, doc="Cycle time of product i [hr]"
+        m.i,
+        within=pyo.NonNegativeReals,
+        bounds=cycle_time_bounds,
+        doc="Cycle time of product i [hr]",
     )  # Cycle time of product i [hr]
     # Number of units in parallel stage j
     m.n = pyo.Var(
-        m.j, within=pyo.NonNegativeReals, doc="Number of units in parallel stage j"
+        m.j,
+        within=pyo.NonNegativeReals,
+        bounds=(0, math.log(NK)),
+        doc="Number of units in parallel stage j",
     )
 
     # Constraints
@@ -398,7 +419,9 @@ def build_model():
     # Associate Boolean variables with with disjunction
     for k in m.k:
         for j in m.j:
-            m.Y[k, j].associate_binary_var(m.Y_exists[k, j].indicator_var)
+            m.Y[k, j].associate_binary_var(
+                m.Y_exists[k, j].indicator_var.get_associated_binary()
+            )
 
     # ____________________________
 

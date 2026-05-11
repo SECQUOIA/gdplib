@@ -9,9 +9,16 @@ import pytest
 import importlib
 import sys
 import os
+import pyomo.environ as pyo
+from pyomo.gdp import Disjunction
 
 # Add the gdplib directory to the path for testing
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from build_model_test_utils import (  # noqa: E402
+    get_required_build_model_parameters,
+    is_missing_external_solver_error,
+)
 
 
 class TestModuleImports:
@@ -39,6 +46,7 @@ class TestModuleImports:
         "small_batch",
         "cstr",
         "reverse_electrodialysis",
+        "multiperiod_blending",
     ]
 
     @pytest.mark.parametrize("module_name", GDPLIB_MODULES)
@@ -72,21 +80,25 @@ class TestModuleImports:
                     build_func
                 ), f"{module_name}.build_model is not callable"
 
-                # Try to call build_model without arguments first
+                required_params = get_required_build_model_parameters(build_func)
+                if required_params:
+                    pytest.skip(
+                        f"{module_name}.build_model requires parameters: "
+                        f"{', '.join(required_params)}"
+                    )
+
                 try:
                     model = build_func()
                     assert model is not None, f"{module_name}.build_model returned None"
-                except TypeError:
-                    # Some models might require arguments, try with empty args
-                    try:
-                        model = build_func(*[])
-                        assert model is not None
-                    except Exception:
-                        pytest.skip(
-                            f"{module_name}.build_model requires specific arguments"
-                        )
                 except Exception as e:
-                    pytest.skip(f"{module_name}.build_model failed with error: {e}")
+                    if is_missing_external_solver_error(e):
+                        pytest.skip(
+                            f"{module_name}.build_model requires external solver: {e}"
+                        )
+                    else:
+                        pytest.fail(
+                            f"{module_name}.build_model raised unexpected error: {e}"
+                        )
         except ImportError:
             pytest.skip(f"Module {module_name} not available")
 
@@ -94,42 +106,43 @@ class TestModuleImports:
 class TestModelConstruction:
     """Test model construction for key modules."""
 
-    def test_cstr_model_construction(self):
-        """Test CSTR model construction specifically."""
+    MODELS = ["cstr", "biofuel", "gdp_col", "methanol"]
+
+    @pytest.mark.parametrize("module_name", MODELS)
+    def test_model_construction(self, module_name):
+        """Ensure that selected models can be built successfully."""
         try:
-            import gdplib.cstr
+            module = importlib.import_module(f"gdplib.{module_name}")
 
-            model = gdplib.cstr.build_model()
-            assert model is not None
-            # Basic model validation
-            assert hasattr(model, "component_objects")
-        except ImportError:
-            pytest.skip("CSTR module not available")
-        except Exception as e:
-            pytest.skip(f"CSTR model construction failed: {e}")
-
-    def test_biofuel_model_construction(self):
-        """Test biofuel model construction specifically."""
-        try:
-            import gdplib.biofuel
-
-            model = gdplib.biofuel.build_model()
+            model = module.build_model()
             assert model is not None
             assert hasattr(model, "component_objects")
         except ImportError:
-            pytest.skip("Biofuel module not available")
+            pytest.skip(f"{module_name} module not available")
         except Exception as e:
-            pytest.skip(f"Biofuel model construction failed: {e}")
+            if is_missing_external_solver_error(e):
+                pytest.skip(
+                    f"{module_name} model construction requires external solver: {e}"
+                )
+            else:
+                pytest.fail(
+                    f"{module_name} model construction raised unexpected error: {e}"
+                )
 
-    def test_gdp_col_model_construction(self):
-        """Test GDP column model construction specifically."""
-        try:
-            import gdplib.gdp_col
+    def test_cstr_model_reformulates_with_bigm(self):
+        """Test CSTR GDP components reformulate with big-M."""
+        import gdplib.cstr
 
-            model = gdplib.gdp_col.build_model()
-            assert model is not None
-            assert hasattr(model, "component_objects")
-        except ImportError:
-            pytest.skip("GDP column module not available")
-        except Exception as e:
-            pytest.skip(f"GDP column model construction failed: {e}")
+        model = gdplib.cstr.build_model()
+
+        assert not any(
+            model.component_data_objects(pyo.LogicalConstraint, active=True)
+        ), "CSTR activation logic should use algebraic indicator-binary constraints"
+        assert any(
+            model.component_data_objects(Disjunction, active=True)
+        ), "CSTR model should contain active disjunctions before reformulation"
+
+        pyo.TransformationFactory("gdp.bigm").apply_to(model)
+
+        assert not any(model.component_data_objects(pyo.LogicalConstraint, active=True))
+        assert not any(model.component_data_objects(Disjunction, active=True))

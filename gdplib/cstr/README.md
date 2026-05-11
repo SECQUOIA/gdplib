@@ -1,7 +1,7 @@
 # GDP Reactor Series Design
-Function that builds CSTR superstructure model of size NT (default = 5). 
+Function that builds CSTR superstructure model of size NT (default = 5).
 NT is the number of reactors in series.
-The CSTRs have a single 1st order auto catalytic reaction A -> B and minimizes total reactors series volume. 
+The CSTRs have a single 1st order auto catalytic reaction A -> B and minimizes total reactors series volume.
 The optimal solution should yield NT reactors with a recycle before reactor NT.
 
 ### References
@@ -12,22 +12,23 @@ The optimal solution should yield NT reactors with a recycle before reactor NT.
  
 ### Solution
 
-Best known objective value: 3.06181298849707
+## Problem Details
+
+### Optimal Solution
+
+Best known objective value: 3.0620145766 (optimal)
 
 ### Size
 
 Number of reactors in series is 5.
 
-| Problem   | vars | Bool | bin | int | cont | cons | nl | disj | disjtn |
-|-----------|------|------|-----|-----|------|------|----|------|--------|
-| gdp_reactors | 71 | 15 | 0 | 0 | 56 | 25 | 2 | 20 | 10 |
-
-- ``vars``: variables
-- ``Bool``: Boolean variables
-- ``bin``: binary variables
-- ``int``: integer variables
-- ``cont``: continuous variables
-- ``cons``: constraints
-- ``nl``: nonlinear constraints
-- ``disj``: disjuncts
-- ``disjtn``: disjunctions
+| Component             |   Number |
+|:----------------------|---------:|
+| Variables             |       76 |
+| Binary variables      |       20 |
+| Integer variables     |        0 |
+| Continuous variables  |       56 |
+| Disjunctions          |       10 |
+| Disjuncts             |       20 |
+| Constraints           |      112 |
+| Nonlinear constraints |       17 |

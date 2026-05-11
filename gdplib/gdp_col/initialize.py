@@ -72,9 +72,9 @@ def initialize(m, excel_file=None):
             for i in range(1, num_active_trays)
         ]
         for tray in range(2, num_active_trays):
-            indx = new_indices[tray - 1]
-            lower = floor(indx)
-            frac_above = indx - lower
+            index = new_indices[tray - 1]
+            lower = floor(index)
+            frac_above = index - lower
             # Take linear combination of values
             tray_indexed_data.loc[tray] = (
                 tray_indexed_data.loc[lower] * (1 - frac_above)

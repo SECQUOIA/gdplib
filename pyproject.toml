@@ -10,14 +10,16 @@ readme = "README.md"
 license = {text = "BSD 3-clause"}
 authors = [
     {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},
+    {name = "David E. Bernal Neira", email = "dbernaln@purdue.edu"},
+    {name = "SECQUOIA"},
 ]
 maintainers = [
-    {name = "Qi Chen", email = "qichen@andrew.cmu.edu"},
+    {name = "David E. Bernal Neira", email = "dbernaln@purdue.edu"},
+    {name = "SECQUOIA"},
 ]
 keywords = ["pyomo", "generalized disjunctive programming"]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10", 
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -27,7 +29,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.9, <3.13"
+requires-python = ">=3.10, <3.13"
 dependencies = [
     "Pyomo>=5.6.1",
     "setuptools>=39.0.1",
@@ -41,6 +43,9 @@ dependencies = [
 [project.urls]
 Homepage = "https://github.com/grossmann-group/gdplib"
 Repository = "https://github.com/grossmann-group/gdplib"
+
+[project.scripts]
+gdplib-benchmark = "gdplib.benchmark:main"
 
 [tool.setuptools]
 packages = {find = {}}

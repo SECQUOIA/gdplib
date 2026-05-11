@@ -21,7 +21,7 @@ from os.path import join
 # maximizing profit. The four different contracts available are:
 # FIXED PRICE CONTRACT: buy as much as you want at constant price
 # DISCOUNT CONTRACT: quantities below minimum amount cost RegPrice. Any additional quantity
-# above min amount costs DiscoutPrice.
+# above min amount costs DiscountPrice.
 # BULK CONTRACT: If more than min amount is purchased, whole purchase is at discount price.
 # FIXED DURATION CONTRACT: Depending on length of time contract is valid, there is a purchase
 # price during that time and min quantity that must be purchased
@@ -1833,7 +1833,7 @@ def build_model():
             == model.Prices_Length[j, 2, t] * model.AmountPurchased_FD[j, t]
         )
         # only enforce these if we aren't in the last time period
-        if t < model.TimePeriods[-1]:
+        if t < model.TimePeriods.at(-1):
             disjunct.amount2 = Constraint(
                 expr=model.AmountPurchased_FD[j, t + 1] >= model.MinAmount_Length[j, 2]
             )
@@ -1874,7 +1874,7 @@ def build_model():
             == model.Prices_Length[j, 3, t] * model.AmountPurchased_FD[j, t]
         )
         # check we aren't in one of the last two time periods
-        if t < model.TimePeriods[-1]:
+        if t < model.TimePeriods.at(-1):
             disjunct.amount2 = Constraint(
                 expr=model.AmountPurchased_FD[j, t + 1] >= model.MinAmount_Length[j, 3]
             )
@@ -1882,7 +1882,7 @@ def build_model():
                 expr=model.Cost_FD[j, t + 1]
                 == model.Prices_Length[j, 3, t] * model.AmountPurchased_FD[j, t + 1]
             )
-        if t < model.TimePeriods[-2]:
+        if t < model.TimePeriods.at(-2):
             disjunct.amount3 = Constraint(
                 expr=model.AmountPurchased_FD[j, t + 2] >= model.MinAmount_Length[j, 3]
             )
@@ -1915,10 +1915,10 @@ def build_model():
         model = disjunct.model()
         disjunct.amount1 = Constraint(expr=model.AmountPurchased_FD[j, t] == 0)
         disjunct.cost1 = Constraint(expr=model.Cost_FD[j, t] == 0)
-        if t < model.TimePeriods[-1]:
+        if t < model.TimePeriods.at(-1):
             disjunct.amount2 = Constraint(expr=model.AmountPurchased_FD[j, t + 1] == 0)
             disjunct.cost2 = Constraint(expr=model.Cost_FD[j, t + 1] == 0)
-        if t < model.TimePeriods[-2]:
+        if t < model.TimePeriods.at(-2):
             disjunct.amount3 = Constraint(expr=model.AmountPurchased_FD[j, t + 2] == 0)
             disjunct.cost3 = Constraint(expr=model.Cost_FD[j, t + 2] == 0)
 
