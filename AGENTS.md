@@ -186,11 +186,33 @@ These instructions apply to the whole repository.
   to DICOPT. Use IPOPT or GAMS IPOPTH for local NLP subproblems, DICOPT for
   local MINLP subproblems, and BARON only when a global solve or global bound is
   the intended evidence.
+- For direct transformed solver comparisons, include a GAMS/Gurobi case for
+  each direct GDP reformulation under discussion when a licensed Gurobi stack is
+  available. If a GAMS/Pyomo wrapper reports an objective or upper bound but
+  the solver log says no incumbent was found, trust the solver log in tables
+  and note the wrapper discrepancy explicitly.
+- For nonlinear transformed GDP instances, Pyomo's direct Gurobi interfaces may
+  reject nonlinear or unknown-degree expressions even when Gurobi can handle the
+  same generated model through GAMS. Record that interface limitation and use
+  the GAMS/Gurobi profile for solver-backed comparison evidence.
 - When reporting benchmark results, include the exact command, run id, model
   instance, strategy/transformation, solver interface, GAMS solver and GDPopt
   role solvers when applicable, time limit, termination condition, objective
   value, primal/dual bounds, gap or infeasibility evidence, and failure log path
   or traceback for errors.
+- For BARON infeasibility investigations, use `CompIIS` when useful and keep
+  the IIS reproduction separate from exploratory verbose solver runs. Generate
+  GAMS files with `symbolic_solver_labels=True`, include a GAMS-to-Pyomo symbol
+  map, and record the exact BARON options such as `CompIIS`, `IISOrder`,
+  `NumLoc`, and `MaxTime`. Minimal Pyomo/GAMS DAT-result reproductions with
+  default `solprint`, `limrow`, and `limcol` are easier to compare than verbose
+  row/column listing runs.
+- For external solver diagnostic handoff packages, include the source Python
+  file, transformed symbolic GAMS instance, solver logs/results, software
+  versions, exact reproduction commands, and a short report. Keep generated
+  archives under ignored paths such as `/tmp`, and do not include email drafts
+  or other private correspondence in the archive unless the user explicitly
+  asks for that.
 - Use `gdplib-benchmark warnings` with a short time limit and the narrowest
   useful mode (`build`, `transform`, or `solve`) to capture Pyomo deprecations
   and warning-heavy construction paths. Update the relevant model issue and the
