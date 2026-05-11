@@ -85,11 +85,6 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
     m.F0 = pyo.Param(m.I, initialize=F0_Def)
 
-    # BOOLEAN VARIABLES
-
-    # Unreacted feed in reactor n
-    m.YF = pyo.BooleanVar(m.N, doc="Unreacted feed in reactor n")
-
     # REAL VARIABLES
 
     # Network Variables
@@ -778,6 +773,32 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
         """
         return [m.YR_is_recycle[n], m.YR_is_not_recycle[n]]
 
+    def unreacted_feed_rule(m, n):
+        """
+        Build the expression indicating the last active CSTR in the prefix.
+
+        Parameters
+        ----------
+        m : Pyomo.ConcreteModel
+            Pyomo GDP model of the CSTR superstructure.
+        n : int
+            Index of the reactor in the reactor series.
+
+        Returns
+        -------
+        Pyomo expression
+            Binary-valued expression that is one when reactor n is the last
+            active CSTR in the reactor series.
+        """
+        cstr_active = m.YP_is_cstr[n].indicator_var.get_associated_binary()
+        if n == NT:
+            return cstr_active
+        return cstr_active - m.YP_is_cstr[n + 1].indicator_var.get_associated_binary()
+
+    m.YF = pyo.Expression(
+        m.N, rule=unreacted_feed_rule, doc="Unreacted feed in reactor n"
+    )
+
     # Logic Constraints
     # Unit must be a CSTR to include a recycle
 
@@ -795,12 +816,15 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        Pyomo.LogicalConstraint
-            Logical constraint for the unit to be a CSTR to include a recycle.
+        Pyomo.Constraint
+            Constraint requiring recycle units to be active CSTR units.
         """
-        return m.YR_is_recycle[n].indicator_var.implies(m.YP_is_cstr[n].indicator_var)
+        return (
+            m.YR_is_recycle[n].indicator_var.get_associated_binary()
+            <= m.YP_is_cstr[n].indicator_var.get_associated_binary()
+        )
 
-    m.cstr_if_recycle = pyo.LogicalConstraint(
+    m.cstr_if_recycle = pyo.Constraint(
         m.N, rule=cstr_if_recycle_rule, doc="Unit must be a CSTR to include a recycle"
     )
 
@@ -808,7 +832,7 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
     def one_unreacted_feed_rule(m):
         """
-        Build the logical constraint for the existence of only one unreacted feed.
+        Build the constraint for the existence of only one unreacted feed.
 
         Parameters
         ----------
@@ -817,12 +841,12 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        Pyomo.LogicalConstraint
-            Logical constraint for the existence of only one unreacted feed.
+        Pyomo.Constraint
+            Constraint requiring exactly one unreacted feed location.
         """
-        return pyo.exactly(1, m.YF)
+        return sum(m.YF[n] for n in m.N) == 1
 
-    m.one_unreacted_feed = pyo.LogicalConstraint(
+    m.one_unreacted_feed = pyo.Constraint(
         rule=one_unreacted_feed_rule, doc="There is only one unreacted feed"
     )
 
@@ -839,12 +863,15 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        Pyomo.LogicalConstraint
-            Logical constraint for the existence of only one recycle stream.
+        Pyomo.Constraint
+            Constraint requiring exactly one recycle stream.
         """
-        return pyo.exactly(1, [m.YR_is_recycle[n].indicator_var for n in m.N])
+        return (
+            sum(m.YR_is_recycle[n].indicator_var.get_associated_binary() for n in m.N)
+            == 1
+        )
 
-    m.one_recycle = pyo.LogicalConstraint(
+    m.one_recycle = pyo.Constraint(
         rule=one_recycle_rule, doc="There is only one recycle stream"
     )
 
@@ -854,8 +881,9 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
         """
         Build the logical constraint for the unit operation in n.
         If n is equal to 1, the unit operation is a CSTR.
-        Otherwise, the unit operation for reactor n except reactor 1 is equivalent to the logical OR of the negation of the unreacted feed of the previous reactors and the unreacted feed of reactor n.
-        Reactor n is active if either the previous reactors (1 through n-1) have no unreacted feed or reactor n has unreacted feed.
+        Otherwise, reactor n can be active only if the previous reactor is
+        active. This preserves the active-prefix structure of the reactor
+        superstructure without auxiliary feed-location Boolean variables.
 
         Parameters
         ----------
@@ -866,17 +894,18 @@ def build_model(NT: int = 5) -> pyo.ConcreteModel():
 
         Returns
         -------
-        Pyomo.LogicalConstraint
-            Logical constraint for the unit operation in n.
+        Pyomo.Constraint
+            Constraint enforcing the active CSTR prefix in the reactor series.
         """
         if n == 1:
-            return m.YP_is_cstr[n].indicator_var.equivalent_to(True)
+            return m.YP_is_cstr[n].indicator_var.get_associated_binary() == 1
         else:
-            return m.YP_is_cstr[n].indicator_var.equivalent_to(
-                pyo.lor(pyo.land(~m.YF[n2] for n2 in range(1, n)), m.YF[n])
+            return (
+                m.YP_is_cstr[n].indicator_var.get_associated_binary()
+                <= m.YP_is_cstr[n - 1].indicator_var.get_associated_binary()
             )
 
-    m.unit_in_n = pyo.LogicalConstraint(m.N, rule=unit_in_n_rule)
+    m.unit_in_n = pyo.Constraint(m.N, rule=unit_in_n_rule)
 
     # OBJECTIVE
 

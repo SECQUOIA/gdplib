@@ -130,14 +130,14 @@ class TestModelConstruction:
                 )
 
     def test_cstr_model_reformulates_with_bigm(self):
-        """Test CSTR logical and GDP components reformulate with big-M."""
+        """Test CSTR GDP components reformulate with big-M."""
         import gdplib.cstr
 
         model = gdplib.cstr.build_model()
 
-        assert any(
+        assert not any(
             model.component_data_objects(pyo.LogicalConstraint, active=True)
-        ), "CSTR model should contain active logical constraints before reformulation"
+        ), "CSTR activation logic should use algebraic indicator-binary constraints"
         assert any(
             model.component_data_objects(Disjunction, active=True)
         ), "CSTR model should contain active disjunctions before reformulation"

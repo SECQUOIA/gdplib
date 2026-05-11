@@ -12,7 +12,7 @@ https://doi.org/10.1016/j.compchemeng.2020.106794
 
 ### Optimal Solution
 
-Best known objective value: 3.06181298849707
+Best known objective value: 3.0620145766 (optimal)
 
 ### Size
 
@@ -26,5 +26,5 @@ Number of reactors in series is 5.
 | Continuous variables  |       56 |
 | Disjunctions          |       10 |
 | Disjuncts             |       20 |
-| Constraints           |      100 |
+| Constraints           |      112 |
 | Nonlinear constraints |       17 |
