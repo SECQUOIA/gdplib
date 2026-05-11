@@ -29,6 +29,15 @@ from pyomo.gdp import *
 from pyomo.util.infeasible import log_infeasible_constraints
 
 
+def _set_within_bounds(var_data, new_value):
+    new_value = value(new_value)
+    if var_data.has_lb():
+        new_value = max(new_value, value(var_data.lb))
+    if var_data.has_ub():
+        new_value = min(new_value, value(var_data.ub))
+    var_data.set_value(new_value)
+
+
 def HDA_model():
     """
     Builds the Hydrodealkylation of Toluene process model.
@@ -674,11 +683,11 @@ def HDA_model():
         m.abs,
         within=NonNegativeReals,
         bounds=(0, 40),
-        initialize=1,
+        initialize=0,
         doc="number of absorber trays",
     )
-    m.gamma = Var(m.abs, m.compon, within=Reals, initialize=1, doc="gamma")
-    m.beta = Var(m.abs, m.compon, within=Reals, initialize=1, doc="beta")
+    m.gamma = Var(m.abs, m.compon, within=Reals, initialize=0, doc="gamma")
+    m.beta = Var(m.abs, m.compon, within=Reals, initialize=0, doc="beta")
 
     # compressor
     m.elec = Var(
@@ -774,7 +783,7 @@ def HDA_model():
         m.memb,
         within=NonNegativeReals,
         bounds=(100, 10000),
-        initialize=1,
+        initialize=100,
         doc="surface area for mass transfer [m**2]",
     )
     # mixer(1 input)
@@ -782,14 +791,14 @@ def HDA_model():
         m.mxr1,
         within=NonNegativeReals,
         bounds=(0.1, 4),
-        initialize=0,
+        initialize=0.1,
         doc="mixer temperature [100 K]",
     )
     m.mxr1t = Var(
         m.mxr1,
         within=NonNegativeReals,
         bounds=(3, 10),
-        initialize=0,
+        initialize=3,
         doc="mixer pressure [MPa]",
     )
     # mixer
@@ -826,7 +835,7 @@ def HDA_model():
     m.krct = Var(
         m.rct,
         within=NonNegativeReals,
-        initialize=1,
+        initialize=0.0123471,
         bounds=(0.0123471, 0.149543),
         doc="rate constant",
     )
@@ -836,6 +845,13 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(None, 0.973),
         doc="conversion of key component",
+    )
+    m.unconverted = Var(
+        m.rct,
+        within=NonNegativeReals,
+        bounds=(0.027, 1.0),
+        initialize=1,
+        doc="fraction of toluene not converted",
     )
     m.sel = Var(
         m.rct,
@@ -1185,27 +1201,27 @@ def HDA_model():
     # ## initialization procedure
 
     # flash1
-    m.eflsh[1, "h2"] = 0.995
-    m.eflsh[1, "ch4"] = 0.99
-    m.eflsh[1, "ben"] = 0.04
-    m.eflsh[1, "tol"] = 0.01
-    m.eflsh[1, "dip"] = 0.0001
+    _set_within_bounds(m.eflsh[1, "h2"], 0.995)
+    _set_within_bounds(m.eflsh[1, "ch4"], 0.99)
+    _set_within_bounds(m.eflsh[1, "ben"], 0.04)
+    _set_within_bounds(m.eflsh[1, "tol"], 0.01)
+    _set_within_bounds(m.eflsh[1, "dip"], 0.0001)
 
     # compressor
-    m.distp[1] = 1.02
-    m.distp[2] = 0.1
-    m.distp[3] = 0.1
-    m.qexch[1] = 0.497842
-    m.elec[1] = 0
-    m.elec[2] = 12.384
-    m.elec[3] = 0
-    m.elec[4] = 28.7602
-    m.presrat[1] = 1
-    m.presrat[2] = 1.04552
-    m.presrat[3] = 1.36516
-    m.presrat[4] = 1.95418
-    m.qfuel[1] = 0.0475341
-    m.q[2] = 54.3002
+    _set_within_bounds(m.distp[1], 1.02)
+    _set_within_bounds(m.distp[2], 0.1)
+    _set_within_bounds(m.distp[3], 0.1)
+    _set_within_bounds(m.qexch[1], 0.497842)
+    _set_within_bounds(m.elec[1], 0)
+    _set_within_bounds(m.elec[2], 12.384)
+    _set_within_bounds(m.elec[3], 0)
+    _set_within_bounds(m.elec[4], 28.7602)
+    _set_within_bounds(m.presrat[1], 1)
+    _set_within_bounds(m.presrat[2], 1.04552)
+    _set_within_bounds(m.presrat[3], 1.36516)
+    _set_within_bounds(m.presrat[4], 1.95418)
+    _set_within_bounds(m.qfuel[1], 0.0475341)
+    _set_within_bounds(m.q[2], 54.3002)
 
     file_1 = os.path.join(dir_path, "GAMS_init_stream_data.csv")
     stream = pd.read_csv(file_1, usecols=[0])
@@ -1215,11 +1231,11 @@ def HDA_model():
     e = pd.read_csv(file_1, usecols=[5])
 
     for i in range(len(stream)):
-        m.p[stream.to_numpy()[i, 0]] = data.to_numpy()[i, 0]
+        _set_within_bounds(m.p[stream.to_numpy()[i, 0]], data.to_numpy()[i, 0])
     for i in range(72):
-        m.t[stream.to_numpy()[i, 0]] = temp.to_numpy()[i, 0]
-        m.f[stream.to_numpy()[i, 0]] = flow.to_numpy()[i, 0]
-        m.e[stream.to_numpy()[i, 0]] = e.to_numpy()[i, 0]
+        _set_within_bounds(m.t[stream.to_numpy()[i, 0]], temp.to_numpy()[i, 0])
+        _set_within_bounds(m.f[stream.to_numpy()[i, 0]], flow.to_numpy()[i, 0])
+        _set_within_bounds(m.e[stream.to_numpy()[i, 0]], e.to_numpy()[i, 0])
 
     file_2 = os.path.join(dir_path, "GAMS_init_stream_compon_data.csv")
     streamfc = pd.read_csv(file_2, usecols=[0])
@@ -1230,8 +1246,13 @@ def HDA_model():
     vp = pd.read_csv(file_2, usecols=[5])
 
     for i in range(len(streamfc)):
-        m.fc[streamfc.to_numpy()[i, 0], comp.to_numpy()[i, 0]] = fc.to_numpy()[i, 0]
-        m.vp[streamvp.to_numpy()[i, 0], compvp.to_numpy()[i, 0]] = vp.to_numpy()[i, 0]
+        _set_within_bounds(
+            m.fc[streamfc.to_numpy()[i, 0], comp.to_numpy()[i, 0]], fc.to_numpy()[i, 0]
+        )
+        _set_within_bounds(
+            m.vp[streamvp.to_numpy()[i, 0], compvp.to_numpy()[i, 0]],
+            vp.to_numpy()[i, 0],
+        )
 
     file_3 = os.path.join(dir_path, "GAMS_init_data.csv")
     stream3 = pd.read_csv(file_3, usecols=[0])
@@ -1265,38 +1286,40 @@ def HDA_model():
     splt = pd.read_csv(file_3, usecols=[53])
 
     for i in range(2):
-        m.rctp[i + 1] = rctp.to_numpy()[i, 0]
-        m.rctt[i + 1] = rctt.to_numpy()[i, 0]
-        m.rctvol[i + 1] = rctvol.to_numpy()[i, 0]
-        m.sel[i + 1] = sel.to_numpy()[i, 0]
-        m.krct[i + 1] = krct.to_numpy()[i, 0]
-        m.consum[i + 1, "tol"] = consum.to_numpy()[i, 0]
-        m.conv[i + 1, "tol"] = conv.to_numpy()[i, 0]
-        m.a[stream3.to_numpy()[i, 0]] = a.to_numpy()[i, 0]
-        m.qc[i + 1] = qc.to_numpy()[i, 0]
+        _set_within_bounds(m.rctp[i + 1], rctp.to_numpy()[i, 0])
+        _set_within_bounds(m.rctt[i + 1], rctt.to_numpy()[i, 0])
+        _set_within_bounds(m.rctvol[i + 1], rctvol.to_numpy()[i, 0])
+        _set_within_bounds(m.sel[i + 1], sel.to_numpy()[i, 0])
+        _set_within_bounds(m.krct[i + 1], krct.to_numpy()[i, 0])
+        _set_within_bounds(m.consum[i + 1, "tol"], consum.to_numpy()[i, 0])
+        _set_within_bounds(m.conv[i + 1, "tol"], conv.to_numpy()[i, 0])
+        _set_within_bounds(m.unconverted[i + 1], 1 - value(m.conv[i + 1, "tol"]))
+        _set_within_bounds(m.a[stream3.to_numpy()[i, 0]], a.to_numpy()[i, 0])
+        _set_within_bounds(m.qc[i + 1], qc.to_numpy()[i, 0])
     for i in range(3):
-        m.avevlt[i + 1] = avevlt.to_numpy()[i, 0]
-        m.distp[i + 1] = disp.to_numpy()[i, 0]
-        m.flshp[i + 1] = flshp.to_numpy()[i, 0]
-        m.flsht[i + 1] = flsht.to_numpy()[i, 0]
-        m.ndist[i + 1] = ndist.to_numpy()[i, 0]
-        m.nmin[i + 1] = nmin.to_numpy()[i, 0]
-        m.reflux[i + 1] = reflux.to_numpy()[i, 0]
-        m.rmin[i + 1] = rmin.to_numpy()[i, 0]
-        m.splp[i + 1] = splp.to_numpy()[i, 0]
-        m.splt[i + 1] = splt.to_numpy()[i, 0]
+        _set_within_bounds(m.avevlt[i + 1], avevlt.to_numpy()[i, 0])
+        _set_within_bounds(m.distp[i + 1], disp.to_numpy()[i, 0])
+        _set_within_bounds(m.flshp[i + 1], flshp.to_numpy()[i, 0])
+        _set_within_bounds(m.flsht[i + 1], flsht.to_numpy()[i, 0])
+        _set_within_bounds(m.ndist[i + 1], ndist.to_numpy()[i, 0])
+        _set_within_bounds(m.nmin[i + 1], nmin.to_numpy()[i, 0])
+        _set_within_bounds(m.reflux[i + 1], reflux.to_numpy()[i, 0])
+        _set_within_bounds(m.rmin[i + 1], rmin.to_numpy()[i, 0])
+        _set_within_bounds(m.splp[i + 1], splp.to_numpy()[i, 0])
+        _set_within_bounds(m.splt[i + 1], splt.to_numpy()[i, 0])
     for i in range(5):
-        m.beta[1, comp1.to_numpy()[i, 0]] = beta.to_numpy()[i, 0]
-        m.mxrp[i + 1] = mxrp.to_numpy()[i, 0]
+        _set_within_bounds(m.beta[1, comp1.to_numpy()[i, 0]], beta.to_numpy()[i, 0])
+        _set_within_bounds(m.mxrp[i + 1], mxrp.to_numpy()[i, 0])
     for i in range(4):
-        m.qh[i + 1] = qh.to_numpy()[i, 0]
+        _set_within_bounds(m.qh[i + 1], qh.to_numpy()[i, 0])
     for i in range(len(stream4)):
-        m.eflsh[stream4.to_numpy()[i, 0], comp2.to_numpy()[i, 0]] = eflsh.to_numpy()[
-            i, 0
-        ]
+        _set_within_bounds(
+            m.eflsh[stream4.to_numpy()[i, 0], comp2.to_numpy()[i, 0]],
+            eflsh.to_numpy()[i, 0],
+        )
     for i in range(6):
-        m.spl1p[i + 1] = spl1p.to_numpy()[i, 0]
-        m.spl1t[i + 1] = spl1t.to_numpy()[i, 0]
+        _set_within_bounds(m.spl1p[i + 1], spl1p.to_numpy()[i, 0])
+        _set_within_bounds(m.spl1t[i + 1], spl1t.to_numpy()[i, 0])
 
     # ## constraints
     m.specrec = Constraint(
@@ -1326,6 +1349,13 @@ def HDA_model():
         return m.fc[67, compon] == m.f[67] * m.f67comp[compon]
 
     m.tolabs = Constraint(m.compon, rule=Tolabs, doc="toluene absorber composition")
+
+    def Unconverted(_m, rct):
+        return m.unconverted[rct] == 1 - m.conv[rct, "tol"]
+
+    m.unconverted_eqn = Constraint(
+        m.rct, rule=Unconverted, doc="fraction of toluene not converted"
+    )
 
     def build_absorber(b, absorber):
         """
@@ -1549,10 +1579,10 @@ def HDA_model():
             if comp == comp_:
                 return m.presrat[comp_] ** (
                     m.cp_cv_ratio / (m.cp_cv_ratio - 1.0)
+                ) * sum(
+                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
                 ) == sum(
                     m.p[stream] for (comp1, stream) in m.ocomp if comp_ == comp1
-                ) / sum(
-                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
                 )
             return Constraint.Skip
 
@@ -1588,7 +1618,7 @@ def HDA_model():
                 and dist_ == dist
             ):
                 return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match
+                    m.vp[stream, compon] * m.vapor_pressure_unit_match + m.eps1
                 ) == m.anta[compon] - m.antb[compon] / (
                     m.t[stream] * 100.0 + m.antc[compon]
                 )
@@ -1609,7 +1639,7 @@ def HDA_model():
                 and dist == dist_
             ):
                 return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match
+                    m.vp[stream, compon] * m.vapor_pressure_unit_match + m.eps1
                 ) == m.anta[compon] - m.antb[compon] / (
                     m.t[stream] * 100.0 + m.antc[compon]
                 )
@@ -1625,13 +1655,17 @@ def HDA_model():
 
         def Relvol(_m, dist_):
             if dist == dist_:
-                divided1 = sum(
+                top_light = sum(
                     sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dlkey
                         if dist_ == dist
                     )
-                    / sum(
+                    for (dist_, stream) in m.vdist
+                    if dist_ == dist
+                )
+                top_heavy = sum(
+                    sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dhkey
                         if dist_ == dist
@@ -1639,13 +1673,17 @@ def HDA_model():
                     for (dist_, stream) in m.vdist
                     if dist_ == dist
                 )
-                divided2 = sum(
+                bottom_light = sum(
                     sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dlkey
                         if dist_ == dist
                     )
-                    / sum(
+                    for (dist_, stream) in m.ldist
+                    if dist_ == dist
+                )
+                bottom_heavy = sum(
+                    sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dhkey
                         if dist_ == dist
@@ -1653,7 +1691,10 @@ def HDA_model():
                     for (dist_, stream) in m.ldist
                     if dist_ == dist
                 )
-                return m.avevlt[dist] == sqrt(divided1 * divided2)
+                return (
+                    m.avevlt[dist] ** 2 * top_heavy * bottom_heavy
+                    == top_light * bottom_light
+                )
             return Constraint.Skip
 
         b.relvol = Constraint([dist], rule=Relvol, doc="average relative volatility")
@@ -1701,7 +1742,7 @@ def HDA_model():
                     for (dist1, stream) in m.ldist
                     if dist1 == dist_
                 )
-                return m.nmin[dist_] * log(m.avevlt[dist_]) == log(sum1 * sum2)
+                return m.nmin[dist_] * log(m.avevlt[dist_] + m.eps1) == log(sum1 * sum2)
             return Constraint.Skip
 
         b.fenske = Constraint([dist], rule=Fenske, doc="minimum number of trays")
@@ -1860,7 +1901,7 @@ def HDA_model():
         def Antflsh(_m, flsh_, stream, compon):
             if (flsh_, stream) in m.lflsh and flsh_ == flsh:
                 return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match
+                    m.vp[stream, compon] * m.vapor_pressure_unit_match + m.eps1
                 ) == m.anta[compon] - m.antb[compon] / (
                     m.t[stream] * 100.0 + m.antc[compon]
                 )
@@ -2645,14 +2686,21 @@ def HDA_model():
         )
 
         def Valt(_m, valve):
-            return sum(
-                m.t[stream] / (m.p[stream] ** ((m.cp_cv_ratio - 1.0) / m.cp_cv_ratio))
-                for (valv, stream) in m.oval
-                if valv == valve
-            ) == sum(
-                m.t[stream] / (m.p[stream] ** ((m.cp_cv_ratio - 1.0) / m.cp_cv_ratio))
-                for (valv, stream) in m.ival
-                if valv == valve
+            exponent = (m.cp_cv_ratio - 1.0) / m.cp_cv_ratio
+            outlet_temperature = sum(
+                m.t[stream] for (valv, stream) in m.oval if valv == valve
+            )
+            outlet_pressure = sum(
+                m.p[stream] for (valv, stream) in m.oval if valv == valve
+            )
+            inlet_temperature = sum(
+                m.t[stream] for (valv, stream) in m.ival if valv == valve
+            )
+            inlet_pressure = sum(
+                m.p[stream] for (valv, stream) in m.ival if valv == valve
+            )
+            return outlet_temperature * inlet_pressure**exponent == (
+                inlet_temperature * outlet_pressure**exponent
             )
 
         b.valt = Constraint([valve_], rule=Valt, doc="temperature relation in valve")
@@ -2700,7 +2748,7 @@ def HDA_model():
 
         def rxnrate(_m, rct):
             return m.krct[rct] == m.Prereference_factor * exp(
-                m.Ea_R / (m.rctt[rct] * 100.0)
+                m.Ea_R / (m.rctt[rct] * 100.0 + m.eps1)
             )
 
         b.Rxnrate = Constraint([rct], rule=rxnrate, doc="reaction rate constant")
@@ -2730,8 +2778,8 @@ def HDA_model():
 
         def rctsel(_m, rct):
             return (1.0 - m.sel[rct]) == m.selectivity_1 * (
-                1.0 - m.conv[rct, "tol"]
-            ) ** m.selectivity_2
+                (m.unconverted[rct] + m.eps1) ** m.selectivity_2
+            )
 
         b.Rctsel = Constraint([rct], rule=rctsel, doc="selectivity to benzene")
 
