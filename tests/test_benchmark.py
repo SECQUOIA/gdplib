@@ -375,7 +375,6 @@ def test_generate_summary_uses_packaged_summary_module(tmp_path, monkeypatch):
     assert combined_data.exists()
     assert "GDPopt (22, 5, 13) - GLOA" in combined_data.read_text()
 
-
 def test_generate_summary_returns_false_without_json_results(tmp_path, monkeypatch):
     result_dir = tmp_path / "gdplib" / "methanol" / "benchmark_result" / "empty_run"
     result_dir.mkdir(parents=True)
