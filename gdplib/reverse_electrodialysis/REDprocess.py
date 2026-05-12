@@ -2835,7 +2835,6 @@ def build_model(solve_stack=True):
         return ru
 
     for unit in m.RU:
-
         unit_exists = m.unit_exists[unit]
 
         # Create a block for each existing RED unit.
