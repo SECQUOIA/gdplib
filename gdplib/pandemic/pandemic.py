@@ -75,9 +75,9 @@ def build_model(num_times=101):
         https://doi.org/10.1016/j.compchemeng.2025.109145
     """
     # SEIR epidemiological parameters
-    beta = 0.727   # infection rate (rho)
+    beta = 0.727  # infection rate (rho)
     gamma = 0.303  # recovery rate (eta)
-    xi = 0.3       # incubation rate (zeta)
+    xi = 0.3  # incubation rate (zeta)
     N = 1e5
 
     # Constraint threshold, time horizon, and event probability level
@@ -95,7 +95,7 @@ def build_model(num_times=101):
     # Initial conditions (fractional populations)
     y0 = [1 - 1 / N, 1 / N, 0, 0]
 
-    # Warm-start initialization from uncontrolled SEIR trajectory
+    # Warm-start initialization from a fixed-control (u=0.5) SEIR trajectory
     seir = odeint(_seir_ode, y0, ts, args=(gamma, beta, xi, u0))
     s_init = dict(zip(ts, seir[:, 0]))
     e_init = dict(zip(ts, seir[:, 1]))
@@ -154,7 +154,7 @@ def build_model(num_times=101):
     m.obj = Objective(sense=minimize, expr=m.intu)
 
     discretizer = TransformationFactory('dae.finite_difference')
-    discretizer.apply_to(m, wrt=m.t, scheme='BACKWARD')
+    discretizer.apply_to(m, wrt=m.t, scheme='BACKWARD', nfe=len(ts) - 1)
 
     # Disjunctions: capacity constraint satisfied or violated at each time point
     def build_satisfy_constraints(disjunct, t):
@@ -180,14 +180,18 @@ def build_model(num_times=101):
 
     # Event constraint: fraction of time with i(t) <= i_max must be >= alpha
     m.event_constr = Constraint(
-        expr=1 / tf * sum(
+        expr=1
+        / tf
+        * sum(
             (
                 m.disjunct_satisfy[m.t.at(i - 1)].indicator_var.get_associated_binary()
                 + m.disjunct_satisfy[m.t.at(i)].indicator_var.get_associated_binary()
             )
-            * (m.t.at(i) - m.t.at(i - 1)) / 2
+            * (m.t.at(i) - m.t.at(i - 1))
+            / 2
             for i in range(2, len(m.t) + 1)
-        ) >= alpha
+        )
+        >= alpha
     )
 
     return m

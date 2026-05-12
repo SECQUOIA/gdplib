@@ -7,7 +7,10 @@ the fraction of infected individuals i(t) remains below a healthcare capacity th
 i_max = 0.02 for at least 90% of the time horizon.
 
 The SEIR (Susceptible–Exposed–Infectious–Recovered) dynamics are discretized via
-backward finite differences over a set of equidistant time points. An event constraint
+backward finite differences over a non-uniform time grid. The grid combines `num_times`
+equidistant points on [0, 200] with 10 additional fine-grained points near t=0
+(0.001, 0.002, 0.004, 0.008, 0.02, 0.04, 0.08, 0.2, 0.4, 0.8) to resolve the sharp
+early-time SEIR dynamics. An event constraint
 with alpha = 0.9 enforces that the capacity constraint i(t) ≤ i_max holds for at least
 90% of the time horizon, approximated by trapezoidal integration of disjunct indicator
 variables. The GDP formulation uses disjunctions to encode whether the constraint is
