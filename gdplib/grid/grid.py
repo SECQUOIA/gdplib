@@ -75,10 +75,16 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
         Event constrained programming. Computers & Chemical Engineering, 199, 109145.
         https://doi.org/10.1016/j.compchemeng.2025.109145
     """
-    if not (0 <= active_gens <= 5):
-        raise ValueError(f"active_gens must be between 0 and 5, got {active_gens}")
-    if not (0 <= active_lines <= 20):
-        raise ValueError(f"active_lines must be between 0 and 20, got {active_lines}")
+    if not isinstance(active_gens, int) or not (0 <= active_gens <= 5):
+        raise ValueError(
+            f"active_gens must be an integer between 0 and 5, got {active_gens}"
+        )
+    if not isinstance(active_lines, int) or not (0 <= active_lines <= 20):
+        raise ValueError(
+            f"active_lines must be an integer between 0 and 20, got {active_lines}"
+        )
+    if not isinstance(num_samples, int) or num_samples < 1:
+        raise ValueError(f"num_samples must be a positive integer, got {num_samples}")
 
     # Nominal loads and covariance for uncertain demand parameters
     theta_nom = np.array([87.3, 50.0, 25.0, 28.8, 50.0, 25.0, 0, 0, 0, 0, 0])
@@ -91,9 +97,9 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
     num_lines = 20
     num_gens = 5
 
-    # Sample uncertain load scenarios
-    np.random.seed(42)
-    thetas = np.random.multivariate_normal(theta_nom, covar, num_samples)
+    # Sample uncertain load scenarios using a local RNG
+    rng = np.random.default_rng(42)
+    thetas = rng.multivariate_normal(theta_nom, covar, num_samples)
     thetas[thetas <= 0.0] = 0.0
 
     m = ConcreteModel()
@@ -145,9 +151,7 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
 
     @m.Constraint(m.K)
     def h5(m, k):
-        return (
-            sum(m.z_line[i, k] for i in [5, 6, 7, 12]) - thetas[k, 3] == 0
-        )
+        return sum(m.z_line[i, k] for i in [5, 6, 7, 12]) - thetas[k, 3] == 0
 
     @m.Constraint(m.K)
     def h6(m, k):
@@ -191,10 +195,7 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
     @m.Constraint(m.K)
     def h13(m, k):
         return (
-            m.z_line[15, k]
-            - sum(m.z_line[i, k] for i in [16, 17])
-            - thetas[k, 9]
-            == 0
+            m.z_line[15, k] - sum(m.z_line[i, k] for i in [16, 17]) - thetas[k, 9] == 0
         )
 
     @m.Constraint(m.K)
@@ -250,12 +251,8 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
             return m.z_line[l, k] - line_cap - m.d_line[l] >= 0
 
     m.line_disjunct1 = Disjunct(m.L, m.K, rule=build_satisfy_line_constraints)
-    m.line_disjunct2 = Disjunct(
-        m.L, m.K, rule=build_not_satisfy_lower_line_constraints
-    )
-    m.line_disjunct3 = Disjunct(
-        m.L, m.K, rule=build_not_satisfy_upper_line_constraints
-    )
+    m.line_disjunct2 = Disjunct(m.L, m.K, rule=build_not_satisfy_lower_line_constraints)
+    m.line_disjunct3 = Disjunct(m.L, m.K, rule=build_not_satisfy_upper_line_constraints)
 
     @m.Disjunction(m.L, m.K)
     def line_constrs_satisfy_or_not(m, l, k):
