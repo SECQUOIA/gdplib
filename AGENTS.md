@@ -190,70 +190,37 @@ These instructions apply to the whole repository.
   discussion instead.
 - Benchmark and reporting helpers that redirect solver output must restore
   `stdout`/`stderr` even when solves fail.
-- Preflight before long campaigns, and use small, bounded runs before launching
-  full matrices. Prefer explicit `--instances`, `--strategies`, `--timelimit`,
-  `--solver-profile`, and `--run-id` values so runs are reproducible.
-- Avoid starting benchmark exploration with `gdpopt.enumerate` or global
-  solvers on every instance. Start with a local or direct transformed smoke
-  path, then broaden method coverage once failures and warnings are understood.
-- Choose solvers according to the transformed model class and benchmark goal.
-  For direct `gdp.bigm` or `gdp.hull` LP/MIP cases, use an LP/MIP solver such
-  as Gurobi or HiGHS when available; do not route pure MIP transformed models
-  to DICOPT. Use IPOPT or GAMS IPOPTH for local NLP subproblems, DICOPT for
-  local MINLP subproblems, and BARON only when a global solve or global bound is
-  the intended evidence.
-- For nonconvex models, do not treat `gdpopt.loa` `optimal` results or
-  reported `LB = UB` as a rigorous global certificate unless convexity and
-  globally valid OA bounds are established. Label LOA results as local or
-  non-rigorous when appropriate, and cross-check against GLOA, RIC, direct
-  transformed global solves, or explicit feasible points before documenting a
-  solution value as optimal.
-- For `gdpopt.lbb` failures, distinguish model issues from GDPopt
-  control-flow or solver-role issues before changing the model. Known patterns
-  include continuous node subproblems being routed to MINLP-only solvers and
-  time-limit result-finalization failures; use minimal MWEs, GAMS model-type
-  errors, or temporary role-solver probes to isolate the cause, then link the
-  upstream Pyomo issue instead of masking it with benchmark configuration.
-- For direct transformed solver comparisons, include a GAMS/Gurobi case for
-  each direct GDP reformulation under discussion when a licensed Gurobi stack is
-  available. If a GAMS/Pyomo wrapper reports an objective or upper bound but
-  the solver log says no incumbent was found, trust the solver log in tables
-  and note the wrapper discrepancy explicitly.
-- For nonlinear transformed GDP instances, Pyomo's direct Gurobi interfaces may
-  reject nonlinear or unknown-degree expressions even when Gurobi can handle the
-  same generated model through GAMS. Record that interface limitation and use
-  the GAMS/Gurobi profile for solver-backed comparison evidence.
-- If direct nonlinear `gdp.hull` solves report infeasible with a local MINLP or
-  NLP solver, do not conclude the GDP model is infeasible until a known
-  discrete route has been fixed and checked with a suitable global solver.
-  Feasible fixed-route Hull solves point to solver initialization, scaling, or
-  nonconvex reformulation difficulty; report that separately from model
-  construction or transformation correctness.
-- When reporting benchmark results, include the exact command, run id, model
-  instance, strategy/transformation, solver interface, GAMS solver and GDPopt
-  role solvers when applicable, time limit, termination condition, objective
-  value, primal/dual bounds, gap or infeasibility evidence, and failure log path
-  or traceback for errors. If claiming coverage across alternatives or solvers,
-  name the exact benchmark strategies and solver profiles tested, and report
-  solver-wrapper caveats such as missing objective or bound fields even when the
-  termination condition is optimal.
-- For BARON infeasibility investigations, use `CompIIS` when useful and keep
-  the IIS reproduction separate from exploratory verbose solver runs. Generate
-  GAMS files with `symbolic_solver_labels=True`, include a GAMS-to-Pyomo symbol
-  map, and record the exact BARON options such as `CompIIS`, `IISOrder`,
-  `NumLoc`, and `MaxTime`. Minimal Pyomo/GAMS DAT-result reproductions with
-  default `solprint`, `limrow`, and `limcol` are easier to compare than verbose
-  row/column listing runs.
-- For external solver diagnostic handoff packages, include the source Python
-  file, transformed symbolic GAMS instance, solver logs/results, software
-  versions, exact reproduction commands, and a short report. Keep generated
-  archives under ignored paths such as `/tmp`, and do not include email drafts
-  or other private correspondence in the archive unless the user explicitly
-  asks for that.
-- Use `gdplib-benchmark warnings` with a short time limit and the narrowest
-  useful mode (`build`, `transform`, or `solve`) to capture Pyomo deprecations
-  and warning-heavy construction paths. Update the relevant model issue and the
-  central deprecation tracker when warning data should inform future refactors.
+- Preflight before long campaigns. Start with small, bounded runs using
+  explicit `--instances`, `--strategies`, `--timelimit`, `--solver-profile`,
+  and `--run-id` values, then broaden coverage once failures are understood.
+- Choose solvers according to transformed model class and benchmark goal: use
+  LP/MIP solvers such as Gurobi or HiGHS for direct MIP reformulations, IPOPT or
+  GAMS IPOPTH for local NLP roles, DICOPT for local MINLP roles, and BARON only
+  when global evidence is intended. For nonlinear GDPs that Pyomo's direct
+  Gurobi writers reject, use the GAMS/Gurobi profile and say why.
+- Avoid `gdpopt.enumerate` for large-disjunction models such as `biofuel`;
+  compare direct `gdp.bigm` and `gdp.hull` solves first. Direct Hull through
+  GAMS/Gurobi can be the best quick evidence for some large GDPs, but report the
+  actual GAMS `optcr`/gap so a 1% certificate is not mistaken for a 1e-6 run.
+- Interpret GDPOpt results conservatively on nonconvex models. Do not treat
+  `gdpopt.loa` `optimal`, `LB = UB`, or missing-bound results as rigorous global
+  certificates unless convexity and valid OA bounds are established; cross-check
+  against GLOA, RIC, direct transformed solves, or explicit feasible points.
+- For `gdpopt.lbb` failures, separate model issues from GDPOpt control-flow or
+  solver-role issues. Known patterns include MINLP-only solvers receiving
+  continuous nodes and time-limit finalization failures; isolate with role-solver
+  probes or MWEs before changing the model.
+- Trust solver logs over wrapper summaries when they disagree. If a GAMS/Pyomo
+  wrapper reports an objective or bound but the solver log says no incumbent was
+  found, report the solver-log status and note the wrapper discrepancy.
+- When reporting benchmark results, include the exact command, run id,
+  instance, strategy, solver interface, GAMS solver and GDPOpt role solvers,
+  time limit, termination condition, objective, primal/dual bounds, gap or
+  infeasibility evidence, and failure log path or traceback.
+- Keep specialized diagnostics focused: use BARON `CompIIS` with symbolic GAMS
+  labels for infeasibility work, keep external solver handoff packages under
+  ignored paths such as `/tmp`, and use `gdplib-benchmark warnings` with the
+  narrowest useful mode to capture warning/deprecation evidence.
 
 ## Model Size Reports
 
@@ -306,8 +273,9 @@ These instructions apply to the whole repository.
   modeling cause before changing solver configuration: derive finite bounds from
   source constraints and parameters for missing-bound failures, and use explicit
   products for small integer powers when negative-bounded variables break
-  `PowExpression`. Keep algebra equivalent and verify the affected
-  transformation or GDPopt path when practical.
+  `PowExpression`. Keep algebra equivalent, verify the affected transformation
+  or GDPOpt path, and re-solve previously converged methods when practical to
+  confirm bound tightening did not change the solution.
 - For ordered-location superstructures or activation-prefix rewrites, test the
   discrete semantics directly on a small representative instance. Enumerate the
   relevant binary activation/location choices and assert the intended valid
