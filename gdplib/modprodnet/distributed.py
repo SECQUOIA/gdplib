@@ -169,7 +169,9 @@ def build_modular_model():
     # m.modules_transferred[...].fix(0)
     m.modules_added = Var(m.modular_sites, m.months, domain=Integers, bounds=(0, 25))
 
-    m.dist_to_mkt = Var(m.modular_sites, m.markets, bounds=(0, sqrt(300**2 + 300**2)))
+    m.dist_to_mkt = Var(
+        m.modular_sites, m.markets, bounds=(0, sqrt(300**2 + 300**2))
+    )
     m.sqr_scaled_dist_to_mkt = Var(
         m.modular_sites, m.markets, bounds=(0.001, 8), initialize=0.001
     )
