@@ -29,6 +29,10 @@ from gdplib.kaibel.kaibel_side_flash import calc_side_feed_flash
 # from .kaibel_side_flash import calc_side_feed_flash
 
 
+def _reduced_temperature_term_bounds(m, sec, n_tray, comp):
+    return (m.prop[comp, "TC"] / m.Tup, m.prop[comp, "TC"] / m.Tlo)
+
+
 def build_model():
     """
     Build the GDP Kaibel Column model.
@@ -127,6 +131,7 @@ def build_model():
     m.Ltotal0 = {}  # Initial liquid flowrate [mol/s]
     m.x0 = {}  # Initial liquid composition
     m.y0 = {}  # Initial vapor composition
+    m.Tr0 = {}  # Initial reduced temperature term
     m.actv0 = {}  # Initial activity coefficients
     m.cpdT0 = {}  # Initial heat capacity for liquid and vapor phases [J/mol/K]
     m.hl0 = {}  # Initial liquid enthalpy [J/mol]
@@ -150,6 +155,8 @@ def build_model():
             m.Ltotal0[sec, n_tray] = sum(m.L0[sec, n_tray, comp] for comp in m.comp)
             m.Vtotal0[sec, n_tray] = sum(m.V0[sec, n_tray, comp] for comp in m.comp)
 
+    m.total_flow_max = max(m.flow_max, max(m.Ltotal0.values()), max(m.Vtotal0.values()))
+
     for n_tray in m.tray_total:
         if n_tray == m.reb_tray:
             m.Ti[n_tray] = m.Treb
@@ -172,6 +179,7 @@ def build_model():
         for n_tray in m.tray:
             for comp in m.comp:
                 m.x0[sec, n_tray, comp] = m.xfi[comp]
+                m.Tr0[sec, n_tray, comp] = m.prop[comp, "TC"] / m.T0[sec, n_tray]
                 m.actv0[sec, n_tray, comp] = 1
                 m.y0[sec, n_tray, comp] = m.xfi[comp]
 
@@ -329,6 +337,15 @@ def build_model():
         bounds=(m.Tlo, m.Tup),
         initialize=m.T0,
     )
+    m.Tr = Var(
+        m.section,
+        m.tray,
+        m.comp,
+        doc="Reduced temperature term for vapor pressure",
+        domain=NonNegativeReals,
+        bounds=_reduced_temperature_term_bounds,
+        initialize=m.Tr0,
+    )
 
     m.x = Var(
         m.section,
@@ -386,7 +403,7 @@ def build_model():
         m.tray,
         doc="Total vapor flowrate [mol/s]",
         domain=NonNegativeReals,
-        bounds=(0, m.flow_max),
+        bounds=(0, m.total_flow_max),
         initialize=m.Vtotal0,
     )
     m.Ltotal = Var(
@@ -394,7 +411,7 @@ def build_model():
         m.tray,
         doc="Total liquid flowrate [mol/s]",
         domain=NonNegativeReals,
-        bounds=(0, m.flow_max),
+        bounds=(0, m.total_flow_max),
         initialize=m.Ltotal0,
     )
 
@@ -543,7 +560,10 @@ def build_model():
     )
 
     @m.Disjunction(
-        m.section, m.tray, doc="Disjunction between whether each tray exists or not"
+        m.section,
+        m.tray,
+        xor=True,
+        doc="Disjunction between whether each tray exists or not",
     )
     def tray_exists_or_not(m, sec, n_tray):
         """
@@ -715,6 +735,10 @@ def build_model():
             The vapor distributor constraint.
         """
         return sum(m.dv[sec] for sec in m.dw) - 1 == 0
+
+    @m.Constraint(m.section, m.tray, m.comp, doc="Reduced temperature term")
+    def _reduced_temperature_term(m, sec, n_tray, comp):
+        return m.Tr[sec, n_tray, comp] * m.T[sec, n_tray] == m.prop[comp, "TC"]
 
     @m.Constraint(doc="Reboiler composition specification")
     def heavy_product(m):
@@ -1448,30 +1472,23 @@ def _build_bottom_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the bottom section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[1, n_tray, comp]
-            == m.x[1, n_tray, comp]
+        return m.y[1, n_tray, comp] * m.P[1, n_tray] == m.x[1, n_tray, comp] * (
+            m.actv[1, n_tray, comp]
             * (
-                m.actv[1, n_tray, comp]
-                * (
-                    m.prop[comp, "PC"]
-                    * exp(
-                        m.prop[comp, "TC"]
-                        / m.T[1, n_tray]
-                        * (
-                            m.prop[comp, "vpA"]
-                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"])
-                            + m.prop[comp, "vpB"]
-                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 1.5
-                            + m.prop[comp, "vpC"]
-                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 3
-                            + m.prop[comp, "vpD"]
-                            * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 6
-                        )
+                m.prop[comp, "PC"]
+                * exp(
+                    m.Tr[1, n_tray, comp]
+                    * (
+                        m.prop[comp, "vpA"] * (1 - m.T[1, n_tray] / m.prop[comp, "TC"])
+                        + m.prop[comp, "vpB"]
+                        * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                        + m.prop[comp, "vpC"]
+                        * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 3
+                        + m.prop[comp, "vpD"]
+                        * (1 - m.T[1, n_tray] / m.prop[comp, "TC"]) ** 6
                     )
                 )
             )
-            / m.P[1, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Bottom section 1 liquid enthalpy")
@@ -1755,30 +1772,23 @@ def _build_feed_side_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the feed side section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[2, n_tray, comp]
-            == m.x[2, n_tray, comp]
+        return m.y[2, n_tray, comp] * m.P[2, n_tray] == m.x[2, n_tray, comp] * (
+            m.actv[2, n_tray, comp]
             * (
-                m.actv[2, n_tray, comp]
-                * (
-                    m.prop[comp, "PC"]
-                    * exp(
-                        m.prop[comp, "TC"]
-                        / m.T[2, n_tray]
-                        * (
-                            m.prop[comp, "vpA"]
-                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"])
-                            + m.prop[comp, "vpB"]
-                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 1.5
-                            + m.prop[comp, "vpC"]
-                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 3
-                            + m.prop[comp, "vpD"]
-                            * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 6
-                        )
+                m.prop[comp, "PC"]
+                * exp(
+                    m.Tr[2, n_tray, comp]
+                    * (
+                        m.prop[comp, "vpA"] * (1 - m.T[2, n_tray] / m.prop[comp, "TC"])
+                        + m.prop[comp, "vpB"]
+                        * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                        + m.prop[comp, "vpC"]
+                        * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 3
+                        + m.prop[comp, "vpD"]
+                        * (1 - m.T[2, n_tray] / m.prop[comp, "TC"]) ** 6
                     )
                 )
             )
-            / m.P[2, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Feed section 2 liquid enthalpy")
@@ -2066,30 +2076,23 @@ def _build_product_side_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the product side section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[3, n_tray, comp]
-            == m.x[3, n_tray, comp]
+        return m.y[3, n_tray, comp] * m.P[3, n_tray] == m.x[3, n_tray, comp] * (
+            m.actv[3, n_tray, comp]
             * (
-                m.actv[3, n_tray, comp]
-                * (
-                    m.prop[comp, "PC"]
-                    * exp(
-                        m.prop[comp, "TC"]
-                        / m.T[3, n_tray]
-                        * (
-                            m.prop[comp, "vpA"]
-                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"])
-                            + m.prop[comp, "vpB"]
-                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 1.5
-                            + m.prop[comp, "vpC"]
-                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 3
-                            + m.prop[comp, "vpD"]
-                            * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 6
-                        )
+                m.prop[comp, "PC"]
+                * exp(
+                    m.Tr[3, n_tray, comp]
+                    * (
+                        m.prop[comp, "vpA"] * (1 - m.T[3, n_tray] / m.prop[comp, "TC"])
+                        + m.prop[comp, "vpB"]
+                        * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                        + m.prop[comp, "vpC"]
+                        * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 3
+                        + m.prop[comp, "vpD"]
+                        * (1 - m.T[3, n_tray] / m.prop[comp, "TC"]) ** 6
                     )
                 )
             )
-            / m.P[3, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Product section 3 liquid enthalpy")
@@ -2385,30 +2388,23 @@ def _build_top_equations(disj, n_tray):
             The constraint expression that enforces the vapor composition for the top section in the column.
             The equation is derived from the vapor-liquid equilibrium relationship.
         """
-        return (
-            m.y[4, n_tray, comp]
-            == m.x[4, n_tray, comp]
+        return m.y[4, n_tray, comp] * m.P[4, n_tray] == m.x[4, n_tray, comp] * (
+            m.actv[4, n_tray, comp]
             * (
-                m.actv[4, n_tray, comp]
-                * (
-                    m.prop[comp, "PC"]
-                    * exp(
-                        m.prop[comp, "TC"]
-                        / m.T[4, n_tray]
-                        * (
-                            m.prop[comp, "vpA"]
-                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"])
-                            + m.prop[comp, "vpB"]
-                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 1.5
-                            + m.prop[comp, "vpC"]
-                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 3
-                            + m.prop[comp, "vpD"]
-                            * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 6
-                        )
+                m.prop[comp, "PC"]
+                * exp(
+                    m.Tr[4, n_tray, comp]
+                    * (
+                        m.prop[comp, "vpA"] * (1 - m.T[4, n_tray] / m.prop[comp, "TC"])
+                        + m.prop[comp, "vpB"]
+                        * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 1.5
+                        + m.prop[comp, "vpC"]
+                        * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 3
+                        + m.prop[comp, "vpD"]
+                        * (1 - m.T[4, n_tray] / m.prop[comp, "TC"]) ** 6
                     )
                 )
             )
-            / m.P[4, n_tray]
         )
 
     @disj.Constraint(m.comp, doc="Top section 4 liquid enthalpy")
