@@ -181,10 +181,10 @@ def _gams_common_options(timelimit):
 def _gams_firstloc_options(timelimit):
     return [
         "option threads=1;",
-        '$onecho > baron.opt',
-        'FirstLoc 1',
-        '$offecho',
-        'GAMS_MODEL.optfile=1',
+        "$onecho > baron.opt",
+        "FirstLoc 1",
+        "$offecho",
+        "GAMS_MODEL.optfile=1",
         "option optcr=1e-2;",
         f"option reslim={timelimit};",
     ]
@@ -928,7 +928,7 @@ def _is_deprecation_warning(category, message):
         or "deprecate" in text
         or "implicitly casting" in text
         or "indicator_var' value" in text
-        or "indicator_var\" value" in text
+        or 'indicator_var" value' in text
     )
 
 
