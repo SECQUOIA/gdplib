@@ -3,7 +3,13 @@ Tests for the pandemic GDP model (event-constrained optimal disease control).
 """
 
 import pytest
-from pyomo.environ import ConcreteModel, TransformationFactory, Var, Objective, Constraint
+from pyomo.environ import (
+    ConcreteModel,
+    TransformationFactory,
+    Var,
+    Objective,
+    Constraint,
+)
 from pyomo.gdp import Disjunct, Disjunction
 from pyomo.dae import ContinuousSet
 
@@ -42,7 +48,9 @@ class TestBuildModel:
     def test_no_dae_warning(self, recwarn):
         # nfe=len(ts)-1 must suppress the "More finite elements were found" Pyomo warning
         build_model(num_times=NUM_TIMES)
-        dae_warnings = [w for w in recwarn.list if 'finite elements' in str(w.message).lower()]
+        dae_warnings = [
+            w for w in recwarn.list if 'finite elements' in str(w.message).lower()
+        ]
         assert len(dae_warnings) == 0
 
 

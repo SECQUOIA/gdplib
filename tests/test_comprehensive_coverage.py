@@ -77,9 +77,9 @@ class TestComprehensiveCoverage:
                 build_func = getattr(module, "build_model")
                 required_params = get_required_build_model_parameters(build_func)
                 if required_params:
-                    execution_results[module_name] = (
-                        f"REQUIRES_PARAMETERS: {', '.join(required_params)}"
-                    )
+                    execution_results[
+                        module_name
+                    ] = f"REQUIRES_PARAMETERS: {', '.join(required_params)}"
                     continue
 
                 # Test build_model execution
@@ -92,13 +92,13 @@ class TestComprehensiveCoverage:
                 except Exception as e:
                     # Handle solver dependency issues gracefully
                     if is_missing_external_solver_error(e):
-                        execution_results[module_name] = (
-                            f"⚠️  REQUIRES_SOLVER: {str(e).split(':')[0] if ':' in str(e) else 'External solver'}"
-                        )
+                        execution_results[
+                            module_name
+                        ] = f"⚠️  REQUIRES_SOLVER: {str(e).split(':')[0] if ':' in str(e) else 'External solver'}"
                     else:
-                        execution_results[module_name] = (
-                            f"❌ EXECUTION_FAILED: {str(e)[:50]}..."
-                        )
+                        execution_results[
+                            module_name
+                        ] = f"❌ EXECUTION_FAILED: {str(e)[:50]}..."
                         unexpected_execution_failures[module_name] = str(e)
             else:
                 build_model_results[module_name] = "❌ MISSING"
