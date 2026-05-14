@@ -135,8 +135,7 @@ def intro_message(m):
 
 
     """
-    print(
-        """
+    print("""
 
 If you use this model and/or initialization strategy, you may cite the following:
 Rawlings, ES; Chen, Q; Grossmann, IE; Caballero, JA. Kaibel Column: Modeling,
@@ -145,8 +144,7 @@ Comp. and Chem. Eng., 2019, 125, 31-39.
 DOI: https://doi.org/10.1016/j.compchemeng.2019.03.006
 
 
-    """
-    )
+    """)
 
 
 def display_results(m):

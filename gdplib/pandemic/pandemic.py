@@ -52,8 +52,8 @@ def build_model(num_times=101):
     of infected individuals i(t) to stay below the healthcare capacity threshold
     i_max = 0.02 for at least alpha = 0.9 of the time horizon. The event probability is
     approximated via trapezoidal integration of the disjunct indicator variables over
-    the discretized time domain. Variables are initialized from an uncontrolled SEIR
-    trajectory (u=0.5) computed via numerical integration.
+    the discretized time domain. Variables are initialized from a fixed-control
+    (u=0.5) SEIR trajectory computed via numerical integration.
 
     Parameters
     ----------
