@@ -21,6 +21,7 @@ if __name__ == "__main__":
             "Pyomo>=5.6.1",
             "setuptools>=39.0.1",
             "pandas>=1.0.1",
+            "tabulate>=0.9.0",
             "matplotlib>=2.2.2",
             "scipy>=1.0.0",
             "pint>=0.15.0",

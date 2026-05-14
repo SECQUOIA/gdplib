@@ -2,10 +2,15 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from benchmark import (
+import pyomo.environ as pyo
+from pyomo.core.expr.visitor import polynomial_degree
+
+from gdplib.benchmark import (
+    DEFAULT_GAMS_OPTCR,
     DEFAULT_STRATEGIES,
     PR58_BENCHMARK_INSTANCES,
     _benchmark_metadata,
+    _generate_summary,
     _gams_solve_options,
     _gdpopt_solve_kwargs,
     _json_safe_result,
@@ -21,8 +26,12 @@ from benchmark import (
 
 def test_gams_solve_options_use_requested_timelimit():
     assert _gams_solve_options(123) == [
-        "option reslim=123;option threads=1;option optcr=1e-2;"
+        "option reslim=123;option threads=1;option optcr=1e-6;"
     ]
+
+
+def test_default_gams_optcr_is_tight_for_benchmark_comparisons():
+    assert DEFAULT_GAMS_OPTCR == "1e-6"
 
 
 def test_non_gams_transformation_solver_uses_native_timelimit():
@@ -37,7 +46,7 @@ def test_gams_dicopt_transformation_records_decomposition_solvers():
 
     assert kwargs["solver"] == "dicopt"
     assert (
-        "option reslim=45;option threads=1;option optcr=1e-2;" in kwargs["add_options"]
+        "option reslim=45;option threads=1;option optcr=1e-6;" in kwargs["add_options"]
     )
     assert "option nlp=ipopth;" in kwargs["add_options"]
     assert "option mip=gurobi;" in kwargs["add_options"]
@@ -55,6 +64,10 @@ def test_gdpopt_gams_solver_args_use_requested_timelimit_and_solver():
     assert "option reslim=78;" in kwargs["mip_solver_args"]["add_options"]
     assert "option reslim=78;" in kwargs["minlp_solver_args"]["add_options"]
     assert "option reslim=78;" in kwargs["local_minlp_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["nlp_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["mip_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["minlp_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["local_minlp_solver_args"]["add_options"]
 
 
 def test_gdpopt_local_profile_uses_role_solvers():
@@ -74,8 +87,11 @@ def test_gdpopt_local_profile_uses_role_solvers():
     assert kwargs["minlp_solver_args"]["solver"] == "dicopt"
     assert kwargs["local_minlp_solver_args"]["solver"] == "dicopt"
     assert "option reslim=12;" in kwargs["nlp_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["mip_solver_args"]["add_options"]
     assert "option nlp=ipopth;" in kwargs["minlp_solver_args"]["add_options"]
     assert "option mip=gurobi;" in kwargs["minlp_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["minlp_solver_args"]["add_options"]
+    assert "option optcr=1e-6;" in kwargs["local_minlp_solver_args"]["add_options"]
     assert "$onecho > baron.opt" not in kwargs["nlp_solver_args"]["add_options"]
 
 
@@ -98,6 +114,7 @@ def test_benchmark_metadata_records_gdpopt_gams_subsolvers():
 
     assert metadata["Strategy"] == "gdpopt.loa"
     assert metadata["GAMS solver"] == "baron"
+    assert metadata["GAMS optcr"] == "1e-6"
     assert metadata["Subsolvers"]["nlp"] == {"interface": "gams", "solver": "baron"}
     assert metadata["Subsolvers"]["mip"] == {"interface": "gams", "solver": "baron"}
     assert metadata["Subsolvers"]["minlp"] == {"interface": "gams", "solver": "baron"}
@@ -182,11 +199,53 @@ def test_committed_pr58_local_cases_cover_default_matrix():
     assert {case.instance for case in cases} == set(PR58_BENCHMARK_INSTANCES)
     assert {case.strategy for case in cases} == set(DEFAULT_STRATEGIES)
     assert {case.solver_profile for case in cases} == {"gams-local"}
-    assert {case.solver_gams for case in cases} == {"dicopt"}
+    med_term_direct_mip_cases = {
+        ("med_term_purchasing", "gdp.bigm"),
+        ("med_term_purchasing", "gdp.hull"),
+    }
+    med_term_lbb_case = ("med_term_purchasing", "gdpopt.lbb")
+    assert {
+        case.solver_gams
+        for case in cases
+        if (case.instance, case.strategy) in med_term_direct_mip_cases
+    } == {"gurobi"}
+    assert {
+        case.solver_gams
+        for case in cases
+        if (case.instance, case.strategy) not in med_term_direct_mip_cases
+    } == {"dicopt"}
     assert {case.gams_nlp_solver for case in cases} == {"ipopth"}
     assert {case.gams_mip_solver for case in cases} == {"gurobi"}
-    assert {case.gams_minlp_solver for case in cases} == {"dicopt"}
+    assert {
+        case.gams_minlp_solver
+        for case in cases
+        if (case.instance, case.strategy) == med_term_lbb_case
+    } == {"gurobi"}
+    assert {
+        case.gams_minlp_solver
+        for case in cases
+        if (case.instance, case.strategy) != med_term_lbb_case
+    } == {"dicopt"}
     assert {case.gams_local_minlp_solver for case in cases} == {"dicopt"}
+
+
+def test_med_term_purchasing_direct_reformulations_are_linear_mips():
+    import gdplib.med_term_purchasing
+
+    model = gdplib.med_term_purchasing.build_model()
+
+    for transformation in ("gdp.bigm", "gdp.hull"):
+        transformed = model.clone()
+        pyo.TransformationFactory(transformation).apply_to(transformed)
+        constraints = transformed.component_data_objects(pyo.Constraint, active=True)
+        objectives = transformed.component_data_objects(pyo.Objective, active=True)
+        degrees = [polynomial_degree(constraint.body) for constraint in constraints]
+        degrees.extend(polynomial_degree(objective.expr) for objective in objectives)
+
+        assert any(
+            var.is_binary() for var in transformed.component_data_objects(pyo.Var)
+        )
+        assert all(degree in (0, 1) for degree in degrees)
 
 
 def test_write_failure_log_records_context(tmp_path):
@@ -282,6 +341,48 @@ def test_cli_run_dry_run_uses_preflight_without_solving(capsys):
     assert status == 0
     assert "Benchmark plan" in output
     assert "Dry run complete" in output
+
+
+def test_generate_summary_uses_packaged_summary_module(tmp_path, monkeypatch):
+    result_dir = tmp_path / "gdplib" / "methanol" / "benchmark_result" / "run_1"
+    result_dir.mkdir(parents=True)
+    (result_dir / "gdpopt.gloa_gams_baron.json").write_text(
+        json.dumps(
+            {
+                "Problem": [
+                    {
+                        "Name": "methanol-gloa",
+                        "Lower bound": -1743.4292381783366,
+                        "Upper bound": -1743.4292381783366,
+                        "Sense": "minimize",
+                    }
+                ],
+                "Solver": [
+                    {
+                        "Name": "GDPopt (22, 5, 13) - GLOA",
+                        "Termination condition": "optimal",
+                        "User time": 3.7971969350182917,
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+
+    assert _generate_summary("run_1", ["methanol"]) is True
+
+    combined_data = tmp_path / "benchmark_summary" / "combined_data.csv"
+    assert combined_data.exists()
+    assert "GDPopt (22, 5, 13) - GLOA" in combined_data.read_text()
+
+
+def test_generate_summary_returns_false_without_json_results(tmp_path, monkeypatch):
+    result_dir = tmp_path / "gdplib" / "methanol" / "benchmark_result" / "empty_run"
+    result_dir.mkdir(parents=True)
+    monkeypatch.chdir(tmp_path)
+
+    assert _generate_summary("empty_run", ["methanol"]) is False
+    assert not (tmp_path / "benchmark_summary").exists()
 
 
 def test_warning_summary_marks_indicator_casts_as_deprecations():

@@ -59,6 +59,7 @@ DEFAULT_SUBSOLVER = "gams"
 DEFAULT_GAMS_SOLVER = "baron"
 DEFAULT_SOLVER_PROFILE = "gams-local"
 DEFAULT_METADATA_DIR = "benchmark_runs"
+DEFAULT_GAMS_OPTCR = "1e-6"
 SOLVER_PROFILES = {
     "gams-local": {
         "description": (
@@ -170,22 +171,26 @@ class _CapturePyomoLogs:
         self.logger.propagate = self.previous_propagate
 
 
-def _gams_solve_options(timelimit, optcr="1e-2"):
+def _gams_solve_options(timelimit, optcr=DEFAULT_GAMS_OPTCR):
     return [f"option reslim={timelimit};option threads=1;option optcr={optcr};"]
 
 
-def _gams_common_options(timelimit):
-    return ["option threads=1;", f"option reslim={timelimit};"]
+def _gams_common_options(timelimit, optcr=DEFAULT_GAMS_OPTCR):
+    return [
+        "option threads=1;",
+        f"option reslim={timelimit};",
+        f"option optcr={optcr};",
+    ]
 
 
-def _gams_firstloc_options(timelimit):
+def _gams_firstloc_options(timelimit, optcr=DEFAULT_GAMS_OPTCR):
     return [
         "option threads=1;",
         "$onecho > baron.opt",
         "FirstLoc 1",
         "$offecho",
         "GAMS_MODEL.optfile=1",
-        "option optcr=1e-2;",
+        f"option optcr={optcr};",
         f"option reslim={timelimit};",
     ]
 
@@ -252,8 +257,6 @@ def _gams_role_options(
     options = _gams_common_options(timelimit)
     if role in {"minlp", "local_minlp"} and solver_name in {"dicopt", "sbb"}:
         options += _gams_decomposition_solver_options(gams_nlp_solver, gams_mip_solver)
-    if role == "minlp":
-        options.append("option optcr=1e-6;")
     return options
 
 
@@ -368,6 +371,7 @@ def _benchmark_metadata(
         metadata["Solver profile"] = solver_profile
     if subsolver == "gams":
         metadata["GAMS solver"] = solver_gams
+        metadata["GAMS optcr"] = DEFAULT_GAMS_OPTCR
     if strategy in GDPOPT_STRATEGIES:
         metadata["Subsolvers"] = _gdpopt_subsolvers(
             subsolver,
@@ -1254,9 +1258,9 @@ def _write_result_reports(metadata_path, run_id, instances):
 
 def _generate_summary(run_id, instances):
     folders = [str(_result_dir(instance, run_id)) for instance in instances]
-    if not any(Path(folder).glob("*.json") for folder in folders):
+    if not any(any(Path(folder).glob("*.json")) for folder in folders):
         return False
-    from generate_benchmark_summary_all import generate_benchmark_summary
+    from gdplib.benchmark_summary import generate_benchmark_summary
 
     generate_benchmark_summary(folders)
     return True

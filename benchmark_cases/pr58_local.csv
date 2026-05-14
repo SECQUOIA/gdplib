@@ -55,12 +55,12 @@ kaibel,gdpopt.loa,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 kaibel,gdpopt.gloa,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 kaibel,gdpopt.lbb,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 kaibel,gdpopt.ric,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
-med_term_purchasing,gdp.bigm,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
-med_term_purchasing,gdp.hull,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
+med_term_purchasing,gdp.bigm,gams-local,gurobi,3600,local,ipopth,gurobi,dicopt,dicopt
+med_term_purchasing,gdp.hull,gams-local,gurobi,3600,local,ipopth,gurobi,dicopt,dicopt
 med_term_purchasing,gdpopt.enumerate,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 med_term_purchasing,gdpopt.loa,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 med_term_purchasing,gdpopt.gloa,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
-med_term_purchasing,gdpopt.lbb,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
+med_term_purchasing,gdpopt.lbb,gams-local,dicopt,3600,local,ipopth,gurobi,gurobi,dicopt
 med_term_purchasing,gdpopt.ric,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 methanol,gdp.bigm,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 methanol,gdp.hull,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt

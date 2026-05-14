@@ -24,6 +24,7 @@ class TestInstallation:
         required_packages = [
             "pyomo",
             "pandas",
+            "tabulate",
             "matplotlib",
             "scipy",
             "pint",

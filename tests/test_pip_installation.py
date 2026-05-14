@@ -15,19 +15,23 @@ import os
 class TestPipInstallation:
     """Test pip installation process and dependency resolution."""
 
-    def test_setup_py_dependencies_specified(self):
-        """Test that setup.py has install_requires properly specified."""
-        setup_py_path = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "setup.py"
-        )
+    def test_runtime_dependencies_specified(self):
+        """Test that runtime dependency metadata is properly specified."""
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        setup_py_path = os.path.join(repo_root, "setup.py")
+        pyproject_path = os.path.join(repo_root, "pyproject.toml")
 
         with open(setup_py_path, "r") as f:
             setup_content = f.read()
+        with open(pyproject_path, "r") as f:
+            pyproject_content = f.read()
 
         # Check that install_requires is not empty
         assert "install_requires=[" in setup_content
         assert "Pyomo>=5.6.1" in setup_content
         assert "pandas>=1.0.1" in setup_content
+        assert "tabulate>=0.9.0" in setup_content
+        assert '"tabulate>=0.9.0"' in pyproject_content
         assert "matplotlib>=2.2.2" in setup_content
 
         # Should not have an empty install_requires list
@@ -55,7 +59,15 @@ class TestPipInstallation:
             setup_content = f.read()
 
         # Check that main dependencies are present in both
-        main_deps = ["Pyomo", "pandas", "matplotlib", "scipy", "pint", "openpyxl"]
+        main_deps = [
+            "Pyomo",
+            "pandas",
+            "tabulate",
+            "matplotlib",
+            "scipy",
+            "pint",
+            "openpyxl",
+        ]
 
         for dep in main_deps:
             # Check in requirements.txt (case-insensitive)

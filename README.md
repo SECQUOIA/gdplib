@@ -74,6 +74,19 @@ IPOPT, Gurobi, HiGHS, and similar tools in optional local environments,
 benchmark profiles, or documentation unless they become required for default
 imports and tests.
 
+For direct Gurobi access through Pyomo's Python interfaces, use the optional
+Pixi environment with `gurobipy` and point Gurobi at a valid license:
+
+```bash
+export GRB_LICENSE_FILE=/path/to/gurobi.lic
+pixi install -e gurobi
+pixi run -e gurobi python -c "import gurobipy as gp; from pyomo.environ import SolverFactory; print(gp.gurobi.version()); print(SolverFactory('gurobi_direct').available(False))"
+```
+
+Pyomo's direct Gurobi interfaces support many LP, MIP, and quadratic workflows.
+For nonlinear transformed GDP models that Pyomo cannot write directly to
+Gurobi, use the documented GAMS/Gurobi benchmark profile.
+
 ### PyPI Release Workflow
 
 PyPI releases are published by
@@ -121,6 +134,9 @@ transformed and local MINLP roles, IPOPTH for NLP roles, and Gurobi for MIP
 roles. This is the recommended first pass before launching a global GAMS/BARON
 run. Use `--solver-profile gams-gurobi` for a GAMS/Gurobi pass, or
 `--solver-profile gams-baron` for a global BARON pass.
+
+GAMS-backed benchmark solves use `option optcr=1e-6` by default so incumbent
+solutions and solver bounds are compared at a consistent relative gap.
 
 ```bash
 pixi run gdplib-benchmark preflight
