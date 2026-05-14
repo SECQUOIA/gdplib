@@ -74,9 +74,10 @@ These instructions apply to the whole repository.
   `git diff --check`, and avoid unrelated normalization.
 - For GitHub issue or PR inspection through `gh`, prefer explicit `--json`
   field lists when default views request deprecated GraphQL fields such as
-  Projects Classic `projectCards`. GitHub rejects approvals from the PR author;
-  submit a `COMMENT` review instead and note that an eligible reviewer is still
-  required.
+  Projects Classic `projectCards`; this can affect plain issue or PR views such
+  as `gh issue view --comments` and `gh pr view --web=false`. GitHub rejects
+  approvals from the PR author; submit a `COMMENT` review instead and note that
+  an eligible reviewer is still required.
 - Match CI formatting and linting:
   ```bash
   black -S -C --target-version py310 --check --diff .
@@ -134,7 +135,8 @@ These instructions apply to the whole repository.
   PR, and benchmark comment. Keep distinct root causes in separate upstream
   issues but cross-link related evidence. Prefer a solver-free or open-solver
   MWE when it can isolate the behavior; otherwise keep licensed-solver evidence
-  as downstream context rather than the only reproduction.
+  as downstream context rather than the only reproduction. Use the upstream
+  project's issue template when one exists.
 - A future structured solution-record format is tracked in
   https://github.com/SECQUOIA/gdplib/issues/105. The intended direction is
   inspired by MINLPLib solution metadata: objective sense/value, best primal and
@@ -204,7 +206,9 @@ These instructions apply to the whole repository.
   (binary variables plus linear objectives/constraints are usually enough).
   Compare direct `gdp.bigm`/`gdp.hull` and GDPOpt LOA/GLOA/RIC before trying
   slower strategies. Avoid `gdpopt.enumerate` for large-disjunction or
-  ordered-location families unless enumeration itself is the benchmark goal.
+  ordered-location families unless enumeration itself is the benchmark goal:
+  Pyomo currently materializes the full discrete solution list before enforcing
+  `time_limit` (Pyomo/pyomo#3953), so timeout settings may not protect memory.
   Direct Hull through GAMS/Gurobi can be good quick evidence for large GDPs, but
   report the actual GAMS `optcr`/gap so a 1% certificate is not mistaken for a
   1e-6 run.
@@ -215,9 +219,9 @@ These instructions apply to the whole repository.
 - For `gdpopt.lbb` failures, separate model issues from GDPOpt control-flow or
   solver-role issues. Known patterns include linear relaxed-node subproblems
   being routed to `minlp_solver`, MINLP-only solvers receiving continuous/MIP
-  nodes, and time-limit finalization failures. Isolate with role-solver probes
-  or MWEs before changing the model, and do not assume LOA/GLOA/RIC share the
-  same routing behavior.
+  nodes, and time-limit finalization failures such as Pyomo/pyomo#3941. Isolate
+  with role-solver probes or MWEs before changing the model, and do not assume
+  LOA/GLOA/RIC share the same routing behavior.
 - Trust solver logs over wrapper summaries when they disagree. If a GAMS/Pyomo
   wrapper reports an objective or bound but the solver log says no incumbent was
   found, report the solver-log status and note the wrapper discrepancy.
@@ -273,6 +277,11 @@ These instructions apply to the whole repository.
 - When model semantics require exactly one disjunct, declare the `Disjunction`
   with `xor=True`; do not rely only on a separate `LogicalConstraint` because
   `gdp.hull` requires XOR disjunctions.
+- When a GDP choice is structurally impossible, do not leave an active
+  disjunction with fixed indicator variables. Deactivate the impossible
+  disjunction/disjuncts, fix the shared algebraic variables to enforce the same
+  state, and test that no fixed choices remain active before benchmarking
+  enumeration-based strategies.
 - For algebraic GDP reformulations, add deterministic equivalence tests on
   representative initialized data and smoke-test supported transformations such
   as `gdp.bigm` and `gdp.hull`. Keep this separate from solver-backed
