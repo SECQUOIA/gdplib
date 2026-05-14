@@ -10,7 +10,17 @@ Source paper (Example 4):
 
 ### Solution
 
-Optimal objective value: -8.06
+Best known objective value: -8.06 (optimal)
+
+The benchmark `gdpopt.gloa` custom-disjunct initialization marks consumers
+1, 6, 8, 15, 17, 20, and 25 as active for the default model instance. In
+PR #145, this active set was cross-checked by solving the Big-M reformulation
+with GAMS/BARON, which reported optimal termination with objective
+-8.0641361647335, `U = 0`, and the same selected consumers. The same active
+set initialized `pixi run gdplib-benchmark run --instances positioning
+--strategies gdpopt.gloa --timelimit 60 --run-id
+issue73_positioning_gloa_custom_init_60s`, which reported optimal termination
+with lower bound, upper bound, and objective -8.0641361676497.
 
 ### Size
 
@@ -24,4 +34,3 @@ Optimal objective value: -8.06
 | Disjuncts             |       50 |
 | Constraints           |       30 |
 | Nonlinear constraints |       25 |
-
