@@ -109,7 +109,7 @@ def test_positioning_gloa_runs_with_gams_local_profile():
         gams_local_minlp_solver="dicopt",
     )
     kwargs["tee"] = False
-    kwargs.update(_gdpopt_model_initialization_kwargs(model))
+    kwargs.update(_gdpopt_model_initialization_kwargs(model, "gdpopt.gloa"))
     for key in (
         "nlp_solver_args",
         "mip_solver_args",

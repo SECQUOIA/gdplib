@@ -34,6 +34,7 @@ GDPOPT_STRATEGIES = [
     "gdpopt.lbb",
     "gdpopt.ric",
 ]
+GDPOPT_CUSTOM_INIT_STRATEGIES = {"gdpopt.loa", "gdpopt.gloa", "gdpopt.ric"}
 DEFAULT_STRATEGIES = TRANSFORMATION_STRATEGIES + GDPOPT_STRATEGIES
 DEFAULT_LOCAL_FIRST_STRATEGIES = DEFAULT_STRATEGIES
 PR58_BENCHMARK_INSTANCES = [
@@ -322,7 +323,10 @@ def _gdpopt_solve_kwargs(
     return kwargs
 
 
-def _gdpopt_model_initialization_kwargs(model):
+def _gdpopt_model_initialization_kwargs(model, strategy):
+    if strategy not in GDPOPT_CUSTOM_INIT_STRATEGIES:
+        return {}
+
     initial_disjuncts = getattr(model, "gdpopt_initial_disjuncts", None)
     if not initial_disjuncts:
         return {}
@@ -544,7 +548,9 @@ def benchmark(
                     gams_minlp_solver,
                     gams_local_minlp_solver,
                 )
-                solve_kwargs.update(_gdpopt_model_initialization_kwargs(model))
+                solve_kwargs.update(
+                    _gdpopt_model_initialization_kwargs(model, strategy)
+                )
                 results = SolverFactory(strategy).solve(model, **solve_kwargs)
                 print(results)
     else:

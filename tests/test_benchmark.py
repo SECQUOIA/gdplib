@@ -2,12 +2,14 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
+import pytest
 import pyomo.environ as pyo
 from pyomo.core.expr.visitor import polynomial_degree
 
 from gdplib.benchmark import (
     DEFAULT_GAMS_OPTCR,
     DEFAULT_STRATEGIES,
+    GDPOPT_CUSTOM_INIT_STRATEGIES,
     PR58_BENCHMARK_INSTANCES,
     _benchmark_metadata,
     _generate_summary,
@@ -96,16 +98,49 @@ def test_gdpopt_local_profile_uses_role_solvers():
     assert "$onecho > baron.opt" not in kwargs["nlp_solver_args"]["add_options"]
 
 
-def test_gdpopt_model_initialization_kwargs_use_custom_disjuncts():
+@pytest.mark.parametrize("strategy", sorted(GDPOPT_CUSTOM_INIT_STRATEGIES))
+def test_gdpopt_model_initialization_kwargs_use_custom_disjuncts(strategy):
     import gdplib.positioning
 
     model = gdplib.positioning.build_model()
 
-    kwargs = _gdpopt_model_initialization_kwargs(model)
+    kwargs = _gdpopt_model_initialization_kwargs(model, strategy)
 
     assert kwargs["init_algorithm"] == "custom_disjuncts"
     assert len(kwargs["custom_init_disjuncts"]) == 1
     assert len(kwargs["custom_init_disjuncts"][0]) == len(model.consumers)
+
+
+def test_gdpopt_custom_initialization_is_not_passed_to_unsupported_strategies():
+    import gdplib.positioning
+
+    model = gdplib.positioning.build_model()
+
+    unsupported_strategies = set(DEFAULT_STRATEGIES) - GDPOPT_CUSTOM_INIT_STRATEGIES
+    assert _gdpopt_model_initialization_kwargs(model, "gdpopt.enumerate") == {}
+    assert _gdpopt_model_initialization_kwargs(model, "gdpopt.lbb") == {}
+    for strategy in unsupported_strategies:
+        assert _gdpopt_model_initialization_kwargs(model, strategy) == {}
+
+
+def test_gdpopt_unsupported_initialization_strategies_accept_benchmark_kwargs():
+    import gdplib.positioning
+
+    model = gdplib.positioning.build_model()
+
+    for strategy in ("gdpopt.enumerate", "gdpopt.lbb"):
+        kwargs = _gdpopt_solve_kwargs(
+            30,
+            "gams",
+            "dicopt",
+            gams_nlp_solver="ipopth",
+            gams_mip_solver="gurobi",
+            gams_minlp_solver="dicopt",
+            gams_local_minlp_solver="dicopt",
+        )
+        kwargs.update(_gdpopt_model_initialization_kwargs(model, strategy))
+
+        pyo.SolverFactory(strategy).CONFIG().set_value(kwargs)
 
 
 def test_json_safe_result_replaces_non_finite_values():
