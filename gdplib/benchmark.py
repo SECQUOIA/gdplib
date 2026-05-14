@@ -1256,7 +1256,7 @@ def _generate_summary(run_id, instances):
     folders = [str(_result_dir(instance, run_id)) for instance in instances]
     if not any(Path(folder).glob("*.json") for folder in folders):
         return False
-    from generate_benchmark_summary_all import generate_benchmark_summary
+    from gdplib.benchmark_summary import generate_benchmark_summary
 
     generate_benchmark_summary(folders)
     return True

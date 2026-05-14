@@ -2,10 +2,11 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from benchmark import (
+from gdplib.benchmark import (
     DEFAULT_STRATEGIES,
     PR58_BENCHMARK_INSTANCES,
     _benchmark_metadata,
+    _generate_summary,
     _gams_solve_options,
     _gdpopt_solve_kwargs,
     _json_safe_result,
@@ -282,6 +283,39 @@ def test_cli_run_dry_run_uses_preflight_without_solving(capsys):
     assert status == 0
     assert "Benchmark plan" in output
     assert "Dry run complete" in output
+
+
+def test_generate_summary_uses_packaged_summary_module(tmp_path, monkeypatch):
+    result_dir = tmp_path / "gdplib" / "methanol" / "benchmark_result" / "run_1"
+    result_dir.mkdir(parents=True)
+    (result_dir / "gdpopt.gloa_gams_baron.json").write_text(
+        json.dumps(
+            {
+                "Problem": [
+                    {
+                        "Name": "methanol-gloa",
+                        "Lower bound": -1743.4292381783366,
+                        "Upper bound": -1743.4292381783366,
+                        "Sense": "minimize",
+                    }
+                ],
+                "Solver": [
+                    {
+                        "Name": "GDPopt (22, 5, 13) - GLOA",
+                        "Termination condition": "optimal",
+                        "User time": 3.7971969350182917,
+                    }
+                ],
+            }
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+
+    assert _generate_summary("run_1", ["methanol"]) is True
+
+    combined_data = tmp_path / "benchmark_summary" / "combined_data.csv"
+    assert combined_data.exists()
+    assert "GDPopt (22, 5, 13) - GLOA" in combined_data.read_text()
 
 
 def test_warning_summary_marks_indicator_casts_as_deprecations():
