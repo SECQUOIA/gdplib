@@ -754,20 +754,31 @@ def build_model(use_cafaro_approximation, num_stages):
         rule=_exchanger_exists_or_absent,
         xor=True,
     )
+
+    def _force_exchanger_absent(hot, cold, stg):
+        # Remove structurally impossible matches from the GDP choice set so
+        # enumeration-based algorithms only see actual exchanger decisions.
+        m.heat_exchanged[hot, cold, stg].fix(0)
+        m.exchanger_area[stg, hot, cold].fix(0)
+        m.exchanger_area_cost[stg, hot, cold].fix(0)
+        m.exchanger_fixed_cost[stg, hot, cold].fix(0)
+        m.exchanger_exists_or_absent[hot, cold, stg].deactivate()
+        m.exchanger_exists[hot, cold, stg].deactivate()
+        m.exchanger_exists[hot, cold, stg].indicator_var.fix(False)
+        m.exchanger_absent[hot, cold, stg].deactivate()
+        m.exchanger_absent[hot, cold, stg].indicator_var.fix(True)
+
     # Only hot utility matches in first stage and cold utility matches in last
     # stage
     for hot, cold in m.valid_matches:
         if hot not in m.utility_streams:
-            m.exchanger_exists[hot, cold, 1].deactivate()
-            m.exchanger_absent[hot, cold, 1].indicator_var.fix(True)
+            _force_exchanger_absent(hot, cold, 1)
         if cold not in m.utility_streams:
-            m.exchanger_exists[hot, cold, num_stages].deactivate()
-            m.exchanger_absent[hot, cold, num_stages].indicator_var.fix(True)
+            _force_exchanger_absent(hot, cold, num_stages)
     # Exclude utility-stream matches in middle stages
     for hot, cold, stg in m.valid_matches * (m.stages - [1, num_stages]):
         if hot in m.utility_streams or cold in m.utility_streams:
-            m.exchanger_exists[hot, cold, stg].deactivate()
-            m.exchanger_absent[hot, cold, stg].indicator_var.fix(True)
+            _force_exchanger_absent(hot, cold, stg)
 
     @m.Expression(m.utility_streams)
     def utility_cost(m, strm):
