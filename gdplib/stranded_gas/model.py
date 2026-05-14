@@ -12,11 +12,13 @@ References:
     [1] Chen, Q., & Grossmann, I. E. (2019). Economies of numbers for a modular stranded gas processing network: Modeling and optimization. In Computer Aided Chemical Engineering (Vol. 47, pp. 257-262). Elsevier. DOI: 10.1016/B978-0-444-64241-7.50100-3
 """
 
+import math
 import os
 
 import pandas as pd
 
 from pyomo.environ import (
+    Binary,
     ConcreteModel,
     Constraint,
     Integers,
@@ -30,7 +32,6 @@ from pyomo.environ import (
     TransformationFactory,
     Var,
     exp,
-    log,
     sqrt,
     summation,
     value,
@@ -451,6 +452,46 @@ def build_model(case=None):
         initialize=1,
     )
 
+    m.max_module_purchases = Param(
+        initialize=5, doc="Limit on total module purchases over project span"
+    )
+    m.purchase_count_options = RangeSet(
+        0,
+        int(value(m.max_module_purchases)),
+        doc="Possible total purchase counts for each module type",
+    )
+
+    @m.Param(m.purchase_count_options)
+    def learning_factor_by_purchase_count(m, count):
+        if count == 0:
+            return 1
+        return float((1 - value(m.learning_rate)) ** (math.log(count) / math.log(2)))
+
+    m.purchase_count_selected = Var(
+        m.module_types,
+        m.purchase_count_options,
+        doc="Binary selector for total module purchases of a type",
+        domain=Binary,
+        initialize=0,
+    )
+
+    @m.Constraint(m.module_types)
+    def select_one_purchase_count(m, mtype):
+        return (
+            sum(
+                m.purchase_count_selected[mtype, count]
+                for count in m.purchase_count_options
+            )
+            == 1
+        )
+
+    @m.Constraint(m.module_types)
+    def match_purchase_count(m, mtype):
+        return sum(m.modules_purchased[mtype, :, :]) == sum(
+            count * m.purchase_count_selected[mtype, count]
+            for count in m.purchase_count_options
+        )
+
     m.pipeline_unit_cost = Param(doc="MM$/mile", initialize=2)
 
     @m.Param(m.time, doc="Module transport cost per mile [M$/100 miles]")
@@ -578,16 +619,18 @@ def build_model(case=None):
         require_module_purchases : Pyomo Constraint
             Ensures that at least one module of this type is purchased, activating this disjunct.
         """
+        total_purchases = sum(m.modules_purchased[mtype, :, :])
         disj.learning_factor_calc = Constraint(
             expr=m.learning_factor[mtype]
-            == (1 - m.learning_rate)
-            ** (log(sum(m.modules_purchased[mtype, :, :])) / log(2)),
+            == sum(
+                m.learning_factor_by_purchase_count[count]
+                * m.purchase_count_selected[mtype, count]
+                for count in m.purchase_count_options
+            ),
             doc="Learning factor calculation",
         )
-        m.BigM[disj.learning_factor_calc] = 1
         disj.require_module_purchases = Constraint(
-            expr=sum(m.modules_purchased[mtype, :, :]) >= 1,
-            doc="At least one module purchase",
+            expr=total_purchases >= 1, doc="At least one module purchase"
         )
 
     @m.Disjunct(m.module_types)
@@ -605,8 +648,11 @@ def build_model(case=None):
         disj.constant_learning_factor = Constraint(
             expr=m.learning_factor[mtype] == 1, doc="Constant learning factor"
         )
+        disj.no_module_purchases = Constraint(
+            expr=sum(m.modules_purchased[mtype, :, :]) == 0, doc="No module purchases"
+        )
 
-    @m.Disjunction(m.module_types)
+    @m.Disjunction(m.module_types, xor=True)
     def mtype_existence(m, mtype):
         """
         A disjunction that determines whether a module type exists or is absent within the GTL network.
@@ -933,7 +979,7 @@ def build_model(case=None):
             doc="No modules purchased",
         )
 
-    @m.Disjunction(m.potential_sites)
+    @m.Disjunction(m.potential_sites, xor=True)
     def site_active_or_not(m, site):
         """
         A disjunction that determines whether a potential site is active or inactive within the GTL network.
@@ -987,7 +1033,7 @@ def build_model(case=None):
             doc="No natural gas flow",
         )
 
-    @m.Disjunction(m.well_clusters, m.potential_sites)
+    @m.Disjunction(m.well_clusters, m.potential_sites, xor=True)
     def pipeline_existence(m, well, site):
         """
         A disjunction that determines whether a pipeline exists or is absent between a well cluster and a potential site.
@@ -1222,7 +1268,7 @@ def build_model(case=None):
         Pyomo.Constraint
             A global constraint that limits the aggregate number of modules purchased across all sites to 5, ensuring that the total investment in module purchases remains within predefined limits.
         """
-        return sum(m.modules_purchased[...]) <= 5
+        return sum(m.modules_purchased[...]) <= m.max_module_purchases
 
     @m.Constraint(m.site_pairs, doc="Limit transfers between any two sites")
     def restrict_module_transfers(m, from_site, to_site):
