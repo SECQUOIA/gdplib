@@ -14,7 +14,7 @@ from pyomo.environ import (
     LogicalConstraint,
     value,
 )
-from pyomo.gdp import Disjunct, Disjunction
+from pyomo.gdp import Disjunction
 
 from gdplib.grid import build_model
 

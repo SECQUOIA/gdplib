@@ -26,7 +26,6 @@ from pyomo.environ import (
     Var,
     Objective,
     minimize,
-    Constraint,
     BooleanVar,
     LogicalConstraint,
     Param,
@@ -36,7 +35,7 @@ from pyomo.environ import (
     land,
     equivalent,
 )
-from pyomo.gdp import Disjunct, Disjunction
+from pyomo.gdp import Disjunct
 
 
 def build_model(active_gens=4, active_lines=20, num_samples=500):
@@ -118,7 +117,7 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
     # Objective: minimize total capacity slack
     m.obj = Objective(
         sense=minimize,
-        expr=sum(m.d_gen[g] for g in m.G) + sum(m.d_line[l] for l in m.L),
+        expr=sum(m.d_gen[g] for g in m.G) + sum(m.d_line[ln] for ln in m.L),
     )
 
     # Power balance constraints (IEEE 14-bus topology)
@@ -225,38 +224,42 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
         return [m.gen_disjunct1[g, k], m.gen_disjunct2[g, k]]
 
     # Line disjunctions: both bounds satisfied, lower violated, or upper violated
-    def build_satisfy_line_constraints(disjunct, l, k):
+    def build_satisfy_line_constraints(disjunct, ln, k):
         m = disjunct.model()
 
         @disjunct.Constraint()
         def line_lower(disjunct):
-            return -m.z_line[l, k] - line_cap - m.d_line[l] <= 0
+            return -m.z_line[ln, k] - line_cap - m.d_line[ln] <= 0
 
         @disjunct.Constraint()
         def line_upper(disjunct):
-            return m.z_line[l, k] - line_cap - m.d_line[l] <= 0
+            return m.z_line[ln, k] - line_cap - m.d_line[ln] <= 0
 
-    def build_not_satisfy_lower_line_constraints(disjunct, l, k):
+    def build_not_satisfy_lower_line_constraints(disjunct, ln, k):
         m = disjunct.model()
 
         @disjunct.Constraint()
         def line_lower(disjunct):
-            return -m.z_line[l, k] - line_cap - m.d_line[l] >= 0
+            return -m.z_line[ln, k] - line_cap - m.d_line[ln] >= 0
 
-    def build_not_satisfy_upper_line_constraints(disjunct, l, k):
+    def build_not_satisfy_upper_line_constraints(disjunct, ln, k):
         m = disjunct.model()
 
         @disjunct.Constraint()
         def line_upper(disjunct):
-            return m.z_line[l, k] - line_cap - m.d_line[l] >= 0
+            return m.z_line[ln, k] - line_cap - m.d_line[ln] >= 0
 
     m.line_disjunct1 = Disjunct(m.L, m.K, rule=build_satisfy_line_constraints)
     m.line_disjunct2 = Disjunct(m.L, m.K, rule=build_not_satisfy_lower_line_constraints)
     m.line_disjunct3 = Disjunct(m.L, m.K, rule=build_not_satisfy_upper_line_constraints)
 
     @m.Disjunction(m.L, m.K)
-    def line_constrs_satisfy_or_not(m, l, k):
-        return [m.line_disjunct1[l, k], m.line_disjunct2[l, k], m.line_disjunct3[l, k]]
+    def line_constrs_satisfy_or_not(m, ln, k):
+        return [
+            m.line_disjunct1[ln, k],
+            m.line_disjunct2[ln, k],
+            m.line_disjunct3[ln, k],
+        ]
 
     # Event variable: True if scenario k jointly satisfies enough constraints
     m.w = BooleanVar(m.K)

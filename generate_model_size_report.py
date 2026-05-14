@@ -100,6 +100,7 @@ MODEL_INSTANCES = {
         {"label": "piecewise", "kwargs": {"approximation": "piecewise"}},
     ],
     "multiperiod_blending": [{"label": "mpbp_6"}],
+    "grid": [{"label": "Number"}],
 }
 
 
