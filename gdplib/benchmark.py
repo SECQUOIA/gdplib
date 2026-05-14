@@ -18,6 +18,7 @@ from importlib import import_module
 from pathlib import Path
 
 import pyomo
+from pyomo.common.collections import ComponentSet
 from pyomo.environ import SolverFactory, TransformationFactory
 
 try:
@@ -321,6 +322,19 @@ def _gdpopt_solve_kwargs(
     return kwargs
 
 
+def _gdpopt_model_initialization_kwargs(model):
+    initial_disjuncts = getattr(model, "gdpopt_initial_disjuncts", None)
+    if not initial_disjuncts:
+        return {}
+
+    return {
+        "init_algorithm": "custom_disjuncts",
+        "custom_init_disjuncts": [
+            ComponentSet(disjunct_set) for disjunct_set in initial_disjuncts
+        ],
+    }
+
+
 def _gdpopt_subsolvers(
     subsolver,
     solver_gams,
@@ -521,18 +535,17 @@ def benchmark(
             "w",
         ) as f:
             with redirect_stdout(f):
-                results = SolverFactory(strategy).solve(
-                    model,
-                    **_gdpopt_solve_kwargs(
-                        timelimit,
-                        subsolver,
-                        solver_gams,
-                        gams_nlp_solver,
-                        gams_mip_solver,
-                        gams_minlp_solver,
-                        gams_local_minlp_solver,
-                    ),
+                solve_kwargs = _gdpopt_solve_kwargs(
+                    timelimit,
+                    subsolver,
+                    solver_gams,
+                    gams_nlp_solver,
+                    gams_mip_solver,
+                    gams_minlp_solver,
+                    gams_local_minlp_solver,
                 )
+                solve_kwargs.update(_gdpopt_model_initialization_kwargs(model))
+                results = SolverFactory(strategy).solve(model, **solve_kwargs)
                 print(results)
     else:
         raise ValueError(f"Unknown benchmark strategy: {strategy}")

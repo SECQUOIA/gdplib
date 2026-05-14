@@ -12,6 +12,7 @@ from gdplib.benchmark import (
     _benchmark_metadata,
     _generate_summary,
     _gams_solve_options,
+    _gdpopt_model_initialization_kwargs,
     _gdpopt_solve_kwargs,
     _json_safe_result,
     _resolve_solver_profile,
@@ -93,6 +94,18 @@ def test_gdpopt_local_profile_uses_role_solvers():
     assert "option optcr=1e-6;" in kwargs["minlp_solver_args"]["add_options"]
     assert "option optcr=1e-6;" in kwargs["local_minlp_solver_args"]["add_options"]
     assert "$onecho > baron.opt" not in kwargs["nlp_solver_args"]["add_options"]
+
+
+def test_gdpopt_model_initialization_kwargs_use_custom_disjuncts():
+    import gdplib.positioning
+
+    model = gdplib.positioning.build_model()
+
+    kwargs = _gdpopt_model_initialization_kwargs(model)
+
+    assert kwargs["init_algorithm"] == "custom_disjuncts"
+    assert len(kwargs["custom_init_disjuncts"]) == 1
+    assert len(kwargs["custom_init_disjuncts"][0]) == len(model.consumers)
 
 
 def test_json_safe_result_replaces_non_finite_values():
