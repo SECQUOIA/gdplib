@@ -38,18 +38,20 @@ from pyomo.environ import (
 from pyomo.gdp import Disjunct
 
 
-def build_model(active_gens=4, active_lines=20, num_samples=500):
+def build_model(active_gens=4, active_lines=20, num_samples=500):  # noqa: C901
     """
-    Build the GDP model for event-constrained optimal power flow on the IEEE 14-bus network.
+    Build the GDP model for event-constrained optimal power flow on the IEEE
+    14-bus network.
 
     The model minimizes the total capacity slack for generators and transmission lines
     across a set of Monte Carlo load scenarios drawn from a multivariate normal
-    distribution. An event constraint enforces that, with probability at least alpha=0.9
-    (approximated via Sample Average Approximation), at least active_gens generators and
-    active_lines transmission lines simultaneously satisfy their capacity bounds in a
-    given scenario. The event logic uses the ATLEAST operator from Generalized Disjunctive
-    Programming, which is less conservative than a joint chance constraint requiring all
-    equipment to be within limits simultaneously.
+    distribution. An event constraint enforces that, with probability at least
+    alpha=0.9 (approximated via Sample Average Approximation), at least
+    active_gens generators and active_lines transmission lines simultaneously
+    satisfy their capacity bounds in a given scenario. The event logic uses the
+    ATLEAST operator from Generalized Disjunctive Programming, which is less
+    conservative than a joint chance constraint requiring all equipment to be
+    within limits simultaneously.
 
     Parameters
     ----------
@@ -60,7 +62,8 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
         Minimum number of transmission lines whose capacity constraints must be
         satisfied in a scenario for the event to hold. Default is 20.
     num_samples : int, optional
-        Number of Monte Carlo samples for the uncertain nodal load demands. Default is 500.
+        Number of Monte Carlo samples for the uncertain nodal load demands.
+        Default is 500.
 
     Returns
     -------
@@ -70,7 +73,8 @@ def build_model(active_gens=4, active_lines=20, num_samples=500):
 
     References
     ----------
-    [1] Ovalle, D., Mazzadi, S., Laird, C. D., Grossmann, I. E., & Pulsipher, J. L. (2025).
+    [1] Ovalle, D., Mazzadi, S., Laird, C. D., Grossmann, I. E.,
+        & Pulsipher, J. L. (2025).
         Event constrained programming. Computers & Chemical Engineering, 199, 109145.
         https://doi.org/10.1016/j.compchemeng.2025.109145
     """
