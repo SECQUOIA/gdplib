@@ -106,7 +106,10 @@ jobs:
           pip install pytest
           python -c "
           import pkg_resources
-          required = ['pyomo', 'pandas', 'matplotlib', 'scipy', 'pint', 'openpyxl']
+          required = [
+              'pyomo', 'pandas', 'tabulate', 'matplotlib', 'scipy', 'pint',
+              'openpyxl',
+          ]
           for pkg in required:
               try:
                   pkg_resources.get_distribution(pkg)

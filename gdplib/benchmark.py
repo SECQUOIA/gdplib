@@ -1258,7 +1258,7 @@ def _write_result_reports(metadata_path, run_id, instances):
 
 def _generate_summary(run_id, instances):
     folders = [str(_result_dir(instance, run_id)) for instance in instances]
-    if not any(Path(folder).glob("*.json") for folder in folders):
+    if not any(any(Path(folder).glob("*.json")) for folder in folders):
         return False
     from gdplib.benchmark_summary import generate_benchmark_summary
 
