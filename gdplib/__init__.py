@@ -24,4 +24,5 @@ import gdplib.small_batch
 import gdplib.cstr
 import gdplib.reverse_electrodialysis
 import gdplib.multiperiod_blending
+import gdplib.grid
 import gdplib.pandemic
