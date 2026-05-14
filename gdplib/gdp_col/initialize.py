@@ -174,12 +174,7 @@ def initialize(m, excel_file=None):
             m.Pvap[c, t].set_value(
                 value(
                     exp(
-                        (
-                            k["A"] * x
-                            + k["B"] * x**1.5
-                            + k["C"] * x**3
-                            + k["D"] * x**6
-                        )
+                        (k["A"] * x + k["B"] * x**1.5 + k["C"] * x**3 + k["D"] * x**6)
                         / (1 - x)
                     )
                     * k["Pc"]

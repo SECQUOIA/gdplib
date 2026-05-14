@@ -105,8 +105,7 @@ def build_model():
 
     m.candidate_trays_main = Set(
         initialize=m.tray - [m.con_tray, m.reb_tray],
-        doc="Candidate trays for top and \
-                                 bottom sections 1 and 4",
+        doc="Candidate trays for top and bottom sections 1 and 4",
     )
     m.candidate_trays_feed = Set(
         initialize=m.tray - [m.con_tray, m.feed_tray, m.reb_tray],
