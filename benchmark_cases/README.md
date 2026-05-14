@@ -21,7 +21,9 @@ Current tracked campaigns:
 
 - `pr58_local.csv`: full PR #58 model/strategy matrix using the local nonlinear
   GAMS profile: DICOPT for transformed/local MINLP roles, IPOPTH for NLP roles,
-  and Gurobi for MIP roles.
+  and Gurobi for MIP roles. Rows may override the direct GAMS solver or GDPopt
+  role solvers when a model/strategy is known to produce a linear MIP under this
+  profile.
 
 Run it with:
 

@@ -50,3 +50,9 @@ benchmark-pr58-local = "gdplib-benchmark run --cases-file benchmark_cases/pr58_l
 benchmark-pr58-gurobi = "gdplib-benchmark run --solver-profile gams-gurobi"
 benchmark-pr58-global = "gdplib-benchmark run --solver-profile gams-baron"
 benchmark-warnings = "gdplib-benchmark warnings"
+
+[feature.gurobi.pypi-dependencies]
+gurobipy = ">=12, <13"
+
+[environments]
+gurobi = { features = ["gurobi"], solve-group = "default" }

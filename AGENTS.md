@@ -199,6 +199,10 @@ These instructions apply to the whole repository.
 - Preflight before long campaigns. Start with small, bounded runs using
   explicit `--instances`, `--strategies`, `--timelimit`, `--solver-profile`,
   and `--run-id` values, then broaden coverage once failures are understood.
+- GAMS-backed benchmark solves should use the committed default
+  `option optcr=1e-6` so solver incumbents and bounds are compared at a
+  consistent relative gap. If a looser exploratory gap is intentional, label it
+  explicitly in the run id and result discussion.
 - If a benchmark run writes per-case JSON/log artifacts but fails while
   generating summaries, inspect the result files and `failures.*` before
   changing the model. Use a focused Pyomo/GDPopt script for clean solver-backed

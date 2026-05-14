@@ -1,4 +1,5 @@
 from gdplib.benchmark import (
+    DEFAULT_GAMS_OPTCR,
     DEFAULT_GAMS_SOLVER,
     DEFAULT_LOCAL_FIRST_STRATEGIES,
     DEFAULT_STRATEGIES,
@@ -12,6 +13,7 @@ from gdplib.benchmark import (
     SOLVER_PROFILES,
     TRANSFORMATION_STRATEGIES,
     _benchmark_metadata,
+    _generate_summary,
     _gams_solve_options,
     _gdpopt_solve_kwargs,
     _json_safe_result,
