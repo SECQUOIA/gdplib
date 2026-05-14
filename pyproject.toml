@@ -39,6 +39,7 @@ dependencies = [
     "scipy>=1.0.0",
     "pint>=0.15.0",
     "openpyxl>=3.0.0",
+    "sympy>=1.0",
 ]
 
 [project.urls]
