@@ -48,6 +48,7 @@ class TestModuleImports:
         "cstr",
         "reverse_electrodialysis",
         "multiperiod_blending",
+        "pandemic",
     ]
 
     @pytest.mark.parametrize("module_name", GDPLIB_MODULES)

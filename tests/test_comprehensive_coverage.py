@@ -48,6 +48,7 @@ class TestComprehensiveCoverage:
         "syngas",
         "water_network",
         "multiperiod_blending",
+        "pandemic",
     ]
 
     def test_coverage_statistics_report(self):

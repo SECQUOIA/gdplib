@@ -101,6 +101,7 @@ MODEL_INSTANCES = {
     ],
     "multiperiod_blending": [{"label": "mpbp_6"}],
     "grid": [{"label": "Number"}],
+    "pandemic": [{"label": "Number"}],
 }
 
 
