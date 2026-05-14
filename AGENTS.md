@@ -85,6 +85,9 @@ These instructions apply to the whole repository.
   flake8 gdplib/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
   typos --config ./.github/workflows/typos.toml
   ```
+- The second flake8 pass is an `--exit-zero` style inventory. Treat the command
+  exit status as authoritative, and keep focused PRs limited to new Black,
+  critical flake8, or typos failures unless broader cleanup is requested.
 
 ## Coding and Documentation Style
 
@@ -196,6 +199,10 @@ These instructions apply to the whole repository.
 - Preflight before long campaigns. Start with small, bounded runs using
   explicit `--instances`, `--strategies`, `--timelimit`, `--solver-profile`,
   and `--run-id` values, then broaden coverage once failures are understood.
+- If a benchmark run writes per-case JSON/log artifacts but fails while
+  generating summaries, inspect the result files and `failures.*` before
+  changing the model. Use a focused Pyomo/GDPopt script for clean solver-backed
+  verification when the summary failure is outside the model change.
 - Choose solvers according to transformed model class and benchmark goal: use
   LP/MIP solvers such as Gurobi or HiGHS for direct MIP reformulations, IPOPT or
   GAMS IPOPTH for local NLP roles, DICOPT for local MINLP roles, and BARON only
@@ -286,6 +293,9 @@ These instructions apply to the whole repository.
   representative initialized data and smoke-test supported transformations such
   as `gdp.bigm` and `gdp.hull`. Keep this separate from solver-backed
   optimality evidence.
+- For pair-activation disjunctions, make inactive branches represent the true
+  complement, such as "not both active," rather than an over-restrictive
+  "both inactive" state. Test all representative binary combinations.
 - When Pyomo/GDPopt FBBT or interval propagation fails, fix the narrow
   modeling cause before changing solver configuration: derive finite bounds from
   source constraints and parameters for missing-bound failures, and use explicit
