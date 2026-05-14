@@ -129,11 +129,12 @@ These instructions apply to the whole repository.
   relevant issue when one exists; otherwise create a new issue with the exact
   command, environment, solver stack, termination condition or traceback, and
   model/formulation attempted.
-- When escalating a Pyomo or solver behavior upstream, include a compact MWE,
-  the exact environment and solver roles, and links to the affected GDPlib
-  issue, PR, and benchmark comment. Prefer a solver-free or open-solver MWE
-  when it can isolate the behavior; otherwise keep licensed-solver evidence as
-  downstream context rather than the only reproduction.
+- When escalating Pyomo or solver behavior upstream, include a compact MWE,
+  exact environment and solver roles, and links to the affected GDPlib issue,
+  PR, and benchmark comment. Keep distinct root causes in separate upstream
+  issues but cross-link related evidence. Prefer a solver-free or open-solver
+  MWE when it can isolate the behavior; otherwise keep licensed-solver evidence
+  as downstream context rather than the only reproduction.
 - A future structured solution-record format is tracked in
   https://github.com/SECQUOIA/gdplib/issues/105. The intended direction is
   inspired by MINLPLib solution metadata: objective sense/value, best primal and
@@ -196,20 +197,27 @@ These instructions apply to the whole repository.
 - Choose solvers according to transformed model class and benchmark goal: use
   LP/MIP solvers such as Gurobi or HiGHS for direct MIP reformulations, IPOPT or
   GAMS IPOPTH for local NLP roles, DICOPT for local MINLP roles, and BARON only
-  when global evidence is intended. For nonlinear GDPs that Pyomo's direct
-  Gurobi writers reject, use the GAMS/Gurobi profile and say why.
-- Avoid `gdpopt.enumerate` for large-disjunction models such as `biofuel`;
-  compare direct `gdp.bigm` and `gdp.hull` solves first. Direct Hull through
-  GAMS/Gurobi can be the best quick evidence for some large GDPs, but report the
-  actual GAMS `optcr`/gap so a 1% certificate is not mistaken for a 1e-6 run.
+  when global evidence is intended. If Pyomo's direct Gurobi interface is
+  unavailable or rejects the transformed model, use the GAMS/Gurobi profile and
+  say why.
+- For linear GDP benchmarks, verify the transformed class when practical
+  (binary variables plus linear objectives/constraints are usually enough).
+  Compare direct `gdp.bigm`/`gdp.hull` and GDPOpt LOA/GLOA/RIC before trying
+  slower strategies. Avoid `gdpopt.enumerate` for large-disjunction or
+  ordered-location families unless enumeration itself is the benchmark goal.
+  Direct Hull through GAMS/Gurobi can be good quick evidence for large GDPs, but
+  report the actual GAMS `optcr`/gap so a 1% certificate is not mistaken for a
+  1e-6 run.
 - Interpret GDPOpt results conservatively on nonconvex models. Do not treat
   `gdpopt.loa` `optimal`, `LB = UB`, or missing-bound results as rigorous global
   certificates unless convexity and valid OA bounds are established; cross-check
   against GLOA, RIC, direct transformed solves, or explicit feasible points.
 - For `gdpopt.lbb` failures, separate model issues from GDPOpt control-flow or
-  solver-role issues. Known patterns include MINLP-only solvers receiving
-  continuous nodes and time-limit finalization failures; isolate with role-solver
-  probes or MWEs before changing the model.
+  solver-role issues. Known patterns include linear relaxed-node subproblems
+  being routed to `minlp_solver`, MINLP-only solvers receiving continuous/MIP
+  nodes, and time-limit finalization failures. Isolate with role-solver probes
+  or MWEs before changing the model, and do not assume LOA/GLOA/RIC share the
+  same routing behavior.
 - Trust solver logs over wrapper summaries when they disagree. If a GAMS/Pyomo
   wrapper reports an objective or bound but the solver log says no incumbent was
   found, report the solver-log status and note the wrapper discrepancy.
