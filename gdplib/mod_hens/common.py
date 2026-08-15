@@ -763,6 +763,9 @@ def build_model(use_cafaro_approximation, num_stages):
         m.exchanger_area_cost[stg, hot, cold].fix(0)
         m.exchanger_fixed_cost[stg, hot, cold].fix(0)
         m.exchanger_exists_or_absent[hot, cold, stg].deactivate()
+        # Order matters: Disjunct.deactivate() fixes its indicator to False,
+        # so each indicator fix below must come after that disjunct's
+        # deactivate() to record the intended truth value.
         m.exchanger_exists[hot, cold, stg].deactivate()
         m.exchanger_exists[hot, cold, stg].indicator_var.fix(False)
         m.exchanger_absent[hot, cold, stg].deactivate()

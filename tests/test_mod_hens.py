@@ -90,7 +90,17 @@ def test_structurally_absent_matches_are_not_active_gdp_choices(case):
 @pytest.mark.parametrize("transformation", ["gdp.bigm", "gdp.hull"])
 def test_supported_cases_transform_after_absent_match_pruning(case, transformation):
     model = build_model(case, cafaro_approx=False, num_stages=2)
+    pruned_matches = [
+        index
+        for index in model.exchanger_exists_or_absent
+        if not model.exchanger_exists_or_absent[index].active
+    ]
 
     pyo.TransformationFactory(transformation).apply_to(model)
 
     assert list(model.component_data_objects(Disjunction, active=True)) == []
+    # Pruned matches must survive transformation still fixed at zero.
+    assert pruned_matches
+    for hot, cold, stg in pruned_matches:
+        assert model.heat_exchanged[hot, cold, stg].fixed
+        assert pyo.value(model.heat_exchanged[hot, cold, stg]) == 0
