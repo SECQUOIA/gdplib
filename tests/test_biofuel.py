@@ -10,7 +10,9 @@ MODULE_COMPONENT_NAMES = {"num_modules", "modules_purchased", "modules_sold"}
 
 def _module_variable_sites(constraint):
     sites = set()
-    for var in identify_variables(constraint.body, include_fixed=False):
+    # include_fixed=True so the site set reflects the constraint algebra even
+    # for module variables fixed to zero during setup periods at build time.
+    for var in identify_variables(constraint.body, include_fixed=True):
         if var.parent_component().local_name in MODULE_COMPONENT_NAMES:
             sites.add(var.index()[0])
     return sites
@@ -40,3 +42,8 @@ def test_biofuel_reformulates_with_supported_gdp_transformations(transformation)
 
     assert not any(model.component_data_objects(Disjunction, active=True))
     assert not any(model.component_data_objects(Disjunct, active=True))
+    if transformation == "gdp.hull":
+        assert any(
+            "disaggregated" in var.name
+            for var in model.component_data_objects(pyo.Var, active=True)
+        )
