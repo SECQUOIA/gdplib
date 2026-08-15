@@ -84,7 +84,6 @@ def build_model(case=None):
     [1] Chen, Q., & Grossmann, I. E. (2019). Economies of numbers for a modular stranded gas processing network: Modeling and optimization. In Computer Aided Chemical Engineering (Vol. 47, pp. 257-262). Elsevier. DOI: 10.1016/B978-0-444-64241-7.50100-3
     """
     m = ConcreteModel("Stranded gas production")
-    m.BigM = Suffix(direction=Suffix.LOCAL)
 
     m.periods_per_year = Param(initialize=4, doc="Quarters per year")
     m.project_life = Param(initialize=15, doc="Years")
@@ -637,6 +636,12 @@ def build_model(case=None):
     def mtype_absent(disj, mtype):
         """
         Represents the scenario where a specific module type does not exist within the GTL network.
+
+        Forcing zero purchases here is a tightening relative to the original
+        formulation, where purchases of an "absent" type remained feasible. No
+        optimal solution is lost: the exists branch weakly dominates, since
+        its learning factor is at most 1, which only lowers the module unit
+        cost while profit is maximized.
 
         Parameters
         ----------

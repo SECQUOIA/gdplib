@@ -5,7 +5,8 @@ import os
 import sys
 
 import pytest
-from pyomo.environ import TransformationFactory, value
+from pyomo.environ import Constraint, TransformationFactory, value
+from pyomo.gdp import Disjunct, Disjunction
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -99,3 +100,31 @@ def test_stranded_gas_reformulates_with_supported_gdp_transformations(
     model = build_model(case)
 
     TransformationFactory(transformation).apply_to(model)
+
+    assert not any(model.component_data_objects(Disjunction, active=True))
+    assert not any(model.component_data_objects(Disjunct, active=True))
+
+
+@pytest.mark.parametrize("case", [None, "Gas_100"])
+def test_stranded_gas_model_has_no_nonlinear_constraints(case):
+    # Regression guard: reintroducing the log-based learning constraint would
+    # make this fail loudly.
+    model = build_model(case)
+
+    assert all(
+        constraint.body.polynomial_degree() in (0, 1)
+        for constraint in model.component_data_objects(
+            Constraint, active=True, descend_into=(Disjunct,)
+        )
+    )
+
+
+def test_mismatched_purchase_count_selector_violates_matching_constraint():
+    model = build_model("Gas_100")
+    mtype = next(iter(model.module_types))
+
+    _set_purchase_count(model, mtype, 2)
+    model.purchase_count_selected[mtype, 2].set_value(0)
+    model.purchase_count_selected[mtype, 3].set_value(1)
+
+    assert abs(value(model.match_purchase_count[mtype].body)) > 1e-6
