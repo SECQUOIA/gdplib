@@ -30,6 +30,9 @@ def test_spectralog_reformulates_with_supported_gdp_transformations(transformati
 
     pyo.TransformationFactory(transformation).apply_to(model)
 
+    # Forward guard: the model currently declares no LogicalConstraint (its
+    # logic uses BooleanVar + associate_binary_var), so this only fires if
+    # future edits add one that a transformation fails to deactivate.
     assert not any(model.component_data_objects(pyo.LogicalConstraint, active=True))
     assert not any(model.component_data_objects(Disjunction, active=True))
     assert not any(model.component_data_objects(Disjunct, active=True))

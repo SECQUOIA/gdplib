@@ -24,12 +24,19 @@ P_UPPER_BOUND = 1000
 
 
 def _val_bounds(m, j):
-    """Bounds for each squared residual term under the source-scale P bounds."""
+    """Bounds for each squared residual term under the source-scale P bounds.
+
+    Assumes the committed data's identity ``R`` matrix (which makes ``val[j]``
+    a sum of squared residuals) and nonnegative ``A``/``C`` data; revisit if
+    ``m.R`` ever gains off-diagonal entries.
+    """
+    # Independent of compound k: the largest modeled signal sum(P * A) over
+    # the P box [0, P_UPPER_BOUND].
+    max_modeled_signal = P_UPPER_BOUND * sum(value(m.A[i, j]) for i in m.wave_number)
     residual_bound = 0
     for k in m.compounds:
         concentration = value(m.C[k, j]) / 100
-        max_absorbance = P_UPPER_BOUND * sum(value(m.A[i, j]) for i in m.wave_number)
-        max_residual = max(abs(concentration), abs(concentration - max_absorbance))
+        max_residual = max(abs(concentration), abs(concentration - max_modeled_signal))
         residual_bound += max_residual**2
     return 0, residual_bound
 
