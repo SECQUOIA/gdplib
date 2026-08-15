@@ -38,7 +38,6 @@ from pyomo.environ import *
 from pyomo.gdp import *
 from pyomo.util.infeasible import log_infeasible_constraints
 
-
 _logger = logging.getLogger(__name__)
 
 
