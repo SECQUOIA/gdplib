@@ -11,6 +11,7 @@ Optimal value: 12.0893
 """
 
 from pyomo.environ import *
+from pyomo.environ import value
 from pyomo.gdp import *
 from pyomo.core.expr.logical_expr import *
 from pyomo.core.plugins.transform.logical_to_linear import (
@@ -18,6 +19,26 @@ from pyomo.core.plugins.transform.logical_to_linear import (
 )
 from six import StringIO
 import pandas as pd
+
+P_UPPER_BOUND = 1000
+
+
+def _val_bounds(m, j):
+    """Bounds for each squared residual term under the source-scale P bounds.
+
+    Assumes the committed data's identity ``R`` matrix (which makes ``val[j]``
+    a sum of squared residuals) and nonnegative ``A``/``C`` data; revisit if
+    ``m.R`` ever gains off-diagonal entries.
+    """
+    # Independent of compound k: the largest modeled signal sum(P * A) over
+    # the P box [0, P_UPPER_BOUND].
+    max_modeled_signal = P_UPPER_BOUND * sum(value(m.A[i, j]) for i in m.wave_number)
+    residual_bound = 0
+    for k in m.compounds:
+        concentration = value(m.C[k, j]) / 100
+        max_residual = max(abs(concentration), abs(concentration - max_modeled_signal))
+        residual_bound += max_residual**2
+    return 0, residual_bound
 
 
 def build_model():
@@ -106,7 +127,9 @@ def build_model():
     )
 
     m.val = Var(
-        m.spectra_data, doc="Calculated objective values for each spectra data point"
+        m.spectra_data,
+        bounds=_val_bounds,
+        doc="Calculated objective values for each spectra data point",
     )
     m.ent = Var(
         m.compounds,
@@ -122,7 +145,7 @@ def build_model():
     m.P = Var(
         m.compounds,
         m.wave_number,
-        bounds=(0, 1000),
+        bounds=(0, P_UPPER_BOUND),
         doc="Continuous variables estimating the concentration level of each compound at each wave number.",
     )
 
@@ -146,7 +169,7 @@ def build_model():
         """
         return [
             [
-                m.P[k, i] <= 1000,
+                m.P[k, i] <= P_UPPER_BOUND,
                 m.P[k, i] >= 0,
                 m.ent[k, i] == 1,
             ],  # Conditions for the compound being active

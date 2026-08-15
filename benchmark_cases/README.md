@@ -23,7 +23,10 @@ Current tracked campaigns:
   GAMS profile: DICOPT for transformed/local MINLP roles, IPOPTH for NLP roles,
   and Gurobi for MIP roles. Rows may override the direct GAMS solver or GDPopt
   role solvers when a model/strategy is known to produce a linear MIP under this
-  profile.
+  profile. The `spectralog`/`gdpopt.enumerate` row is intentionally omitted
+  because the model has 30 independent disjunctions, which implies `2^30`
+  discrete realizations; Pyomo currently materializes that enumeration list
+  before enforcing `time_limit` (Pyomo/pyomo#3953).
 
 Run it with:
 
