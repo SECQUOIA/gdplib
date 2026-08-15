@@ -38,6 +38,9 @@ def _time_periods(model):
 
 
 def _constraints_satisfied(block, tolerance=1e-8):
+    # Walks every active constraint on the block, so it assumes all of the
+    # block's constraints are evaluable at the values the caller set; future
+    # constraints added to these disjuncts widen this test's scope implicitly.
     for constraint in block.component_data_objects(pyo.Constraint, active=True):
         body = pyo.value(constraint.body)
         if (
@@ -54,15 +57,15 @@ def _constraints_satisfied(block, tolerance=1e-8):
 
 
 @pytest.mark.parametrize("case", DISTRIBUTED_CASES)
+@pytest.mark.parametrize(("site1", "site2"), [(1, 2), (1, 3), (2, 3)])
 @pytest.mark.parametrize(
     ("site1_active", "site2_active", "expected"),
     [(0, 0, True), (1, 0, True), (0, 1, True), (1, 1, False)],
 )
 def test_pair_inactive_represents_not_both_sites_active(
-    case, site1_active, site2_active, expected
+    case, site1, site2, site1_active, site2_active, expected
 ):
     model = build_model(case)
-    site1, site2 = 1, 2
     model.site_active[site1].binary_indicator_var.set_value(site1_active)
     model.site_active[site2].binary_indicator_var.set_value(site2_active)
     for period in _time_periods(model):

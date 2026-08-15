@@ -302,6 +302,9 @@ def build_modular_model():
             <= 1
         )
 
+        # Logically redundant with site_inactive[site].no_module_transfer, but
+        # kept deliberately: it tightens the continuous relaxation of the
+        # pair disjunction at no modeling cost.
         disj.no_module_transfer = Constraint(
             expr=sum(m.modules_transferred[site1, site2, qtr] for qtr in m.quarters)
             == 0
