@@ -43,8 +43,8 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/grossmann-group/gdplib"
-Repository = "https://github.com/grossmann-group/gdplib"
+Homepage = "https://github.com/SECQUOIA/gdplib"
+Repository = "https://github.com/SECQUOIA/gdplib"
 
 [project.scripts]
 gdplib-benchmark = "gdplib.benchmark:main"
