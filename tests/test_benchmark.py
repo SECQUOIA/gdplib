@@ -104,11 +104,34 @@ def test_gdpopt_model_initialization_kwargs_use_custom_disjuncts(strategy):
 
     model = gdplib.positioning.build_model()
 
-    kwargs = _gdpopt_model_initialization_kwargs(model, strategy)
+    kwargs = _gdpopt_model_initialization_kwargs(model, strategy, custom_init=True)
 
     assert kwargs["init_algorithm"] == "custom_disjuncts"
     assert len(kwargs["custom_init_disjuncts"]) == 1
     assert len(kwargs["custom_init_disjuncts"][0]) == len(model.consumers)
+
+    # Supported strategies must accept the warm-start kwargs without a solve.
+    solve_kwargs = _gdpopt_solve_kwargs(
+        30,
+        "gams",
+        "dicopt",
+        gams_nlp_solver="ipopth",
+        gams_mip_solver="gurobi",
+        gams_minlp_solver="dicopt",
+        gams_local_minlp_solver="dicopt",
+    )
+    solve_kwargs.update(kwargs)
+    pyo.SolverFactory(strategy).CONFIG().set_value(solve_kwargs)
+
+
+def test_gdpopt_custom_initialization_is_opt_in():
+    import gdplib.positioning
+
+    model = gdplib.positioning.build_model()
+
+    # Default is cold start even when the model provides an initial set.
+    for strategy in sorted(GDPOPT_CUSTOM_INIT_STRATEGIES):
+        assert _gdpopt_model_initialization_kwargs(model, strategy) == {}
 
 
 def test_gdpopt_custom_initialization_is_not_passed_to_unsupported_strategies():
@@ -117,10 +140,14 @@ def test_gdpopt_custom_initialization_is_not_passed_to_unsupported_strategies():
     model = gdplib.positioning.build_model()
 
     unsupported_strategies = set(DEFAULT_STRATEGIES) - GDPOPT_CUSTOM_INIT_STRATEGIES
-    assert _gdpopt_model_initialization_kwargs(model, "gdpopt.enumerate") == {}
-    assert _gdpopt_model_initialization_kwargs(model, "gdpopt.lbb") == {}
+    for strategy in ("gdpopt.enumerate", "gdpopt.lbb"):
+        assert (
+            _gdpopt_model_initialization_kwargs(model, strategy, custom_init=True) == {}
+        )
     for strategy in unsupported_strategies:
-        assert _gdpopt_model_initialization_kwargs(model, strategy) == {}
+        assert (
+            _gdpopt_model_initialization_kwargs(model, strategy, custom_init=True) == {}
+        )
 
 
 def test_gdpopt_unsupported_initialization_strategies_accept_benchmark_kwargs():
@@ -138,7 +165,9 @@ def test_gdpopt_unsupported_initialization_strategies_accept_benchmark_kwargs():
             gams_minlp_solver="dicopt",
             gams_local_minlp_solver="dicopt",
         )
-        kwargs.update(_gdpopt_model_initialization_kwargs(model, strategy))
+        kwargs.update(
+            _gdpopt_model_initialization_kwargs(model, strategy, custom_init=True)
+        )
 
         pyo.SolverFactory(strategy).CONFIG().set_value(kwargs)
 
