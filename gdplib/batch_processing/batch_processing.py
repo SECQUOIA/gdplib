@@ -64,10 +64,12 @@ def build_model():
     StorageTankSizeUB = log(15000)
     UnitsInPhaseUB = log(6)
     UnitsOutOfPhaseUB = log(6)
+    # Log-space batch-size box carried over from the original GAMS source
+    # (Batch101006_BM.gms, not committed here); the cycleTime_log bounds
+    # derived in get_cycleTime_bounds below depend on this upper bound.
+    # TODO: trace the remaining GAMS bounds for the other log-space variables.
     BatchSizeLogLB = 0
     BatchSizeLogUB = 10
-    # TODO: YOU ARE HERE. YOU HAVEN'T ACTUALLY MADE THESE THE BOUNDS YET, NOR HAVE YOU FIGURED OUT WHOSE
-    # BOUNDS THEY ARE. AND THERE ARE MORE IN GAMS.
 
     # Sets
 

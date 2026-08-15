@@ -8,7 +8,34 @@ from pyomo.gdp import Disjunct, Disjunction
 from pyomo.opt import TerminationCondition
 
 from gdplib.batch_processing import build_model
-from gdplib.benchmark import _gdpopt_solve_kwargs
+
+
+def _gloa_gams_baron_kwargs(timelimit):
+    """Self-contained GDPopt kwargs for the GAMS/BARON smoke test.
+
+    Kept independent of gdplib.benchmark internals so benchmark refactors
+    cannot break this model regression test.
+    """
+
+    def _solver_args():
+        return dict(
+            solver="baron",
+            add_options=[f"option reslim={timelimit};", "option optcr=1e-6;"],
+            tee=False,
+        )
+
+    return {
+        "tee": False,
+        "time_limit": timelimit,
+        "nlp_solver": "gams",
+        "nlp_solver_args": _solver_args(),
+        "mip_solver": "gams",
+        "mip_solver_args": _solver_args(),
+        "minlp_solver": "gams",
+        "minlp_solver_args": _solver_args(),
+        "local_minlp_solver": "gams",
+        "local_minlp_solver_args": _solver_args(),
+    }
 
 
 def test_batch_processing_cycle_time_log_has_finite_source_bounds():
@@ -47,6 +74,9 @@ def test_batch_processing_reformulates_with_supported_gdp_transformations(
 
     pyo.TransformationFactory(transformation).apply_to(model)
 
+    # Forward guard: the model currently declares no LogicalConstraint (its
+    # XORs are algebraic), so this only fires if future edits add one that a
+    # transformation then fails to deactivate.
     assert not any(model.component_data_objects(pyo.LogicalConstraint, active=True))
     assert not any(model.component_data_objects(Disjunction, active=True))
     assert not any(model.component_data_objects(Disjunct, active=True))
@@ -61,15 +91,7 @@ def test_batch_processing_gloa_runs_with_gams_baron():
         pytest.skip("GAMS solver interface is not available")
 
     model = build_model()
-    kwargs = _gdpopt_solve_kwargs(20, "gams", "baron")
-    kwargs["tee"] = False
-    for key in (
-        "nlp_solver_args",
-        "mip_solver_args",
-        "minlp_solver_args",
-        "local_minlp_solver_args",
-    ):
-        kwargs[key]["tee"] = False
+    kwargs = _gloa_gams_baron_kwargs(20)
 
     results = pyo.SolverFactory("gdpopt.gloa").solve(model, **kwargs)
 
