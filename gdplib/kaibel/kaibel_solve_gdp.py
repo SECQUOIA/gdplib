@@ -174,6 +174,12 @@ def build_model():
             m.Ltotal0[sec, n_tray] = sum(m.L0[sec, n_tray, comp] for comp in m.comp)
             m.Vtotal0[sec, n_tray] = sum(m.V0[sec, n_tray, comp] for comp in m.comp)
 
+    # Deliberate widening: the total-flow upper bound is raised from flow_max
+    # (1000 mol/s) to contain the initialization totals (up to 1600 mol/s for
+    # 4 components at Li = Vi = 400), so warm starts are feasible w.r.t.
+    # bounds. This enlarges the feasible region relative to the published
+    # benchmark, so optimal objectives are not directly comparable with
+    # earlier gdplib versions.
     m.total_flow_max = max(m.flow_max, max(m.Ltotal0.values()), max(m.Vtotal0.values()))
 
     for n_tray in m.tray_total:
@@ -363,7 +369,7 @@ def build_model():
         m.section,
         m.tray,
         m.comp,
-        doc="Reduced temperature term for vapor pressure",
+        doc="Inverse reduced temperature TC/T for vapor pressure",
         domain=NonNegativeReals,
         bounds=_reduced_temperature_term_bounds,
         initialize=m.Tr0,
@@ -775,7 +781,9 @@ def build_model():
         """
         return sum(m.dv[sec] for sec in m.dw) - 1 == 0
 
-    @m.Constraint(m.section, m.tray, m.comp, doc="Reduced temperature term")
+    @m.Constraint(
+        m.section, m.tray, m.comp, doc="Inverse reduced temperature Tr = TC/T"
+    )
     def _reduced_temperature_term(m, sec, n_tray, comp):
         return m.Tr[sec, n_tray, comp] * m.T[sec, n_tray] == m.prop[comp, "TC"]
 
