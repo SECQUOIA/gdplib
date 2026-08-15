@@ -25,6 +25,16 @@ def test_hda_build_uses_bounded_initial_values(caplog):
     assert "Setting Var" not in messages
 
 
+def test_hda_unconverted_lifting_consistent_at_initialization():
+    model = gdplib.hda.build_model()
+
+    for rct in model.rct:
+        assert pyo.value(model.unconverted[rct]) == pytest.approx(
+            1 - pyo.value(model.conv[rct, "tol"])
+        )
+        assert pyo.value(model.unconverted_eqn[rct].body) == pytest.approx(0)
+
+
 @pytest.mark.parametrize("transformation", ["gdp.bigm", "gdp.hull"])
 def test_hda_reformulates_with_supported_gdp_transformations(transformation):
     model = gdplib.hda.build_model()

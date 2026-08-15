@@ -14,12 +14,22 @@ The model enforces constraints to ensure that the mass and energy balances are s
 
 The objective of the model is to maximize the profit by determining the optimal process configuration and operating conditions. The decision variables include the number of trays in the absorber and distillation column, the reflux ratio, the pressure in the distillation column, the temperature and pressure in the flash drums, the heating requirement in the furnace, the electricity requirement in the compressor, the heat exchange in the coolers and heaters, the surface area in the membrane separators, the temperature and pressure in the mixers, the temperature and pressure in the reactors, and the volume and rate constant in the reactors.
 
+Numerical notes:
+    Several nonlinear constraints add the small constant ``eps1`` (1e-4) inside
+    fractional-power and exponential terms so the hull reformulation stays
+    evaluable at disaggregated-zero points. Most insertions are relatively
+    negligible (~1e-7), but the selectivity constraint's
+    ``(unconverted + eps1) ** -1.544`` perturbs ``(1 - sel)`` by up to ~0.6%
+    at the maximum conversion of 0.973. This is a deliberate model
+    perturbation accepted for hull/GLOA robustness.
+
 References:
     [1] James M Douglas (1988). Conceptual Design of Chemical Processes, McGraw-Hill. ISBN-13: 978-0070177628
     [2] G.R. Kocis, and I.E. Grossmann (1989). Computational Experience with DICOPT Solving MINLP Problems in Process Synthesis. Computers and Chemical Engineering 13, 3, 307-315. https://doi.org/10.1016/0098-1354(89)85008-2
     [3] GAMS Development Corporation (2023). Hydrodealkylation Process. Available at: https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_hda.html
 """
 
+import logging
 import math
 import os
 import pandas as pd
@@ -29,12 +39,23 @@ from pyomo.gdp import *
 from pyomo.util.infeasible import log_infeasible_constraints
 
 
+_logger = logging.getLogger(__name__)
+
+
 def _set_within_bounds(var_data, new_value):
-    new_value = value(new_value)
+    requested = value(new_value)
+    new_value = requested
     if var_data.has_lb():
         new_value = max(new_value, value(var_data.lb))
     if var_data.has_ub():
         new_value = min(new_value, value(var_data.ub))
+    if not math.isclose(new_value, requested, rel_tol=1e-9, abs_tol=1e-12):
+        _logger.debug(
+            "Clamped initial value of %s from %g to %g",
+            var_data.name,
+            requested,
+            new_value,
+        )
     var_data.set_value(new_value)
 
 
