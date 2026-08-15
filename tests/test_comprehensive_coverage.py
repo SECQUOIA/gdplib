@@ -32,6 +32,7 @@ class TestComprehensiveCoverage:
         "disease_model",
         "ex1_linan_2023",
         "gdp_col",
+        "grid",
         "hda",
         "jobshop",
         "kaibel",
@@ -47,6 +48,7 @@ class TestComprehensiveCoverage:
         "syngas",
         "water_network",
         "multiperiod_blending",
+        "pandemic",
     ]
 
     def test_coverage_statistics_report(self):
