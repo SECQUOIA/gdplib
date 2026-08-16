@@ -1194,22 +1194,32 @@ def HDA_model():
     m.t[16].setub(8.943)
     m.t[66].setlb(3.0)
 
+    # Antoine-implied bounds are outer-approximated by a 1e-7 relative margin:
+    # they are derived quantities, and exact lb == ub pins (at fixed-temperature
+    # streams) get constant-folded by solver presolves with zero tolerance, so
+    # ulp-level float differences between the bound and equation evaluation
+    # paths would otherwise read as infeasibility.
+    def _outer(lo, hi):
+        pad_lo = max(1e-10, 1e-7 * abs(lo))
+        pad_hi = max(1e-10, 1e-7 * abs(hi))
+        return lo - pad_lo, hi + pad_hi
+
     for stream in m.str:
         for compon in m.compon:
-            m.vp[stream, compon].setlb(
+            _vp_lo, _vp_hi = _outer(
                 (1.0 / 7500.6168)
                 * exp(
                     m.anta[compon]
                     - m.antb[compon] / (m.t[stream].lb * 100.0 + m.antc[compon])
-                )
-            )
-            m.vp[stream, compon].setub(
+                ),
                 (1.0 / 7500.6168)
                 * exp(
                     m.anta[compon]
                     - m.antb[compon] / (m.t[stream].ub * 100.0 + m.antc[compon])
-                )
+                ),
             )
+            m.vp[stream, compon].setlb(_vp_lo)
+            m.vp[stream, compon].setub(_vp_hi)
 
     # Log-space vapor pressure auxiliary lnvp = log(vp * 7500.6168). The
     # Antoine relations are written as a pole-free bilinear equation defining
@@ -1237,16 +1247,16 @@ def HDA_model():
     )
     for stream in m.str:
         for compon in m.compon:
-            m.lnvp[stream, compon].setlb(
+            _ln_lo, _ln_hi = _outer(
                 m.anta[compon]
                 - m.antb[compon] / (m.t[stream].lb * 100.0 + m.antc[compon])
-                - value(m.lnvp_shift)
-            )
-            m.lnvp[stream, compon].setub(
+                - value(m.lnvp_shift),
                 m.anta[compon]
                 - m.antb[compon] / (m.t[stream].ub * 100.0 + m.antc[compon])
-                - value(m.lnvp_shift)
+                - value(m.lnvp_shift),
             )
+            m.lnvp[stream, compon].setlb(_ln_lo)
+            m.lnvp[stream, compon].setub(min(0.0, _ln_hi))
             m.lnvp[stream, compon].set_value(m.lnvp[stream, compon].lb)
 
     m.p[1].setub(3.93)
@@ -3536,6 +3546,21 @@ def HDA_model():
 
     #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.methane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coefficient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coefficient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.binary_indicator_var + m.recycle_hydrogen.binary_indicator_var + m.absorber_hydrogen.binary_indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.binary_indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var + m.adiabtic_reactor_linear_coefficient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.binary_indicator_var + m.isothermal_reactor_linear_coefficient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.binary_indicator_var +m.stabilizing_column_linear_coefficient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coefficient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.binary_indicator_var + m.toluene_column_linear_coefficient * m.ndist[3]) - (m.membrane_separator_fixed_cost * m.purify_H2.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[3]) - (m.membrane_separator_fixed_cost * m.recycle_methane_membrane.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[54]) - (3.0 * m.absorber_hydrogen.binary_indicator_var + m.abs_linear_coefficient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coefficient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
     # m.obj = Objective(rule=profits_GAMS_file, sense=maximize)
+
+    # Solver presolves constant-fold variables pinned by lb == ub and apply
+    # zero tolerance to the resulting constant equations, so ulp-level float
+    # residues between different evaluation paths of the same quantity read
+    # as infeasibility. Represent every pinned value as a tiny outer interval
+    # instead (1e-7 relative width — far below physical precision).
+    for pinned_var in m.component_data_objects(Var, descend_into=True):
+        if (
+            pinned_var.lb is not None
+            and pinned_var.ub is not None
+            and pinned_var.lb == pinned_var.ub
+        ):
+            pinned_lo, pinned_hi = _outer(pinned_var.lb, pinned_var.ub)
+            pinned_var.setlb(pinned_lo)
+            pinned_var.setub(pinned_hi)
 
     return m
 
