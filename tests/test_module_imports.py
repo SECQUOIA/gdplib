@@ -33,6 +33,7 @@ class TestModuleImports:
         "spectralog",
         "stranded_gas",
         "gdp_col",
+        "grid",
         "hda",
         "kaibel",
         "methanol",
@@ -47,6 +48,7 @@ class TestModuleImports:
         "cstr",
         "reverse_electrodialysis",
         "multiperiod_blending",
+        "pandemic",
     ]
 
     @pytest.mark.parametrize("module_name", GDPLIB_MODULES)

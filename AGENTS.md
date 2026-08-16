@@ -119,11 +119,13 @@ These instructions apply to the whole repository.
   instances, use `Best known objective values:` followed by one entry per case.
   If a value is not proven optimal, say "best known" rather than "optimal" and
   include the solver status or gap when known.
-- When adding or changing documented solution values, try to reproduce them with
-  the model's existing solve path or a focused Pyomo script, preferably inside
-  the Pixi environment. Record the model instance/formulation, transformation,
-  solver interface, solver, termination condition, objective value, and any gap
-  or infeasibility evidence in the PR or issue discussion.
+- When adding or changing documented solution values or model-specific
+  benchmark seeds such as GDPOpt initial disjunct sets, try to reproduce them
+  with the model's existing solve path or a focused Pyomo script, preferably
+  inside the Pixi environment. Record the model instance/formulation,
+  transformation, solver interface, solver, termination condition, objective
+  value, discrete selections, and any gap or infeasibility evidence in the PR
+  or issue discussion.
 - Keep solver-backed solution verification separate from default model
   construction tests. GAMS, BARON, IPOPT, and similar tools are optional, so do
   not make default imports, model construction, or CI tests depend on them
@@ -160,7 +162,10 @@ These instructions apply to the whole repository.
 - For GDPOpt dispatcher calls through `SolverFactory("gdpopt").solve(...)`,
   use `algorithm=...` instead of the deprecated top-level `strategy=...`.
   Verify current Pyomo option names in the committed environment before
-  updating less common GDPOpt options.
+  updating less common GDPOpt options. For strategy-specific GDPOpt options,
+  check `SolverFactory(strategy).CONFIG()` or validate kwargs with
+  `CONFIG().set_value(...)`, and gate options per strategy because GDPOpt
+  variants do not all share the same config surface.
 - For ordered Pyomo `Set` positional access, use `set.at(index)` when the
   intent is positional lookup. Do not rely on deprecated `set[index]` behavior.
 - Add focused warning-regression tests for deprecation cleanup. Prefer

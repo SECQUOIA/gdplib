@@ -26,6 +26,7 @@ if __name__ == "__main__":
             "scipy>=1.0.0",
             "pint>=0.15.0",
             "openpyxl>=3.0.0",
+            "sympy>=1.0",
         ],
         python_requires=">=3.10, <3.13",
         entry_points={"console_scripts": ["gdplib-benchmark=gdplib.benchmark:main"]},
