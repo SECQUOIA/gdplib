@@ -1195,6 +1195,44 @@ def HDA_model():
                 )
             )
 
+    # Log-space vapor pressure auxiliary lnvp = log(vp * 7500.6168). The
+    # Antoine relations are written as a pole-free bilinear equation defining
+    # lnvp plus a bounded exponential vp * 7500.6168 == exp(lnvp), so that
+    # neither Big-M estimation nor hull's perspective correction ever
+    # evaluates exp at a huge argument (the direct exp form produced ~1e31
+    # constants at hull's disaggregated-zero point and broke global solvers).
+    # The shift keeps lnvp globally nonpositive, so hull's perspective
+    # substitution lnvp/((1-eps)*y + eps) can only drive exp() toward zero
+    # (harmless underflow) instead of overflowing for high-vapor-pressure
+    # streams.
+    _lnvp_max = max(
+        value(m.anta[compon])
+        - value(m.antb[compon]) / (m.t[stream].ub * 100.0 + value(m.antc[compon]))
+        for stream in m.str
+        for compon in m.compon
+    )
+    m.lnvp_shift = Param(
+        initialize=_lnvp_max, doc="Constant shift keeping lnvp nonpositive"
+    )
+    m.lnvp = Var(
+        m.str,
+        m.compon,
+        doc="Shifted log vapor pressure, lnvp = log(vp * 7500.6168) - lnvp_shift",
+    )
+    for stream in m.str:
+        for compon in m.compon:
+            m.lnvp[stream, compon].setlb(
+                m.anta[compon]
+                - m.antb[compon] / (m.t[stream].lb * 100.0 + m.antc[compon])
+                - value(m.lnvp_shift)
+            )
+            m.lnvp[stream, compon].setub(
+                m.anta[compon]
+                - m.antb[compon] / (m.t[stream].ub * 100.0 + m.antc[compon])
+                - value(m.lnvp_shift)
+            )
+            m.lnvp[stream, compon].set_value(m.lnvp[stream, compon].lb)
+
     m.p[1].setub(3.93)
     m.p[1].setlb(3.93)
     m.f[31].setlb(2.08)
@@ -1637,11 +1675,13 @@ def HDA_model():
                 and (dist_, compon) in m.dkey
                 and dist_ == dist
             ):
-                return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match + m.eps1
-                ) == m.anta[compon] - m.antb[compon] / (
+                # Pole-free bilinear Antoine: defines lnvp exactly, with only
+                # modest constants under Big-M and hull (see m.lnvp).
+                return (m.lnvp[stream, compon] + m.lnvp_shift) * (
                     m.t[stream] * 100.0 + m.antc[compon]
-                )
+                ) == m.anta[compon] * (m.t[stream] * 100.0 + m.antc[compon]) - m.antb[
+                    compon
+                ]
             return Constraint.Skip
 
         b.antdistb = Constraint(
@@ -1652,17 +1692,37 @@ def HDA_model():
             doc="vapor pressure correlation (bottom)",
         )
 
+        def Antdistbexp(_m, dist_, stream, compon):
+            if (
+                (dist_, stream) in m.ldist
+                and (dist_, compon) in m.dkey
+                and dist_ == dist
+            ):
+                return m.vp[stream, compon] * m.vapor_pressure_unit_match == math.exp(
+                    value(m.lnvp_shift)
+                ) * exp(m.lnvp[stream, compon])
+            return Constraint.Skip
+
+        b.antdistbexp = Constraint(
+            [dist],
+            m.str,
+            m.compon,
+            rule=Antdistbexp,
+            doc="vapor pressure from log form (bottom)",
+        )
+
         def Antdistt(_m, dist_, stream, compon):
             if (
                 (dist_, stream) in m.vdist
                 and (dist_, compon) in m.dkey
                 and dist == dist_
             ):
-                return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match + m.eps1
-                ) == m.anta[compon] - m.antb[compon] / (
+                # Pole-free bilinear Antoine: see Antdistb and m.lnvp.
+                return (m.lnvp[stream, compon] + m.lnvp_shift) * (
                     m.t[stream] * 100.0 + m.antc[compon]
-                )
+                ) == m.anta[compon] * (m.t[stream] * 100.0 + m.antc[compon]) - m.antb[
+                    compon
+                ]
             return Constraint.Skip
 
         b.antdistt = Constraint(
@@ -1671,6 +1731,25 @@ def HDA_model():
             m.compon,
             rule=Antdistt,
             doc="vapor pressure correlation (top)",
+        )
+
+        def Antdisttexp(_m, dist_, stream, compon):
+            if (
+                (dist_, stream) in m.vdist
+                and (dist_, compon) in m.dkey
+                and dist == dist_
+            ):
+                return m.vp[stream, compon] * m.vapor_pressure_unit_match == math.exp(
+                    value(m.lnvp_shift)
+                ) * exp(m.lnvp[stream, compon])
+            return Constraint.Skip
+
+        b.antdisttexp = Constraint(
+            [dist],
+            m.str,
+            m.compon,
+            rule=Antdisttexp,
+            doc="vapor pressure from log form (top)",
         )
 
         def Relvol(_m, dist_):
@@ -1920,15 +1999,33 @@ def HDA_model():
 
         def Antflsh(_m, flsh_, stream, compon):
             if (flsh_, stream) in m.lflsh and flsh_ == flsh:
-                return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match + m.eps1
-                ) == m.anta[compon] - m.antb[compon] / (
+                # Pole-free bilinear Antoine: defines lnvp exactly (no eps1
+                # perturbation; the eps1-in-log form was unsatisfiable
+                # whenever vp sat at an Antoine-derived bound). See m.lnvp.
+                return (m.lnvp[stream, compon] + m.lnvp_shift) * (
                     m.t[stream] * 100.0 + m.antc[compon]
-                )
+                ) == m.anta[compon] * (m.t[stream] * 100.0 + m.antc[compon]) - m.antb[
+                    compon
+                ]
             return Constraint.Skip
 
         b.antflsh = Constraint(
             [flsh], m.str, m.compon, rule=Antflsh, doc="flash pressure relation"
+        )
+
+        def Antflshexp(_m, flsh_, stream, compon):
+            if (flsh_, stream) in m.lflsh and flsh_ == flsh:
+                return m.vp[stream, compon] * m.vapor_pressure_unit_match == math.exp(
+                    value(m.lnvp_shift)
+                ) * exp(m.lnvp[stream, compon])
+            return Constraint.Skip
+
+        b.antflshexp = Constraint(
+            [flsh],
+            m.str,
+            m.compon,
+            rule=Antflshexp,
+            doc="vapor pressure from log form (flash)",
         )
 
         def Flshrec(_m, flsh_, stream, compon):
@@ -2767,8 +2864,12 @@ def HDA_model():
         )
 
         def rxnrate(_m, rct):
-            return m.krct[rct] == m.Prereference_factor * exp(
-                m.Ea_R / (m.rctt[rct] * 100.0 + m.eps1)
+            # Prefactor folded into the exponent: exp(24.87 + Ea_R/T) keeps
+            # every constant modest (the 6.3e10 multiplier produced a huge
+            # matrix coefficient range that destabilized global solvers).
+            return m.krct[rct] == exp(
+                math.log(value(m.Prereference_factor))
+                + m.Ea_R / (m.rctt[rct] * 100.0 + m.eps1)
             )
 
         b.Rxnrate = Constraint([rct], rule=rxnrate, doc="reaction rate constant")
