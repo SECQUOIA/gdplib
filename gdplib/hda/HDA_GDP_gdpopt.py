@@ -15,13 +15,18 @@ The model enforces constraints to ensure that the mass and energy balances are s
 The objective of the model is to maximize the profit by determining the optimal process configuration and operating conditions. The decision variables include the number of trays in the absorber and distillation column, the reflux ratio, the pressure in the distillation column, the temperature and pressure in the flash drums, the heating requirement in the furnace, the electricity requirement in the compressor, the heat exchange in the coolers and heaters, the surface area in the membrane separators, the temperature and pressure in the mixers, the temperature and pressure in the reactors, and the volume and rate constant in the reactors.
 
 Numerical notes:
-    Several nonlinear constraints add the small constant ``eps1`` (1e-4) inside
-    fractional-power and exponential terms so the hull reformulation stays
-    evaluable at disaggregated-zero points. Most insertions are relatively
-    negligible (~1e-7), but the selectivity constraint's
-    ``(unconverted + eps1) ** -1.544`` perturbs ``(1 - sel)`` by up to ~0.6%
-    at the maximum conversion of 0.973. This is a deliberate model
-    perturbation accepted for hull/GLOA robustness.
+    The Antoine, Arrhenius, selectivity, and membrane-flux relations are
+    written in exact, eps-free forms (bounded log auxiliaries, positive
+    powers, and mole-fraction variables) that stay evaluable and modest in
+    magnitude under Big-M estimation and hull's perspective reformulation.
+    A small constant ``eps1`` (1e-4) remains only where an exact form would
+    lose boundedness at a genuine zero-flow or zero-tray singularity: the
+    Fenske ratios ``(f + eps1)/(fc + eps1)`` (key-component flows may
+    approach zero), the reactor conversion powers of ``f`` (flow in a
+    denominator power), and the Kremser gamma ``log`` (singular at
+    ``nabs = 0``). These guards regularize limit points outside normal
+    operation; they perturb active-unit algebra by at most ~1e-4 relative
+    except when a guarded quantity itself approaches zero.
 
 References:
     [1] James M Douglas (1988). Conceptual Design of Chemical Processes, McGraw-Hill. ISBN-13: 978-0070177628
@@ -859,6 +864,17 @@ def HDA_model():
         bounds=(0.0123471, 0.149543),
         doc="rate constant",
     )
+    # lnkrct = log(krct); defined through a pole-free bilinear Arrhenius
+    # relation so no eps guard or huge prefactor constant is needed.
+    m.lnkrct = Var(
+        m.rct,
+        bounds=(
+            math.log(6.3e10) - 26167.0 / (8.9427 * 100.0),
+            math.log(6.3e10) - 26167.0 / (9.7760 * 100.0),
+        ),
+        initialize=math.log(0.0123471),
+        doc="log of rate constant",
+    )
     m.conv = Var(
         m.rct,
         m.compon,
@@ -1119,7 +1135,7 @@ def HDA_model():
         for compon in m.compon:
             m.beta[abso, compon].setlb(
                 log(
-                    (1 - m.aabs[compon] ** (m.nabs[1].lb * m.abseff + m.eps1 + 1))
+                    (1 - m.aabs[compon] ** (m.nabs[1].lb * m.abseff + 1))
                     / (1 - m.aabs[compon])
                 )
             )
@@ -1127,7 +1143,7 @@ def HDA_model():
                 min(
                     15,
                     log(
-                        (1 - m.aabs[compon] ** (m.nabs[1].ub * m.abseff + m.eps1 + 1))
+                        (1 - m.aabs[compon] ** (m.nabs[1].ub * m.abseff + 1))
                         / (1 - m.aabs[compon])
                     ),
                 )
@@ -2451,6 +2467,32 @@ def HDA_model():
         membrane : int
             Index of the membrane
         """
+        memb_streams = [
+            stream
+            for pairs in (m.imemb, m.nmemb, m.pmemb)
+            for (memb_, stream) in pairs
+            if memb_ == membrane
+        ]
+        # Component mole fractions of the membrane streams. The bilinear
+        # definition fc == y * f is exact and pole-free, replacing the
+        # eps-regularized ratios (fc + eps)/(f + eps) in the flux relation.
+        b.molefrac = Var(
+            memb_streams,
+            m.compon,
+            bounds=(0, 1),
+            initialize=0.2,
+            doc="component mole fraction of membrane streams",
+        )
+
+        def Molefrac_defn(_m, stream, compon):
+            return m.fc[stream, compon] == b.molefrac[stream, compon] * m.f[stream]
+
+        b.molefrac_defn = Constraint(
+            memb_streams,
+            m.compon,
+            rule=Molefrac_defn,
+            doc="mole fraction definition",
+        )
 
         def Memcmb(_m, memb, stream, compon):
             if (memb, stream) in m.imemb and memb == membrane:
@@ -2479,20 +2521,17 @@ def HDA_model():
                     sum(m.p[stream2] for (memb_, stream2) in m.imemb if memb_ == memb)
                     * (
                         sum(
-                            (m.fc[stream2, compon] + m.eps1) / (m.f[stream2] + m.eps1)
+                            b.molefrac[stream2, compon]
                             for (memb_, stream2) in m.imemb
                             if memb_ == memb
                         )
                         + sum(
-                            (m.fc[stream2, compon] + m.eps1) / (m.f[stream2] + m.eps1)
+                            b.molefrac[stream2, compon]
                             for (memb_, stream2) in m.nmemb
                             if memb_ == memb
                         )
                     )
-                    - 2.0
-                    * m.p[stream]
-                    * (m.fc[stream, compon] + m.eps1)
-                    / (m.f[stream] + m.eps1)
+                    - 2.0 * m.p[stream] * b.molefrac[stream, compon]
                 )
             return Constraint.Skip
 
@@ -2863,14 +2902,22 @@ def HDA_model():
             [rct], m.str, rule=rctspec, doc="specification on reactor feed stream"
         )
 
-        def rxnrate(_m, rct):
-            # Prefactor folded into the exponent: exp(24.87 + Ea_R/T) keeps
-            # every constant modest (the 6.3e10 multiplier produced a huge
-            # matrix coefficient range that destabilized global solvers).
-            return m.krct[rct] == exp(
-                math.log(value(m.Prereference_factor))
-                + m.Ea_R / (m.rctt[rct] * 100.0 + m.eps1)
+        def rxnratelog(_m, rct):
+            # Arrhenius in log space, multiplied through by the temperature so
+            # there is no division (no eps guard needed) and no huge prefactor
+            # constant: lnkrct * T = ln(A) * T + Ea_R.
+            return (
+                m.lnkrct[rct] * (m.rctt[rct] * 100.0)
+                == math.log(value(m.Prereference_factor)) * (m.rctt[rct] * 100.0)
+                + m.Ea_R
             )
+
+        b.Rxnratelog = Constraint(
+            [rct], rule=rxnratelog, doc="log rate constant definition"
+        )
+
+        def rxnrate(_m, rct):
+            return m.krct[rct] == exp(m.lnkrct[rct])
 
         b.Rxnrate = Constraint([rct], rule=rxnrate, doc="reaction rate constant")
 
@@ -2898,9 +2945,11 @@ def HDA_model():
         )
 
         def rctsel(_m, rct):
-            return (1.0 - m.sel[rct]) == m.selectivity_1 * (
-                (m.unconverted[rct] + m.eps1) ** m.selectivity_2
-            )
+            # Multiplied through by unconverted**1.544 so the exponent is
+            # positive: exact (no eps perturbation) and evaluable at zero.
+            return (1.0 - m.sel[rct]) * m.unconverted[rct] ** (
+                -m.selectivity_2
+            ) == m.selectivity_1
 
         b.Rctsel = Constraint([rct], rule=rctsel, doc="selectivity to benzene")
 
