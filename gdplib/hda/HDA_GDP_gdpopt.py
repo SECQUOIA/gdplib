@@ -2903,14 +2903,12 @@ def HDA_model():
         )
 
         def rxnratelog(_m, rct):
-            # Arrhenius in log space, multiplied through by the temperature so
-            # there is no division (no eps guard needed) and no huge prefactor
-            # constant: lnkrct * T = ln(A) * T + Ea_R.
-            return (
-                m.lnkrct[rct] * (m.rctt[rct] * 100.0)
-                == math.log(value(m.Prereference_factor)) * (m.rctt[rct] * 100.0)
-                + m.Ea_R
-            )
+            # Arrhenius in log space as a single cancellation-free bilinear:
+            # (lnkrct - ln(A)) * T == Ea_R, with no division (no eps guard)
+            # and no huge prefactor constant.
+            return (m.lnkrct[rct] - math.log(value(m.Prereference_factor))) * (
+                m.rctt[rct] * 100.0
+            ) == m.Ea_R
 
         b.Rxnratelog = Constraint(
             [rct], rule=rxnratelog, doc="log rate constant definition"
