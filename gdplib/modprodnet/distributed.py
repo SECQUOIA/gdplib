@@ -280,13 +280,15 @@ def build_modular_model():
 
     @m.Disjunct(m.unique_site_pairs)
     def pair_inactive(disj, site1, site2):
-        disj.site1_inactive = Constraint(
-            expr=m.site_active[site1].binary_indicator_var == 0
-        )
-        disj.site2_inactive = Constraint(
-            expr=m.site_active[site2].binary_indicator_var == 0
+        disj.not_both_sites_active = Constraint(
+            expr=m.site_active[site1].binary_indicator_var
+            + m.site_active[site2].binary_indicator_var
+            <= 1
         )
 
+        # Logically redundant with site_inactive[site].no_module_transfer, but
+        # kept deliberately: it tightens the continuous relaxation of the
+        # pair disjunction at no modeling cost.
         disj.no_module_transfer = Constraint(
             expr=sum(m.modules_transferred[site1, site2, mo] for mo in m.months) == 0
         )
