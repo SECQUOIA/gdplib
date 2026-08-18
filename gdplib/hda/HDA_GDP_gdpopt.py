@@ -2498,10 +2498,7 @@ def HDA_model():
             return m.fc[stream, compon] == b.molefrac[stream, compon] * m.f[stream]
 
         b.molefrac_defn = Constraint(
-            memb_streams,
-            m.compon,
-            rule=Molefrac_defn,
-            doc="mole fraction definition",
+            memb_streams, m.compon, rule=Molefrac_defn, doc="mole fraction definition"
         )
 
         def Memcmb(_m, memb, stream, compon):
