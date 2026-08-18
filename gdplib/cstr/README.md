@@ -14,7 +14,12 @@ The optimal solution should yield NT reactors with a recycle before reactor NT.
 
 ### Optimal Solution
 
-Best known objective value: 3.0620145766 (optimal)
+Best known objective value: 3.062003537511728 (proven optimal)
+
+Verified with GAMS/BARON on the `gdp.bigm` reformulation at `optcr=optca=0`
+(lower bound equal to upper bound), 2026-08-18. The solution point passes all
+six GAMS/Examiner checks (primal and dual bounds and constraints at 1e-6,
+complementary slackness at 1e-7) with the discrete variables fixed. See #152.
 
 ### Size
 
