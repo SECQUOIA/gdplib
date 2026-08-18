@@ -10,6 +10,15 @@ The objective function originates from Problem No. 6 of Gomez's paper, and Li√±√
 
 ## Problem details
 
+### Solution
+
+Best known objective value: -0.9996.
+
+Best found with GAMS/BARON on the `gdp.bigm` reformulation (120 s,
+`optcr=1e-6`), 2026-08-18; not proven optimal. The solution point passes all
+six GAMS/Examiner checks (primal and dual bounds and constraints at 1e-6,
+complementary slackness at 1e-7) with the discrete variables fixed. See #152.
+
 ### Size
 
 | Component             |   Number |

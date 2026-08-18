@@ -30,6 +30,13 @@ The objective is to minimize total quarantine intervention subject to the event
 constraint at alpha = 0.9. Optimal objective values for various alpha levels are
 reported in the reference above.
 
+Best known objective value for the default instance: 21.208560364904056.
+
+Best found with GAMS/BARON on the `gdp.bigm` reformulation (120 s,
+`optcr=1e-6`), 2026-08-18; not proven optimal. The solution point passes all
+six GAMS/Examiner checks (primal and dual bounds and constraints at 1e-6,
+complementary slackness at 1e-7) with the discrete variables fixed. See #152.
+
 ### Size
 
 Problem size for the default instance with `num_times=101`:
