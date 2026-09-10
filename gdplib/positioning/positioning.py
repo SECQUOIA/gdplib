@@ -233,16 +233,46 @@ def build_model():
     # minimum dissimilarity between the existing products and consumers' ideal points
     r = {i: min(rr[i, j] for j in m.products) for i in m.consumers}
 
-    m.x = Var(m.locations, doc="Location of each product")
+    def _location_bounds(m, k):
+        return location_bounds[k]
+
+    m.x = Var(m.locations, bounds=_location_bounds, doc="Location of each product")
     m.Y = BooleanVar(
         m.consumers,
         doc="Indicates if consumer positioning is satisfactory based on distance to ideal points.",
     )
+    consumer_slack_bound = {}
+    for i in m.consumers:
+        max_distance = sum(
+            value(m.weights[i, k])
+            * max(
+                (location_bounds[k][0] - value(m.ideal_points[i, k])) ** 2,
+                (location_bounds[k][1] - value(m.ideal_points[i, k])) ** 2,
+            )
+            for k in m.locations
+        )
+        consumer_slack_bound[i] = max(0, max_distance - value(r[i]))
+
+    m.consumer_slack_bound = Param(
+        m.consumers,
+        initialize=consumer_slack_bound,
+        doc="Valid upper bound on each consumer distance slack",
+    )
     m.H = Param(initialize=1000, doc="Big M value")
     m.U = Var(
-        bounds=(0, 5000),
+        bounds=(0, max(consumer_slack_bound.values())),
         doc="Upper bound on the sum of the distances to the ideal points",
     )  # Slack variable
+
+    @m.Expression(m.consumers)
+    def distance_slack(m, i):
+        return (
+            sum(
+                m.weights[i, k] * (m.x[k] - m.ideal_points[i, k]) ** 2
+                for k in m.locations
+            )
+            - r[i]
+        )
 
     @m.Disjunction(m.consumers)
     def d(m, i):
@@ -261,24 +291,23 @@ def build_model():
         Pyomo.Disjunction
             A Pyomo Disjunction object that evaluates if the consumer's preference is met (`true` scenario) with a single Pyomo expression, or not met (`false` scenario) where the list is empty.
         """
-        return [
-            [
-                sum(
-                    m.weights[i, k] * (m.x[k] - m.ideal_points[i, k]) ** 2
-                    for k in m.locations
-                )
-                - r[i]
-                <= m.U
-            ],
-            [],
-        ]
+        return [[m.distance_slack[i] <= m.U], []]
 
     for i in m.consumers:
         m.Y[i].associate_binary_var(m.d[i].disjuncts[0].binary_indicator_var)
-    for k in m.locations:
-        lb, ub = location_bounds[k]
-        m.x[k].setlb(lb)
-        m.x[k].setub(ub)
+
+    # BARON-verified active set for GDPOpt custom-disjunct initialization.
+    gdpopt_initial_consumers = {1, 6, 8, 15, 17, 20, 25}
+    m.gdpopt_initial_disjuncts = [
+        tuple(
+            (
+                m.d[i].disjuncts[0]
+                if i in gdpopt_initial_consumers
+                else m.d[i].disjuncts[1]
+            )
+            for i in m.consumers
+        )
+    ]
 
     m.c1 = Constraint(
         expr=m.x[1] - m.x[2] + m.x[3] + m.x[4] + m.x[5] <= 10, doc="Constraint 1"
