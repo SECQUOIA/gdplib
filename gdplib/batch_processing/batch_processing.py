@@ -64,6 +64,8 @@ def build_model():
     StorageTankSizeUB = log(15000)
     UnitsInPhaseUB = log(6)
     UnitsOutOfPhaseUB = log(6)
+    BatchSizeLogLB = 0
+    BatchSizeLogUB = 10
     # TODO: YOU ARE HERE. YOU HAVEN'T ACTUALLY MADE THESE THE BOUNDS YET, NOR HAVE YOU FIGURED OUT WHOSE
     # BOUNDS THEY ARE. AND THERE ARE MORE IN GAMS.
 
@@ -219,11 +221,34 @@ def build_model():
     model.batchSize_log = Var(
         model.PRODUCTS,
         model.STAGES,
-        bounds=(0, 10),
+        bounds=(BatchSizeLogLB, BatchSizeLogUB),
         doc="Logarithmic Batch Size of the Products",
     )
+
+    def get_cycleTime_bounds(model, i):
+        """
+        Derives finite source bounds for the logarithmic cycle time of each product.
+
+        The upper bound follows from the production horizon because each positive
+        product term in ``finish_in_time`` must fit within ``HorizonTime``. The
+        lower bound follows from the processing-time constraints and the finite
+        bounds on batch size and out-of-phase units.
+        """
+        lower_bound = max(
+            value(
+                log(model.ProcessingTime[i, j])
+                - BatchSizeLogUB
+                - model.unitsOutOfPhaseUB[j]
+            )
+            for j in model.STAGES
+        )
+        upper_bound = value(log(model.HorizonTime / model.ProductionAmount[i]))
+        return (lower_bound, upper_bound)
+
     model.cycleTime_log = Var(
-        model.PRODUCTS, doc="Logarithmic Cycle Time of the Products"
+        model.PRODUCTS,
+        bounds=get_cycleTime_bounds,
+        doc="Logarithmic Cycle Time of the Products",
     )
 
     def get_unitsOutOfPhase_bounds(model, j):
