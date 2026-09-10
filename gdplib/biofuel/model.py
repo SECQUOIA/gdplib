@@ -906,9 +906,9 @@ def _build_site_inactive_disjunct(disj, site):
             The constraint that there are no modules at the inactive site
         """
         return (
-            sum(m.num_modules[...])
-            + sum(m.modules_purchased[...])
-            + sum(m.modules_sold[...])
+            sum(m.num_modules[site, t] for t in m.time)
+            + sum(m.modules_purchased[site, t] for t in m.time)
+            + sum(m.modules_sold[site, t] for t in m.time)
             == 0
         )
 
@@ -1031,9 +1031,9 @@ def _build_conventional_disjunct(disj, site):
             A constraint that the number of modules (present, purchased, sold) at the site is zero.
         """
         return (
-            sum(m.num_modules[...])
-            + sum(m.modules_purchased[...])
-            + sum(m.modules_sold[...])
+            sum(m.num_modules[site, t] for t in m.time)
+            + sum(m.modules_purchased[site, t] for t in m.time)
+            + sum(m.modules_sold[site, t] for t in m.time)
             == 0
         )
 
