@@ -16,7 +16,7 @@ from pyomo.core.expr.logical_expr import *
 from pyomo.core.plugins.transform.logical_to_linear import (
     update_boolean_vars_from_binary,
 )
-from six import StringIO
+from io import StringIO
 import pandas as pd
 
 
