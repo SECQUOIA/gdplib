@@ -98,7 +98,7 @@ The build backend remains `setuptools.build_meta` as configured in
 
 The publish workflow checks out full git history, builds both the sdist and
 wheel with `python -m build`, validates them with
-`python -m twine check dist/*`, installs the wheel on Python 3.10, 3.11, and
+`python -m twine check dist/*`, installs the wheel on Python 3.11 and
 3.12, and then publishes with PyPI Trusted Publishing through the protected
 `pypi` GitHub environment. The PyPI project must have a trusted publisher entry
 for this repository, the `publish.yml` workflow, and the `pypi` environment
@@ -198,7 +198,7 @@ For a pip-based setup:
 
 4. **Code formatting and linting:**
    ```bash
-   black -S -C --target-version py310 --check --diff .
+   black -S -C --target-version py311 --check --diff .
    flake8 gdplib/ --count --select=E9,F63,F7,F82 --show-source --statistics
    flake8 gdplib/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
    ```
