@@ -3035,7 +3035,7 @@ packages:
   - pint>=0.15.0
   - openpyxl>=3.0.0
   - sympy>=1.0
-  requires_python: '>=3.10,<3.13'
+  requires_python: '>=3.11,<3.13'
 - pypi: https://files.pythonhosted.org/packages/9b/8b/2b9f26e4e19a258229b8a8ffc377ca372cc2059a22a0a7c67572efe308d8/gurobipy-12.0.3-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
   name: gurobipy
   version: 12.0.3

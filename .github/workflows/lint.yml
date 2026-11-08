@@ -16,7 +16,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.10"
+          python-version: "3.11"
       
       - name: Install dependencies
         run: |
@@ -26,7 +26,7 @@ jobs:
       - name: Black Formatting Check
         uses: psf/black@stable
         with:
-          options: "-S -C --target-version py310 --check --diff"
+          options: "-S -C --target-version py311 --check --diff"
       
       - name: Flake8 Lint Check
         run: |

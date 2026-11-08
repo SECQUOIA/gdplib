@@ -10,7 +10,7 @@ These instructions apply to the whole repository.
 - GDPlib is a Python model library for Generalized Disjunctive Programming examples and benchmarks built with Pyomo.
 - GDPlib is licensed under the BSD 3-clause license. Keep new contributions
   compatible with that license.
-- Supported Python versions are 3.10, 3.11, and 3.12. Keep `pyproject.toml`, `setup.py`, CI, and environment manifests aligned when changing support.
+- Supported Python versions are 3.11 and 3.12. Keep `pyproject.toml`, `setup.py`, CI, and environment manifests aligned when changing support.
 - Treat optimization solvers as optional external tools. Do not make model construction, imports, or default tests require GAMS, IPOPT, or another solver unless the task explicitly asks for solver-specific behavior.
 - Direct Gurobi Python access is available through the optional Pixi
   environment `gurobi`, which adds `gurobipy` without making it part of the
@@ -80,7 +80,7 @@ These instructions apply to the whole repository.
   an eligible reviewer is still required.
 - Match CI formatting and linting:
   ```bash
-  black -S -C --target-version py310 --check --diff .
+  black -S -C --target-version py311 --check --diff .
   flake8 gdplib/ --count --select=E9,F63,F7,F82 --show-source --statistics
   flake8 gdplib/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
   typos --config ./.github/workflows/typos.toml

@@ -26,7 +26,7 @@ def test_publish_workflow_uses_release_trigger_and_supported_python_matrix():
     workflow = PUBLISH_WORKFLOW.read_text()
 
     assert "\non:\n  release:\n    types: [published]\n" in workflow
-    assert 'python-version: ["3.10", "3.11", "3.12"]' in workflow
+    assert 'python-version: ["3.11", "3.12"]' in workflow
 
 
 def test_readme_documents_release_process_and_pixi_policy():
