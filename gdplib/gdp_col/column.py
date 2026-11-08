@@ -6,12 +6,13 @@ from pyomo.environ import (
     Block,
     ConcreteModel,
     Constraint,
-    log,
+    exp,
     minimize,
     NonNegativeReals,
     Objective,
     RangeSet,
     Set,
+    value,
     Var,
 )
 from pyomo.gdp import Disjunct, Disjunction
@@ -389,13 +390,11 @@ def build_column(min_trays, max_trays, xD, xB):
     m.H_L_spec_feed = Var(
         m.comps,
         doc="Component liquid molar enthalpy in feed [kJ/mol]",
-        initialize=0,
         bounds=(0.1, 16),
     )
     m.H_V_spec_feed = Var(
         m.comps,
         doc="Component vapor molar enthalpy in feed [kJ/mol]",
-        initialize=0,
         bounds=(30, 16 + 40),
     )
     m.Qb = Var(
@@ -431,6 +430,9 @@ def build_column(min_trays, max_trays, xD, xB):
     m.dH_vap = {"benzene": 33.770e3, "toluene": 38.262e3}  # J/mol
 
     _build_column_heat_relations(m)
+    for c in m.comps:
+        m.H_L_spec_feed[c].set_value(value(m.feed_liq_enthalpy_expr[c]))
+        m.H_V_spec_feed[c].set_value(value(m.feed_vap_enthalpy_expr[c]))
 
     @m.Constraint()
     def distillate_req(m):
@@ -1096,12 +1098,12 @@ def _build_tray_phase_equilibrium(m, t, tray):
         Returns
         -------
         Pyomo.Constraint
-            Antoine's equation for the vapor pressure of each component in a tray is calculated as the logarithm of the vapor pressure minus the logarithm of the critical pressure times one minus the fraction of critical temperature. The equation is equal to the sum of the Antoine coefficients times the fraction of critical temperature raised to different powers.
+            Antoine's equation for the vapor pressure of each component in a tray.
         """
         k = m.pvap_const[c]
         x = m.Pvap_X[c, t]
-        return (log(m.Pvap[c, t]) - log(k["Pc"])) * (1 - x) == (
-            k["A"] * x + k["B"] * x**1.5 + k["C"] * x**3 + k["D"] * x**6
+        return m.Pvap[c, t] == k["Pc"] * exp(
+            (k["A"] * x + k["B"] * x**1.5 + k["C"] * x**3 + k["D"] * x**6) / (1 - x)
         )
 
     @tray.Constraint(m.comps)
