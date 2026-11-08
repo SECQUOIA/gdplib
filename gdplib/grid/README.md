@@ -28,6 +28,14 @@ The objective is to minimize total generator and line capacity slack subject to 
 event constraint at alpha=0.9. Optimal objective values for various ATLEAST
 configurations are reported in the reference above.
 
+Best known objective value for the default instance: 0.0 (proven optimal;
+zero slack is attainable, so no capacity expansion is required).
+
+Verified with GAMS/BARON on the `gdp.bigm` reformulation at `optcr=optca=0`
+(lower bound equal to upper bound), 2026-08-18. The solution point passes all
+six GAMS/Examiner checks (primal and dual bounds and constraints at 1e-6,
+complementary slackness at 1e-7) with the discrete variables fixed. See #152.
+
 ### Size
 
 Problem size for the default instance with `active_gens=4`, `active_lines=20`, and
