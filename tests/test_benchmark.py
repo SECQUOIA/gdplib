@@ -23,6 +23,8 @@ from gdplib.benchmark import (
     summarize_warning_rows,
 )
 
+PR58_LOCAL_OMITTED_CASES = {("spectralog", "gdpopt.enumerate")}
+
 
 def test_gams_solve_options_use_requested_timelimit():
     assert _gams_solve_options(123) == [
@@ -195,7 +197,14 @@ def test_committed_pr58_local_cases_cover_default_matrix():
 
     cases = read_benchmark_cases_file(cases_file, defaults)
 
-    assert len(cases) == len(PR58_BENCHMARK_INSTANCES) * len(DEFAULT_STRATEGIES)
+    expected_cases = {
+        (instance, strategy)
+        for instance in PR58_BENCHMARK_INSTANCES
+        for strategy in DEFAULT_STRATEGIES
+    } - PR58_LOCAL_OMITTED_CASES
+
+    assert len(cases) == len(expected_cases)
+    assert {(case.instance, case.strategy) for case in cases} == expected_cases
     assert {case.instance for case in cases} == set(PR58_BENCHMARK_INSTANCES)
     assert {case.strategy for case in cases} == set(DEFAULT_STRATEGIES)
     assert {case.solver_profile for case in cases} == {"gams-local"}

@@ -99,7 +99,6 @@ small_batch,gdpopt.lbb,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 small_batch,gdpopt.ric,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 spectralog,gdp.bigm,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 spectralog,gdp.hull,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
-spectralog,gdpopt.enumerate,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 spectralog,gdpopt.loa,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 spectralog,gdpopt.gloa,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
 spectralog,gdpopt.lbb,gams-local,dicopt,3600,local,ipopth,gurobi,dicopt,dicopt
