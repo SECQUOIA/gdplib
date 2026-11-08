@@ -14,12 +14,27 @@ The model enforces constraints to ensure that the mass and energy balances are s
 
 The objective of the model is to maximize the profit by determining the optimal process configuration and operating conditions. The decision variables include the number of trays in the absorber and distillation column, the reflux ratio, the pressure in the distillation column, the temperature and pressure in the flash drums, the heating requirement in the furnace, the electricity requirement in the compressor, the heat exchange in the coolers and heaters, the surface area in the membrane separators, the temperature and pressure in the mixers, the temperature and pressure in the reactors, and the volume and rate constant in the reactors.
 
+Numerical notes:
+    The Antoine, Arrhenius, selectivity, and membrane-flux relations are
+    written in exact, eps-free forms (bounded log auxiliaries, positive
+    powers, and mole-fraction variables) that stay evaluable and modest in
+    magnitude under Big-M estimation and hull's perspective reformulation.
+    A small constant ``eps1`` (1e-4) remains only where an exact form would
+    lose boundedness at a genuine zero-flow or zero-tray singularity: the
+    Fenske ratios ``(f + eps1)/(fc + eps1)`` (key-component flows may
+    approach zero), the reactor conversion powers of ``f`` (flow in a
+    denominator power), and the Kremser gamma ``log`` (singular at
+    ``nabs = 0``). These guards regularize limit points outside normal
+    operation; they perturb active-unit algebra by at most ~1e-4 relative
+    except when a guarded quantity itself approaches zero.
+
 References:
     [1] James M Douglas (1988). Conceptual Design of Chemical Processes, McGraw-Hill. ISBN-13: 978-0070177628
     [2] G.R. Kocis, and I.E. Grossmann (1989). Computational Experience with DICOPT Solving MINLP Problems in Process Synthesis. Computers and Chemical Engineering 13, 3, 307-315. https://doi.org/10.1016/0098-1354(89)85008-2
     [3] GAMS Development Corporation (2023). Hydrodealkylation Process. Available at: https://www.gams.com/latest/gamslib_ml/libhtml/gamslib_hda.html
 """
 
+import logging
 import math
 import os
 import pandas as pd
@@ -27,6 +42,25 @@ import pandas as pd
 from pyomo.environ import *
 from pyomo.gdp import *
 from pyomo.util.infeasible import log_infeasible_constraints
+
+_logger = logging.getLogger(__name__)
+
+
+def _set_within_bounds(var_data, new_value):
+    requested = value(new_value)
+    new_value = requested
+    if var_data.has_lb():
+        new_value = max(new_value, value(var_data.lb))
+    if var_data.has_ub():
+        new_value = min(new_value, value(var_data.ub))
+    if not math.isclose(new_value, requested, rel_tol=1e-9, abs_tol=1e-12):
+        _logger.debug(
+            "Clamped initial value of %s from %g to %g",
+            var_data.name,
+            requested,
+            new_value,
+        )
+    var_data.set_value(new_value)
 
 
 def HDA_model():
@@ -674,11 +708,11 @@ def HDA_model():
         m.abs,
         within=NonNegativeReals,
         bounds=(0, 40),
-        initialize=1,
+        initialize=0,
         doc="number of absorber trays",
     )
-    m.gamma = Var(m.abs, m.compon, within=Reals, initialize=1, doc="gamma")
-    m.beta = Var(m.abs, m.compon, within=Reals, initialize=1, doc="beta")
+    m.gamma = Var(m.abs, m.compon, within=Reals, initialize=0, doc="gamma")
+    m.beta = Var(m.abs, m.compon, within=Reals, initialize=0, doc="beta")
 
     # compressor
     m.elec = Var(
@@ -774,7 +808,7 @@ def HDA_model():
         m.memb,
         within=NonNegativeReals,
         bounds=(100, 10000),
-        initialize=1,
+        initialize=100,
         doc="surface area for mass transfer [m**2]",
     )
     # mixer(1 input)
@@ -782,14 +816,14 @@ def HDA_model():
         m.mxr1,
         within=NonNegativeReals,
         bounds=(0.1, 4),
-        initialize=0,
+        initialize=0.1,
         doc="mixer temperature [100 K]",
     )
     m.mxr1t = Var(
         m.mxr1,
         within=NonNegativeReals,
         bounds=(3, 10),
-        initialize=0,
+        initialize=3,
         doc="mixer pressure [MPa]",
     )
     # mixer
@@ -826,9 +860,20 @@ def HDA_model():
     m.krct = Var(
         m.rct,
         within=NonNegativeReals,
-        initialize=1,
+        initialize=0.0123471,
         bounds=(0.0123471, 0.149543),
         doc="rate constant",
+    )
+    # lnkrct = log(krct); defined through a pole-free bilinear Arrhenius
+    # relation so no eps guard or huge prefactor constant is needed.
+    m.lnkrct = Var(
+        m.rct,
+        bounds=(
+            math.log(6.3e10) - 26167.0 / (8.9427 * 100.0),
+            math.log(6.3e10) - 26167.0 / (9.7760 * 100.0),
+        ),
+        initialize=math.log(0.0123471),
+        doc="log of rate constant",
     )
     m.conv = Var(
         m.rct,
@@ -836,6 +881,13 @@ def HDA_model():
         within=NonNegativeReals,
         bounds=(None, 0.973),
         doc="conversion of key component",
+    )
+    m.unconverted = Var(
+        m.rct,
+        within=NonNegativeReals,
+        bounds=(0.027, 1.0),
+        initialize=1,
+        doc="fraction of toluene not converted",
     )
     m.sel = Var(
         m.rct,
@@ -1083,7 +1135,7 @@ def HDA_model():
         for compon in m.compon:
             m.beta[abso, compon].setlb(
                 log(
-                    (1 - m.aabs[compon] ** (m.nabs[1].lb * m.abseff + m.eps1 + 1))
+                    (1 - m.aabs[compon] ** (m.nabs[1].lb * m.abseff + 1))
                     / (1 - m.aabs[compon])
                 )
             )
@@ -1091,7 +1143,7 @@ def HDA_model():
                 min(
                     15,
                     log(
-                        (1 - m.aabs[compon] ** (m.nabs[1].ub * m.abseff + m.eps1 + 1))
+                        (1 - m.aabs[compon] ** (m.nabs[1].ub * m.abseff + 1))
                         / (1 - m.aabs[compon])
                     ),
                 )
@@ -1142,22 +1194,70 @@ def HDA_model():
     m.t[16].setub(8.943)
     m.t[66].setlb(3.0)
 
+    # Antoine-implied bounds are outer-approximated by a 1e-7 relative margin:
+    # they are derived quantities, and exact lb == ub pins (at fixed-temperature
+    # streams) get constant-folded by solver presolves with zero tolerance, so
+    # ulp-level float differences between the bound and equation evaluation
+    # paths would otherwise read as infeasibility.
+    def _outer(lo, hi):
+        pad_lo = max(1e-10, 1e-7 * abs(lo))
+        pad_hi = max(1e-10, 1e-7 * abs(hi))
+        return lo - pad_lo, hi + pad_hi
+
     for stream in m.str:
         for compon in m.compon:
-            m.vp[stream, compon].setlb(
+            _vp_lo, _vp_hi = _outer(
                 (1.0 / 7500.6168)
                 * exp(
                     m.anta[compon]
                     - m.antb[compon] / (m.t[stream].lb * 100.0 + m.antc[compon])
-                )
-            )
-            m.vp[stream, compon].setub(
+                ),
                 (1.0 / 7500.6168)
                 * exp(
                     m.anta[compon]
                     - m.antb[compon] / (m.t[stream].ub * 100.0 + m.antc[compon])
-                )
+                ),
             )
+            m.vp[stream, compon].setlb(_vp_lo)
+            m.vp[stream, compon].setub(_vp_hi)
+
+    # Log-space vapor pressure auxiliary lnvp = log(vp * 7500.6168). The
+    # Antoine relations are written as a pole-free bilinear equation defining
+    # lnvp plus a bounded exponential vp * 7500.6168 == exp(lnvp), so that
+    # neither Big-M estimation nor hull's perspective correction ever
+    # evaluates exp at a huge argument (the direct exp form produced ~1e31
+    # constants at hull's disaggregated-zero point and broke global solvers).
+    # The shift keeps lnvp globally nonpositive, so hull's perspective
+    # substitution lnvp/((1-eps)*y + eps) can only drive exp() toward zero
+    # (harmless underflow) instead of overflowing for high-vapor-pressure
+    # streams.
+    _lnvp_max = max(
+        value(m.anta[compon])
+        - value(m.antb[compon]) / (m.t[stream].ub * 100.0 + value(m.antc[compon]))
+        for stream in m.str
+        for compon in m.compon
+    )
+    m.lnvp_shift = Param(
+        initialize=_lnvp_max, doc="Constant shift keeping lnvp nonpositive"
+    )
+    m.lnvp = Var(
+        m.str,
+        m.compon,
+        doc="Shifted log vapor pressure, lnvp = log(vp * 7500.6168) - lnvp_shift",
+    )
+    for stream in m.str:
+        for compon in m.compon:
+            _ln_lo, _ln_hi = _outer(
+                m.anta[compon]
+                - m.antb[compon] / (m.t[stream].lb * 100.0 + m.antc[compon])
+                - value(m.lnvp_shift),
+                m.anta[compon]
+                - m.antb[compon] / (m.t[stream].ub * 100.0 + m.antc[compon])
+                - value(m.lnvp_shift),
+            )
+            m.lnvp[stream, compon].setlb(_ln_lo)
+            m.lnvp[stream, compon].setub(min(0.0, _ln_hi))
+            m.lnvp[stream, compon].set_value(m.lnvp[stream, compon].lb)
 
     m.p[1].setub(3.93)
     m.p[1].setlb(3.93)
@@ -1185,27 +1285,27 @@ def HDA_model():
     # ## initialization procedure
 
     # flash1
-    m.eflsh[1, "h2"] = 0.995
-    m.eflsh[1, "ch4"] = 0.99
-    m.eflsh[1, "ben"] = 0.04
-    m.eflsh[1, "tol"] = 0.01
-    m.eflsh[1, "dip"] = 0.0001
+    _set_within_bounds(m.eflsh[1, "h2"], 0.995)
+    _set_within_bounds(m.eflsh[1, "ch4"], 0.99)
+    _set_within_bounds(m.eflsh[1, "ben"], 0.04)
+    _set_within_bounds(m.eflsh[1, "tol"], 0.01)
+    _set_within_bounds(m.eflsh[1, "dip"], 0.0001)
 
     # compressor
-    m.distp[1] = 1.02
-    m.distp[2] = 0.1
-    m.distp[3] = 0.1
-    m.qexch[1] = 0.497842
-    m.elec[1] = 0
-    m.elec[2] = 12.384
-    m.elec[3] = 0
-    m.elec[4] = 28.7602
-    m.presrat[1] = 1
-    m.presrat[2] = 1.04552
-    m.presrat[3] = 1.36516
-    m.presrat[4] = 1.95418
-    m.qfuel[1] = 0.0475341
-    m.q[2] = 54.3002
+    _set_within_bounds(m.distp[1], 1.02)
+    _set_within_bounds(m.distp[2], 0.1)
+    _set_within_bounds(m.distp[3], 0.1)
+    _set_within_bounds(m.qexch[1], 0.497842)
+    _set_within_bounds(m.elec[1], 0)
+    _set_within_bounds(m.elec[2], 12.384)
+    _set_within_bounds(m.elec[3], 0)
+    _set_within_bounds(m.elec[4], 28.7602)
+    _set_within_bounds(m.presrat[1], 1)
+    _set_within_bounds(m.presrat[2], 1.04552)
+    _set_within_bounds(m.presrat[3], 1.36516)
+    _set_within_bounds(m.presrat[4], 1.95418)
+    _set_within_bounds(m.qfuel[1], 0.0475341)
+    _set_within_bounds(m.q[2], 54.3002)
 
     file_1 = os.path.join(dir_path, "GAMS_init_stream_data.csv")
     stream = pd.read_csv(file_1, usecols=[0])
@@ -1215,11 +1315,11 @@ def HDA_model():
     e = pd.read_csv(file_1, usecols=[5])
 
     for i in range(len(stream)):
-        m.p[stream.to_numpy()[i, 0]] = data.to_numpy()[i, 0]
+        _set_within_bounds(m.p[stream.to_numpy()[i, 0]], data.to_numpy()[i, 0])
     for i in range(72):
-        m.t[stream.to_numpy()[i, 0]] = temp.to_numpy()[i, 0]
-        m.f[stream.to_numpy()[i, 0]] = flow.to_numpy()[i, 0]
-        m.e[stream.to_numpy()[i, 0]] = e.to_numpy()[i, 0]
+        _set_within_bounds(m.t[stream.to_numpy()[i, 0]], temp.to_numpy()[i, 0])
+        _set_within_bounds(m.f[stream.to_numpy()[i, 0]], flow.to_numpy()[i, 0])
+        _set_within_bounds(m.e[stream.to_numpy()[i, 0]], e.to_numpy()[i, 0])
 
     file_2 = os.path.join(dir_path, "GAMS_init_stream_compon_data.csv")
     streamfc = pd.read_csv(file_2, usecols=[0])
@@ -1230,8 +1330,13 @@ def HDA_model():
     vp = pd.read_csv(file_2, usecols=[5])
 
     for i in range(len(streamfc)):
-        m.fc[streamfc.to_numpy()[i, 0], comp.to_numpy()[i, 0]] = fc.to_numpy()[i, 0]
-        m.vp[streamvp.to_numpy()[i, 0], compvp.to_numpy()[i, 0]] = vp.to_numpy()[i, 0]
+        _set_within_bounds(
+            m.fc[streamfc.to_numpy()[i, 0], comp.to_numpy()[i, 0]], fc.to_numpy()[i, 0]
+        )
+        _set_within_bounds(
+            m.vp[streamvp.to_numpy()[i, 0], compvp.to_numpy()[i, 0]],
+            vp.to_numpy()[i, 0],
+        )
 
     file_3 = os.path.join(dir_path, "GAMS_init_data.csv")
     stream3 = pd.read_csv(file_3, usecols=[0])
@@ -1265,38 +1370,40 @@ def HDA_model():
     splt = pd.read_csv(file_3, usecols=[53])
 
     for i in range(2):
-        m.rctp[i + 1] = rctp.to_numpy()[i, 0]
-        m.rctt[i + 1] = rctt.to_numpy()[i, 0]
-        m.rctvol[i + 1] = rctvol.to_numpy()[i, 0]
-        m.sel[i + 1] = sel.to_numpy()[i, 0]
-        m.krct[i + 1] = krct.to_numpy()[i, 0]
-        m.consum[i + 1, "tol"] = consum.to_numpy()[i, 0]
-        m.conv[i + 1, "tol"] = conv.to_numpy()[i, 0]
-        m.a[stream3.to_numpy()[i, 0]] = a.to_numpy()[i, 0]
-        m.qc[i + 1] = qc.to_numpy()[i, 0]
+        _set_within_bounds(m.rctp[i + 1], rctp.to_numpy()[i, 0])
+        _set_within_bounds(m.rctt[i + 1], rctt.to_numpy()[i, 0])
+        _set_within_bounds(m.rctvol[i + 1], rctvol.to_numpy()[i, 0])
+        _set_within_bounds(m.sel[i + 1], sel.to_numpy()[i, 0])
+        _set_within_bounds(m.krct[i + 1], krct.to_numpy()[i, 0])
+        _set_within_bounds(m.consum[i + 1, "tol"], consum.to_numpy()[i, 0])
+        _set_within_bounds(m.conv[i + 1, "tol"], conv.to_numpy()[i, 0])
+        _set_within_bounds(m.unconverted[i + 1], 1 - value(m.conv[i + 1, "tol"]))
+        _set_within_bounds(m.a[stream3.to_numpy()[i, 0]], a.to_numpy()[i, 0])
+        _set_within_bounds(m.qc[i + 1], qc.to_numpy()[i, 0])
     for i in range(3):
-        m.avevlt[i + 1] = avevlt.to_numpy()[i, 0]
-        m.distp[i + 1] = disp.to_numpy()[i, 0]
-        m.flshp[i + 1] = flshp.to_numpy()[i, 0]
-        m.flsht[i + 1] = flsht.to_numpy()[i, 0]
-        m.ndist[i + 1] = ndist.to_numpy()[i, 0]
-        m.nmin[i + 1] = nmin.to_numpy()[i, 0]
-        m.reflux[i + 1] = reflux.to_numpy()[i, 0]
-        m.rmin[i + 1] = rmin.to_numpy()[i, 0]
-        m.splp[i + 1] = splp.to_numpy()[i, 0]
-        m.splt[i + 1] = splt.to_numpy()[i, 0]
+        _set_within_bounds(m.avevlt[i + 1], avevlt.to_numpy()[i, 0])
+        _set_within_bounds(m.distp[i + 1], disp.to_numpy()[i, 0])
+        _set_within_bounds(m.flshp[i + 1], flshp.to_numpy()[i, 0])
+        _set_within_bounds(m.flsht[i + 1], flsht.to_numpy()[i, 0])
+        _set_within_bounds(m.ndist[i + 1], ndist.to_numpy()[i, 0])
+        _set_within_bounds(m.nmin[i + 1], nmin.to_numpy()[i, 0])
+        _set_within_bounds(m.reflux[i + 1], reflux.to_numpy()[i, 0])
+        _set_within_bounds(m.rmin[i + 1], rmin.to_numpy()[i, 0])
+        _set_within_bounds(m.splp[i + 1], splp.to_numpy()[i, 0])
+        _set_within_bounds(m.splt[i + 1], splt.to_numpy()[i, 0])
     for i in range(5):
-        m.beta[1, comp1.to_numpy()[i, 0]] = beta.to_numpy()[i, 0]
-        m.mxrp[i + 1] = mxrp.to_numpy()[i, 0]
+        _set_within_bounds(m.beta[1, comp1.to_numpy()[i, 0]], beta.to_numpy()[i, 0])
+        _set_within_bounds(m.mxrp[i + 1], mxrp.to_numpy()[i, 0])
     for i in range(4):
-        m.qh[i + 1] = qh.to_numpy()[i, 0]
+        _set_within_bounds(m.qh[i + 1], qh.to_numpy()[i, 0])
     for i in range(len(stream4)):
-        m.eflsh[stream4.to_numpy()[i, 0], comp2.to_numpy()[i, 0]] = eflsh.to_numpy()[
-            i, 0
-        ]
+        _set_within_bounds(
+            m.eflsh[stream4.to_numpy()[i, 0], comp2.to_numpy()[i, 0]],
+            eflsh.to_numpy()[i, 0],
+        )
     for i in range(6):
-        m.spl1p[i + 1] = spl1p.to_numpy()[i, 0]
-        m.spl1t[i + 1] = spl1t.to_numpy()[i, 0]
+        _set_within_bounds(m.spl1p[i + 1], spl1p.to_numpy()[i, 0])
+        _set_within_bounds(m.spl1t[i + 1], spl1t.to_numpy()[i, 0])
 
     # ## constraints
     m.specrec = Constraint(
@@ -1326,6 +1433,13 @@ def HDA_model():
         return m.fc[67, compon] == m.f[67] * m.f67comp[compon]
 
     m.tolabs = Constraint(m.compon, rule=Tolabs, doc="toluene absorber composition")
+
+    def Unconverted(_m, rct):
+        return m.unconverted[rct] == 1 - m.conv[rct, "tol"]
+
+    m.unconverted_eqn = Constraint(
+        m.rct, rule=Unconverted, doc="fraction of toluene not converted"
+    )
 
     def build_absorber(b, absorber):
         """
@@ -1549,10 +1663,10 @@ def HDA_model():
             if comp == comp_:
                 return m.presrat[comp_] ** (
                     m.cp_cv_ratio / (m.cp_cv_ratio - 1.0)
+                ) * sum(
+                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
                 ) == sum(
                     m.p[stream] for (comp1, stream) in m.ocomp if comp_ == comp1
-                ) / sum(
-                    m.p[stream] for (comp1, stream) in m.icomp if comp1 == comp_
                 )
             return Constraint.Skip
 
@@ -1587,11 +1701,13 @@ def HDA_model():
                 and (dist_, compon) in m.dkey
                 and dist_ == dist
             ):
-                return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match
-                ) == m.anta[compon] - m.antb[compon] / (
+                # Pole-free bilinear Antoine: defines lnvp exactly, with only
+                # modest constants under Big-M and hull (see m.lnvp).
+                return (m.lnvp[stream, compon] + m.lnvp_shift) * (
                     m.t[stream] * 100.0 + m.antc[compon]
-                )
+                ) == m.anta[compon] * (m.t[stream] * 100.0 + m.antc[compon]) - m.antb[
+                    compon
+                ]
             return Constraint.Skip
 
         b.antdistb = Constraint(
@@ -1602,17 +1718,37 @@ def HDA_model():
             doc="vapor pressure correlation (bottom)",
         )
 
+        def Antdistbexp(_m, dist_, stream, compon):
+            if (
+                (dist_, stream) in m.ldist
+                and (dist_, compon) in m.dkey
+                and dist_ == dist
+            ):
+                return m.vp[stream, compon] * m.vapor_pressure_unit_match == math.exp(
+                    value(m.lnvp_shift)
+                ) * exp(m.lnvp[stream, compon])
+            return Constraint.Skip
+
+        b.antdistbexp = Constraint(
+            [dist],
+            m.str,
+            m.compon,
+            rule=Antdistbexp,
+            doc="vapor pressure from log form (bottom)",
+        )
+
         def Antdistt(_m, dist_, stream, compon):
             if (
                 (dist_, stream) in m.vdist
                 and (dist_, compon) in m.dkey
                 and dist == dist_
             ):
-                return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match
-                ) == m.anta[compon] - m.antb[compon] / (
+                # Pole-free bilinear Antoine: see Antdistb and m.lnvp.
+                return (m.lnvp[stream, compon] + m.lnvp_shift) * (
                     m.t[stream] * 100.0 + m.antc[compon]
-                )
+                ) == m.anta[compon] * (m.t[stream] * 100.0 + m.antc[compon]) - m.antb[
+                    compon
+                ]
             return Constraint.Skip
 
         b.antdistt = Constraint(
@@ -1623,15 +1759,38 @@ def HDA_model():
             doc="vapor pressure correlation (top)",
         )
 
+        def Antdisttexp(_m, dist_, stream, compon):
+            if (
+                (dist_, stream) in m.vdist
+                and (dist_, compon) in m.dkey
+                and dist == dist_
+            ):
+                return m.vp[stream, compon] * m.vapor_pressure_unit_match == math.exp(
+                    value(m.lnvp_shift)
+                ) * exp(m.lnvp[stream, compon])
+            return Constraint.Skip
+
+        b.antdisttexp = Constraint(
+            [dist],
+            m.str,
+            m.compon,
+            rule=Antdisttexp,
+            doc="vapor pressure from log form (top)",
+        )
+
         def Relvol(_m, dist_):
             if dist == dist_:
-                divided1 = sum(
+                top_light = sum(
                     sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dlkey
                         if dist_ == dist
                     )
-                    / sum(
+                    for (dist_, stream) in m.vdist
+                    if dist_ == dist
+                )
+                top_heavy = sum(
+                    sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dhkey
                         if dist_ == dist
@@ -1639,13 +1798,17 @@ def HDA_model():
                     for (dist_, stream) in m.vdist
                     if dist_ == dist
                 )
-                divided2 = sum(
+                bottom_light = sum(
                     sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dlkey
                         if dist_ == dist
                     )
-                    / sum(
+                    for (dist_, stream) in m.ldist
+                    if dist_ == dist
+                )
+                bottom_heavy = sum(
+                    sum(
                         m.vp[stream, compon]
                         for (dist_, compon) in m.dhkey
                         if dist_ == dist
@@ -1653,7 +1816,10 @@ def HDA_model():
                     for (dist_, stream) in m.ldist
                     if dist_ == dist
                 )
-                return m.avevlt[dist] == sqrt(divided1 * divided2)
+                return (
+                    m.avevlt[dist] ** 2 * top_heavy * bottom_heavy
+                    == top_light * bottom_light
+                )
             return Constraint.Skip
 
         b.relvol = Constraint([dist], rule=Relvol, doc="average relative volatility")
@@ -1701,7 +1867,7 @@ def HDA_model():
                     for (dist1, stream) in m.ldist
                     if dist1 == dist_
                 )
-                return m.nmin[dist_] * log(m.avevlt[dist_]) == log(sum1 * sum2)
+                return m.nmin[dist_] * log(m.avevlt[dist_] + m.eps1) == log(sum1 * sum2)
             return Constraint.Skip
 
         b.fenske = Constraint([dist], rule=Fenske, doc="minimum number of trays")
@@ -1859,15 +2025,33 @@ def HDA_model():
 
         def Antflsh(_m, flsh_, stream, compon):
             if (flsh_, stream) in m.lflsh and flsh_ == flsh:
-                return log(
-                    m.vp[stream, compon] * m.vapor_pressure_unit_match
-                ) == m.anta[compon] - m.antb[compon] / (
+                # Pole-free bilinear Antoine: defines lnvp exactly (no eps1
+                # perturbation; the eps1-in-log form was unsatisfiable
+                # whenever vp sat at an Antoine-derived bound). See m.lnvp.
+                return (m.lnvp[stream, compon] + m.lnvp_shift) * (
                     m.t[stream] * 100.0 + m.antc[compon]
-                )
+                ) == m.anta[compon] * (m.t[stream] * 100.0 + m.antc[compon]) - m.antb[
+                    compon
+                ]
             return Constraint.Skip
 
         b.antflsh = Constraint(
             [flsh], m.str, m.compon, rule=Antflsh, doc="flash pressure relation"
+        )
+
+        def Antflshexp(_m, flsh_, stream, compon):
+            if (flsh_, stream) in m.lflsh and flsh_ == flsh:
+                return m.vp[stream, compon] * m.vapor_pressure_unit_match == math.exp(
+                    value(m.lnvp_shift)
+                ) * exp(m.lnvp[stream, compon])
+            return Constraint.Skip
+
+        b.antflshexp = Constraint(
+            [flsh],
+            m.str,
+            m.compon,
+            rule=Antflshexp,
+            doc="vapor pressure from log form (flash)",
         )
 
         def Flshrec(_m, flsh_, stream, compon):
@@ -2293,6 +2477,29 @@ def HDA_model():
         membrane : int
             Index of the membrane
         """
+        memb_streams = [
+            stream
+            for pairs in (m.imemb, m.nmemb, m.pmemb)
+            for (memb_, stream) in pairs
+            if memb_ == membrane
+        ]
+        # Component mole fractions of the membrane streams. The bilinear
+        # definition fc == y * f is exact and pole-free, replacing the
+        # eps-regularized ratios (fc + eps)/(f + eps) in the flux relation.
+        b.molefrac = Var(
+            memb_streams,
+            m.compon,
+            bounds=(0, 1),
+            initialize=0.2,
+            doc="component mole fraction of membrane streams",
+        )
+
+        def Molefrac_defn(_m, stream, compon):
+            return m.fc[stream, compon] == b.molefrac[stream, compon] * m.f[stream]
+
+        b.molefrac_defn = Constraint(
+            memb_streams, m.compon, rule=Molefrac_defn, doc="mole fraction definition"
+        )
 
         def Memcmb(_m, memb, stream, compon):
             if (memb, stream) in m.imemb and memb == membrane:
@@ -2321,20 +2528,17 @@ def HDA_model():
                     sum(m.p[stream2] for (memb_, stream2) in m.imemb if memb_ == memb)
                     * (
                         sum(
-                            (m.fc[stream2, compon] + m.eps1) / (m.f[stream2] + m.eps1)
+                            b.molefrac[stream2, compon]
                             for (memb_, stream2) in m.imemb
                             if memb_ == memb
                         )
                         + sum(
-                            (m.fc[stream2, compon] + m.eps1) / (m.f[stream2] + m.eps1)
+                            b.molefrac[stream2, compon]
                             for (memb_, stream2) in m.nmemb
                             if memb_ == memb
                         )
                     )
-                    - 2.0
-                    * m.p[stream]
-                    * (m.fc[stream, compon] + m.eps1)
-                    / (m.f[stream] + m.eps1)
+                    - 2.0 * m.p[stream] * b.molefrac[stream, compon]
                 )
             return Constraint.Skip
 
@@ -2645,14 +2849,21 @@ def HDA_model():
         )
 
         def Valt(_m, valve):
-            return sum(
-                m.t[stream] / (m.p[stream] ** ((m.cp_cv_ratio - 1.0) / m.cp_cv_ratio))
-                for (valv, stream) in m.oval
-                if valv == valve
-            ) == sum(
-                m.t[stream] / (m.p[stream] ** ((m.cp_cv_ratio - 1.0) / m.cp_cv_ratio))
-                for (valv, stream) in m.ival
-                if valv == valve
+            exponent = (m.cp_cv_ratio - 1.0) / m.cp_cv_ratio
+            outlet_temperature = sum(
+                m.t[stream] for (valv, stream) in m.oval if valv == valve
+            )
+            outlet_pressure = sum(
+                m.p[stream] for (valv, stream) in m.oval if valv == valve
+            )
+            inlet_temperature = sum(
+                m.t[stream] for (valv, stream) in m.ival if valv == valve
+            )
+            inlet_pressure = sum(
+                m.p[stream] for (valv, stream) in m.ival if valv == valve
+            )
+            return outlet_temperature * inlet_pressure**exponent == (
+                inlet_temperature * outlet_pressure**exponent
             )
 
         b.valt = Constraint([valve_], rule=Valt, doc="temperature relation in valve")
@@ -2698,10 +2909,20 @@ def HDA_model():
             [rct], m.str, rule=rctspec, doc="specification on reactor feed stream"
         )
 
+        def rxnratelog(_m, rct):
+            # Arrhenius in log space as a single cancellation-free bilinear:
+            # (lnkrct - ln(A)) * T == Ea_R, with no division (no eps guard)
+            # and no huge prefactor constant.
+            return (m.lnkrct[rct] - math.log(value(m.Prereference_factor))) * (
+                m.rctt[rct] * 100.0
+            ) == m.Ea_R
+
+        b.Rxnratelog = Constraint(
+            [rct], rule=rxnratelog, doc="log rate constant definition"
+        )
+
         def rxnrate(_m, rct):
-            return m.krct[rct] == m.Prereference_factor * exp(
-                m.Ea_R / (m.rctt[rct] * 100.0)
-            )
+            return m.krct[rct] == exp(m.lnkrct[rct])
 
         b.Rxnrate = Constraint([rct], rule=rxnrate, doc="reaction rate constant")
 
@@ -2729,9 +2950,11 @@ def HDA_model():
         )
 
         def rctsel(_m, rct):
-            return (1.0 - m.sel[rct]) == m.selectivity_1 * (
-                1.0 - m.conv[rct, "tol"]
-            ) ** m.selectivity_2
+            # Multiplied through by unconverted**1.544 so the exponent is
+            # positive: exact (no eps perturbation) and evaluable at zero.
+            return (1.0 - m.sel[rct]) * m.unconverted[rct] ** (
+                -m.selectivity_2
+            ) == m.selectivity_1
 
         b.Rctsel = Constraint([rct], rule=rctsel, doc="selectivity to benzene")
 
@@ -3320,6 +3543,21 @@ def HDA_model():
 
     #     return 510. * (- m.h2_feed_cost * m.f[1] - m.toluene_feed_cost * (m.f[66] + m.f[67]) + m.benzene_product * m.f[31] + m.diphenyl_product * m.f[35] + m.hydrogen_purge_value * (m.fc[4, 'h2'] + m.fc[28, 'h2'] + m.fc[53, 'h2'] + m.fc[55, 'h2']) + m.methane_purge_value * (m.fc[4, 'ch4'] + m.fc[28, 'ch4'] + m.fc[53, 'ch4'] + m.fc[55, 'ch4'])) - m.compressor_linear_coefficient * (m.elec[1] + m.elec[2] + m.elec[3]) - m.compressor_linear_coefficient_4  * m.elec[4] - m.compressor_fixed_cost * (m.purify_H2.binary_indicator_var + m.recycle_hydrogen.binary_indicator_var + m.absorber_hydrogen.binary_indicator_var) - m.compressor_fixed_cost_4 * m.recycle_methane_membrane.binary_indicator_var - sum((m.costelec * m.elec[comp]) for comp in m.comp) - (m.adiabtic_reactor_fixed_cost * m.adiabatic_reactor.binary_indicator_var + m.adiabtic_reactor_linear_coefficient * m.rctvol[1]) -  (m.isothermal_reactor_fixed_cost * m.isothermal_reactor.binary_indicator_var + m.isothermal_reactor_linear_coefficient * m.rctvol[2]) - m.cooling_cost/1000 * m.q[2] - (m.stabilizing_column_fixed_cost * m.methane_distillation_column.binary_indicator_var +m.stabilizing_column_linear_coefficient * m.ndist[1]) - (m.benzene_column_fixed_cost + m.benzene_column_linear_coefficient  * m.ndist[2]) - (m.toluene_column_fixed_cost * m.toluene_distillation_column.binary_indicator_var + m.toluene_column_linear_coefficient * m.ndist[3]) - (m.membrane_separator_fixed_cost * m.purify_H2.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[3]) - (m.membrane_separator_fixed_cost * m.recycle_methane_membrane.binary_indicator_var + m.membrane_separator_linear_coefficient * m.f[54]) - (3.0 * m.absorber_hydrogen.binary_indicator_var + m.abs_linear_coefficient * m.nabs[1]) - (m.fuel_cost * m.qfuel[1] + m.furnace_linear_coefficient* m.qfuel[1]) - sum(m.cooling_cost * m.qc[hec] for hec in m.hec) - sum(m.heating_cost * m.qh[heh] for heh in m.heh) - m.furnace_fixed_cost
     # m.obj = Objective(rule=profits_GAMS_file, sense=maximize)
+
+    # Solver presolves constant-fold variables pinned by lb == ub and apply
+    # zero tolerance to the resulting constant equations, so ulp-level float
+    # residues between different evaluation paths of the same quantity read
+    # as infeasibility. Represent every pinned value as a tiny outer interval
+    # instead (1e-7 relative width — far below physical precision).
+    for pinned_var in m.component_data_objects(Var, descend_into=True):
+        if (
+            pinned_var.lb is not None
+            and pinned_var.ub is not None
+            and pinned_var.lb == pinned_var.ub
+        ):
+            pinned_lo, pinned_hi = _outer(pinned_var.lb, pinned_var.ub)
+            pinned_var.setlb(pinned_lo)
+            pinned_var.setub(pinned_hi)
 
     return m
 
