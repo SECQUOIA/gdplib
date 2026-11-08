@@ -18,6 +18,7 @@ from importlib import import_module
 from pathlib import Path
 
 import pyomo
+from pyomo.common.collections import ComponentSet
 from pyomo.environ import SolverFactory, TransformationFactory
 
 try:
@@ -33,6 +34,7 @@ GDPOPT_STRATEGIES = [
     "gdpopt.lbb",
     "gdpopt.ric",
 ]
+GDPOPT_CUSTOM_INIT_STRATEGIES = {"gdpopt.gloa"}
 DEFAULT_STRATEGIES = TRANSFORMATION_STRATEGIES + GDPOPT_STRATEGIES
 DEFAULT_LOCAL_FIRST_STRATEGIES = DEFAULT_STRATEGIES
 PR58_BENCHMARK_INSTANCES = [
@@ -321,6 +323,35 @@ def _gdpopt_solve_kwargs(
     return kwargs
 
 
+def _gdpopt_model_initialization_kwargs(model, strategy, custom_init=False):
+    """Opt-in GDPopt warm start from a model-provided active-disjunct set.
+
+    Protocol: a model may expose ``model.gdpopt_initial_disjuncts``, a list of
+    iterables of Disjunct objects (one iterable per initialization subproblem)
+    describing a known-feasible active set. It is consumed only when the
+    benchmark run explicitly opts in (``--custom-init``) and the strategy is in
+    ``GDPOPT_CUSTOM_INIT_STRATEGIES``; runs using it are labeled in the result
+    metadata, because a warm-started row measures verification of the provided
+    set, not cold-start solving.
+    """
+    if not custom_init:
+        return {}
+
+    if strategy not in GDPOPT_CUSTOM_INIT_STRATEGIES:
+        return {}
+
+    initial_disjuncts = getattr(model, "gdpopt_initial_disjuncts", None)
+    if not initial_disjuncts:
+        return {}
+
+    return {
+        "init_algorithm": "custom_disjuncts",
+        "custom_init_disjuncts": [
+            ComponentSet(disjunct_set) for disjunct_set in initial_disjuncts
+        ],
+    }
+
+
 def _gdpopt_subsolvers(
     subsolver,
     solver_gams,
@@ -359,12 +390,15 @@ def _benchmark_metadata(
     gams_minlp_solver=None,
     gams_local_minlp_solver=None,
     label=None,
+    custom_init=False,
 ):
     metadata = {
         "Strategy": strategy,
         "Time limit": timelimit,
         "Solver interface": subsolver,
     }
+    if strategy in GDPOPT_STRATEGIES:
+        metadata["Initialization"] = "custom_disjuncts" if custom_init else "default"
     if label:
         metadata["Case label"] = label
     if solver_profile:
@@ -409,6 +443,7 @@ def _write_results_json(
     gams_minlp_solver=None,
     gams_local_minlp_solver=None,
     label=None,
+    custom_init=False,
 ):
     payload = results.json_repn()
     payload["Benchmark"] = [
@@ -423,6 +458,7 @@ def _write_results_json(
             gams_minlp_solver,
             gams_local_minlp_solver,
             label,
+            custom_init,
         )
     ]
     payload = _json_safe_result(payload)
@@ -463,8 +499,13 @@ def benchmark(
     gams_minlp_solver=None,
     gams_local_minlp_solver=None,
     label=None,
+    custom_init=False,
 ):
     """Benchmark the model using the given strategy and subsolver.
+
+    When ``custom_init`` is true and the model exposes
+    ``gdpopt_initial_disjuncts``, supported GDPopt strategies are warm-started
+    from that active set and the result metadata is labeled accordingly.
 
     The result files include solver output and a JSON representation of the results.
 
@@ -521,18 +562,19 @@ def benchmark(
             "w",
         ) as f:
             with redirect_stdout(f):
-                results = SolverFactory(strategy).solve(
-                    model,
-                    **_gdpopt_solve_kwargs(
-                        timelimit,
-                        subsolver,
-                        solver_gams,
-                        gams_nlp_solver,
-                        gams_mip_solver,
-                        gams_minlp_solver,
-                        gams_local_minlp_solver,
-                    ),
+                solve_kwargs = _gdpopt_solve_kwargs(
+                    timelimit,
+                    subsolver,
+                    solver_gams,
+                    gams_nlp_solver,
+                    gams_mip_solver,
+                    gams_minlp_solver,
+                    gams_local_minlp_solver,
                 )
+                solve_kwargs.update(
+                    _gdpopt_model_initialization_kwargs(model, strategy, custom_init)
+                )
+                results = SolverFactory(strategy).solve(model, **solve_kwargs)
                 print(results)
     else:
         raise ValueError(f"Unknown benchmark strategy: {strategy}")
@@ -550,6 +592,7 @@ def benchmark(
         gams_minlp_solver,
         gams_local_minlp_solver,
         label,
+        custom_init,
     )
     return None
 
@@ -1348,6 +1391,7 @@ def run_benchmark_campaign(args, stream=None):  # noqa: C901
                     case.gams_minlp_solver,
                     case.gams_local_minlp_solver,
                     case.label,
+                    custom_init=getattr(args, "custom_init", False),
                 )
             except Exception as err:
                 failure_path = _write_failure_log(
@@ -1692,6 +1736,18 @@ def _build_parser():
         "--skip-preflight",
         action="store_true",
         help="Start solves without running preflight checks first.",
+    )
+    run.add_argument(
+        "--custom-init",
+        dest="custom_init",
+        action="store_true",
+        default=False,
+        help=(
+            "Warm-start supported GDPopt strategies from a model-provided "
+            "gdpopt_initial_disjuncts active set. Warm-started rows are "
+            "labeled in the result metadata and are not comparable with "
+            "cold-start rows."
+        ),
     )
     run.add_argument(
         "--dry-run",
