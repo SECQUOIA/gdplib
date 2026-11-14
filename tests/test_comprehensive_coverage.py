@@ -38,6 +38,7 @@ class TestComprehensiveCoverage:
         "kaibel",
         "med_term_purchasing",
         "methanol",
+        "methanol_availability",
         "mod_hens",
         "modprodnet",
         "positioning",

@@ -13,6 +13,7 @@ import gdplib.gdp_col
 import gdplib.hda
 import gdplib.kaibel
 import gdplib.methanol
+import gdplib.methanol_availability
 import gdplib.batch_processing
 import gdplib.jobshop
 import gdplib.disease_model
