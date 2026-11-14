@@ -37,6 +37,7 @@ class TestModuleImports:
         "hda",
         "kaibel",
         "methanol",
+        "methanol_availability",
         "batch_processing",
         "jobshop",
         "disease_model",

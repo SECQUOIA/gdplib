@@ -31,6 +31,7 @@ MODEL_INSTANCES = {
     "kaibel": [{"label": "Number"}],
     "med_term_purchasing": [{"label": "Number"}],
     "methanol": [{"label": "Number"}],
+    "methanol_availability": [{"label": "Number"}],
     "mod_hens": [
         {
             "label": "conventional",
