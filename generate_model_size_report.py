@@ -32,6 +32,10 @@ MODEL_INSTANCES = {
     "med_term_purchasing": [{"label": "Number"}],
     "methanol": [{"label": "Number"}],
     "methanol_availability": [{"label": "Number"}],
+    "methanol_stochastic": [
+        {"label": "no_redundancy"},
+        {"label": "redundancy", "kwargs": {"redundancy": True}},
+    ],
     "mod_hens": [
         {
             "label": "conventional",
