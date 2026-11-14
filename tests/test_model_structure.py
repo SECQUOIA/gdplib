@@ -27,6 +27,7 @@ class TestModelStructure:
         "kaibel",
         "methanol",
         "methanol_availability",
+        "methanol_stochastic",
         "batch_processing",
         "jobshop",
         "disease_model",

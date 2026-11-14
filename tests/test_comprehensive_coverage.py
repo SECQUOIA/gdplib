@@ -39,6 +39,7 @@ class TestComprehensiveCoverage:
         "med_term_purchasing",
         "methanol",
         "methanol_availability",
+        "methanol_stochastic",
         "mod_hens",
         "modprodnet",
         "positioning",
